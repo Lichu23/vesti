@@ -18,11 +18,11 @@ Branch: feature/bootstrap
 
 -   [x] Categories CRUD
 -   [x] Brands
--   [ ] Products CRUD
+-   [x] Products CRUD
 -   [ ] Images
 -   [ ] Dynamic categories
 
-Branches: feat/categories feat/brands feature/products
+Branches: feat/categories feat/brands feat/products
 feature/product-images
 
 ## Phase 3 Variants
