@@ -11,12 +11,20 @@ export default async function AdminPage() {
       <p className="text-zinc-600">
         Sesion iniciada como {session.user.email}
       </p>
-      <Link
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-        href="/admin/categories"
-      >
-        Manage categories
-      </Link>
+      <nav className="flex flex-wrap justify-center gap-3">
+        <Link
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+          href="/admin/categories"
+        >
+          Manage categories
+        </Link>
+        <Link
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+          href="/admin/brands"
+        >
+          Manage brands
+        </Link>
+      </nav>
     </main>
   );
 }
