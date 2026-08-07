@@ -40,5 +40,5 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thoemia_intimo
           AUTH_SECRET: ci-placeholder-auth-secret
-          AUTH_GITHUB_ID: ci-placeholder-github-id
-          AUTH_GITHUB_SECRET: ci-placeholder-github-secret
+          AUTH_GOOGLE_ID: ci-placeholder-google-id
+          AUTH_GOOGLE_SECRET: ci-placeholder-google-secret

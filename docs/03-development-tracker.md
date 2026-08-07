@@ -16,13 +16,13 @@ Branch: feature/bootstrap
 
 ## Phase 2 Catalog
 
--   [ ] Categories CRUD
+-   [x] Categories CRUD
 -   [ ] Brands
 -   [ ] Products CRUD
 -   [ ] Images
 -   [ ] Dynamic categories
 
-Branches: feature/categories feature/brands feature/products
+Branches: feat/categories feature/brands feature/products
 feature/product-images
 
 ## Phase 3 Variants

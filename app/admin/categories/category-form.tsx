@@ -1,0 +1,89 @@
+"use client";
+
+import { useActionState } from "react";
+
+import { type CategoryFormState } from "@/app/admin/categories/actions";
+
+const initialCategoryFormState: CategoryFormState = {
+  message: "",
+  status: "idle",
+};
+
+type CategoryFormProps = {
+  action: (
+    previousState: CategoryFormState,
+    formData: FormData,
+  ) => Promise<CategoryFormState>;
+  buttonLabel: string;
+  category?: {
+    id: string;
+    name: string;
+    isActive: boolean;
+    sortOrder: number;
+  };
+};
+
+export function CategoryForm({
+  action,
+  buttonLabel,
+  category,
+}: CategoryFormProps) {
+  const [state, formAction, pending] = useActionState(
+    action,
+    initialCategoryFormState,
+  );
+
+  return (
+    <form action={formAction} className="grid gap-3 rounded-xl border p-4">
+      {category ? <input name="id" type="hidden" value={category.id} /> : null}
+
+      <label className="grid gap-1 text-sm font-medium">
+        Name
+        <input
+          className="rounded-md border px-3 py-2 text-sm"
+          defaultValue={category?.name}
+          name="name"
+          required
+        />
+      </label>
+
+      <label className="grid gap-1 text-sm font-medium">
+        Sort order
+        <input
+          className="rounded-md border px-3 py-2 text-sm"
+          defaultValue={category?.sortOrder ?? 0}
+          name="sortOrder"
+          type="number"
+        />
+      </label>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          defaultChecked={category?.isActive ?? true}
+          name="isActive"
+          type="checkbox"
+        />
+        Active
+      </label>
+
+      {state.message ? (
+        <p
+          aria-live="polite"
+          className={
+            state.status === "error" ? "text-sm text-red-600" : "text-sm"
+          }
+        >
+          {state.message}
+        </p>
+      ) : null}
+
+      <button
+        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        disabled={pending}
+        type="submit"
+      >
+        {pending ? "Saving..." : buttonLabel}
+      </button>
+    </form>
+  );
+}
