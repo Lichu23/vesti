@@ -1,11 +1,16 @@
 # Development Tracker
 
+## Project Rules
+
+- [x] Do not use accent marks in UI copy, admin content, WhatsApp messages, emails, docs, seeds, or identifiers unless an external legal/source text must be preserved exactly.
+
+
 ## Phase 1
 
--   [ ] Initialize project
--   [ ] CI
--   [ ] Database
--   [ ] Authentication
+-   [x] Initialize project
+-   [x] CI
+-   [x] Database
+-   [x] Authentication
 
 Branch: feature/bootstrap
 
