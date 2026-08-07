@@ -19,7 +19,7 @@ Branch: feature/bootstrap
 -   [x] Categories CRUD
 -   [x] Brands
 -   [x] Products CRUD
--   [ ] Images
+-   [x] Images
 -   [ ] Dynamic categories
 
 Branches: feat/categories feat/brands feat/products

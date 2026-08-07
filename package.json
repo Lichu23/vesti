@@ -10,6 +10,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "storage:setup": "node scripts/setup-product-images-bucket.mjs",
     "db:validate": "prisma validate",
     "validate": "pnpm lint && pnpm db:validate && pnpm build"
   },
@@ -17,6 +18,7 @@
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@supabase/supabase-js": "^2.112.2",
     "next": "16.3.0",
     "next-auth": "5.0.0-beta.32",
     "pg": "^8.22.0",
