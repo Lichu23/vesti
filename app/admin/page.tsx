@@ -24,6 +24,12 @@ export default async function AdminPage() {
         >
           Manage brands
         </Link>
+        <Link
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+          href="/admin/products"
+        >
+          Manage products
+        </Link>
       </nav>
     </main>
   );
