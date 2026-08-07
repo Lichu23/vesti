@@ -1,0 +1,167 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import { Prisma } from "@/generated/prisma/client";
+import { requireAdminSession } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
+
+export type CategoryFormState = {
+  message: string;
+  status: "idle" | "error" | "success";
+};
+
+type CategoryFormData =
+  | {
+      data: {
+        name: string;
+        slug: string;
+        sortOrder: number;
+        isActive: boolean;
+      };
+    }
+  | {
+      error: string;
+    };
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function readCategoryForm(formData: FormData): CategoryFormData {
+  const name = String(formData.get("name") ?? "").trim();
+  const sortOrderValue = String(formData.get("sortOrder") ?? "0").trim();
+  const sortOrder = Number.parseInt(sortOrderValue, 10);
+
+  if (!name) {
+    return { error: "Name is required." };
+  }
+
+  const slug = slugify(name);
+
+  if (!slug) {
+    return { error: "Name must contain at least one letter or number." };
+  }
+
+  if (Number.isNaN(sortOrder)) {
+    return { error: "Sort order must be a number." };
+  }
+
+  return {
+    data: {
+      name,
+      slug,
+      sortOrder,
+      isActive: formData.get("isActive") === "on",
+    },
+  };
+}
+
+function categoryError(error: unknown): CategoryFormState {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    return {
+      message: "A category with this slug already exists.",
+      status: "error",
+    };
+  }
+
+  throw error;
+}
+
+export async function createCategory(
+  _previousState: CategoryFormState,
+  formData: FormData,
+): Promise<CategoryFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const parsed = readCategoryForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  try {
+    await prisma.category.create({
+      data: {
+        ...parsed.data,
+        storeId,
+      },
+    });
+  } catch (error) {
+    return categoryError(error);
+  }
+
+  revalidatePath("/admin/categories");
+
+  return { message: "Category created.", status: "success" };
+}
+
+export async function updateCategory(
+  _previousState: CategoryFormState,
+  formData: FormData,
+): Promise<CategoryFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const id = String(formData.get("id") ?? "");
+  const parsed = readCategoryForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!id) {
+    return { message: "Category id is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  try {
+    await prisma.category.update({
+      data: parsed.data,
+      where: {
+        id,
+        storeId,
+      },
+    });
+  } catch (error) {
+    return categoryError(error);
+  }
+
+  revalidatePath("/admin/categories");
+
+  return { message: "Category updated.", status: "success" };
+}
+
+export async function deleteCategory(formData: FormData) {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const id = String(formData.get("id") ?? "");
+
+  if (!id || !storeId) {
+    return;
+  }
+
+  await prisma.category.delete({
+    where: {
+      id,
+      storeId,
+    },
+  });
+
+  revalidatePath("/admin/categories");
+}

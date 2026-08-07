@@ -1,0 +1,18 @@
+-- Enable Row-Level Security for application tables.
+-- The app accesses data through server-side Prisma with database credentials.
+-- No public Supabase API policies are added yet, so anon/authenticated API access is denied by default.
+
+ALTER TABLE "Store" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Account" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Session" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VerificationToken" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Category" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Brand" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Product" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ProductVariant" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ProductImage" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "InventoryMovement" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "SizeGuide" ENABLE ROW LEVEL SECURITY;
