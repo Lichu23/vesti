@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -18,6 +19,18 @@ export type ProductFormState = {
   message: string;
   status: "idle" | "error" | "success";
 };
+
+export type ProductImageFormState = ProductFormState;
+
+const allowedImageTypes = new Set([
+  "image/avif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+const maxImageSize = 5 * 1024 * 1024;
+const productImagesBucket = "product-images";
 
 type ProductPayload = {
   name: string;
@@ -61,6 +74,114 @@ function slugify(value: string) {
 function optionalText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text ? text : null;
+}
+
+function readSortOrder(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+
+  if (!text) {
+    return 0;
+  }
+
+  if (!/^\d+$/.test(text)) {
+    return null;
+  }
+
+  return Number.parseInt(text, 10);
+}
+
+function isAllowedImageUrl(value: string) {
+  if (value.startsWith("/") && !value.startsWith("//")) {
+    return true;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function fileExtension(file: File) {
+  const extensionByType = {
+    "image/avif": ".avif",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+  } as const;
+
+  return extensionByType[file.type as keyof typeof extensionByType] ?? "";
+}
+
+function productImageStoragePath(
+  url: string,
+  storeId: string,
+  productId: string,
+) {
+  const marker = `/storage/v1/object/public/${productImagesBucket}/`;
+  const markerIndex = url.indexOf(marker);
+
+  if (markerIndex === -1) {
+    return null;
+  }
+
+  const storagePath = decodeURIComponent(url.slice(markerIndex + marker.length));
+
+  if (!storagePath.startsWith(`${storeId}/${productId}/`)) {
+    return null;
+  }
+
+  return storagePath;
+}
+
+function requireSupabaseStorageClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+    },
+  });
+}
+
+async function uploadProductImageFile(
+  storeId: string,
+  productId: string,
+  file: File,
+): Promise<{ url: string } | { error: string }> {
+  const supabase = requireSupabaseStorageClient();
+
+  if (!supabase) {
+    return {
+      error: "Supabase Storage env vars are required for image uploads.",
+    };
+  }
+
+  const extension = fileExtension(file);
+  const filename = `${storeId}/${productId}/${crypto.randomUUID()}${extension}`;
+  const { error } = await supabase.storage
+    .from(productImagesBucket)
+    .upload(filename, file, {
+      cacheControl: "31536000",
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const { data } = supabase.storage
+    .from(productImagesBucket)
+    .getPublicUrl(filename);
+
+  return { url: data.publicUrl };
 }
 
 function readProductForm(formData: FormData): ProductFormData {
@@ -294,12 +415,184 @@ export async function deleteProduct(formData: FormData) {
   }
 
   try {
+    const product = await prisma.product.findUnique({
+      select: {
+        images: {
+          select: {
+            url: true,
+          },
+        },
+      },
+      where: {
+        id,
+        storeId,
+      },
+    });
+
+    if (!product) {
+      return;
+    }
+
     await prisma.product.delete({
       where: {
         id,
         storeId,
       },
     });
+
+    const storagePaths = product.images
+      .map((image) => productImageStoragePath(image.url, storeId, id))
+      .filter((storagePath): storagePath is string => Boolean(storagePath));
+    const supabase = storagePaths.length ? requireSupabaseStorageClient() : null;
+
+    if (supabase && storagePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from(productImagesBucket)
+        .remove(storagePaths);
+
+      if (storageError) {
+        console.error(storageError.message);
+      }
+    }
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return;
+    }
+
+    throw error;
+  }
+
+  revalidatePath("/admin/products");
+}
+
+export async function createProductImage(
+  _previousState: ProductImageFormState,
+  formData: FormData,
+): Promise<ProductImageFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const productId = String(formData.get("productId") ?? "").trim();
+  const urlValue = String(formData.get("url") ?? "").trim();
+  const fileValue = formData.get("image");
+  const alt = optionalText(formData.get("alt"));
+  const sortOrder = readSortOrder(formData.get("sortOrder"));
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!productId) {
+    return { message: "Product id is required.", status: "error" };
+  }
+
+  if (!urlValue && !(fileValue instanceof File && fileValue.size > 0)) {
+    return { message: "Image file or URL is required.", status: "error" };
+  }
+
+  if (urlValue && !isAllowedImageUrl(urlValue)) {
+    return {
+      message: "Image URL must start with http://, https://, or /.",
+      status: "error",
+    };
+  }
+
+  if (sortOrder === null) {
+    return { message: "Sort order must be zero or more.", status: "error" };
+  }
+
+  const product = await prisma.product.findUnique({
+    select: { id: true },
+    where: {
+      id: productId,
+      storeId,
+    },
+  });
+
+  if (!product) {
+    return { message: "Product not found.", status: "error" };
+  }
+
+  let url = urlValue;
+
+  if (fileValue instanceof File && fileValue.size > 0) {
+    if (!allowedImageTypes.has(fileValue.type)) {
+      return {
+        message: "Image file must be AVIF, JPG, PNG, or WebP.",
+        status: "error",
+      };
+    }
+
+    if (fileValue.size > maxImageSize) {
+      return {
+        message: "Image file must be 5 MB or smaller.",
+        status: "error",
+      };
+    }
+
+    const uploaded = await uploadProductImageFile(storeId, productId, fileValue);
+
+    if ("error" in uploaded) {
+      return { message: uploaded.error, status: "error" };
+    }
+
+    url = uploaded.url;
+  }
+
+  await prisma.productImage.create({
+    data: {
+      alt,
+      productId,
+      sortOrder,
+      storeId,
+      url,
+    },
+  });
+
+  revalidatePath("/admin/products");
+
+  return { message: "Image added.", status: "success" };
+}
+
+export async function deleteProductImage(formData: FormData) {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const id = String(formData.get("id") ?? "").trim();
+
+  if (!id || !storeId) {
+    return;
+  }
+
+  try {
+    const image = await prisma.productImage.delete({
+      select: {
+        productId: true,
+        url: true,
+      },
+      where: {
+        id,
+        storeId,
+      },
+    });
+
+    const storagePath = productImageStoragePath(
+      image.url,
+      storeId,
+      image.productId,
+    );
+    const supabase = storagePath ? requireSupabaseStorageClient() : null;
+
+    if (storagePath && supabase) {
+      const { error: storageError } = await supabase.storage
+        .from(productImagesBucket)
+        .remove([storagePath]);
+
+      if (storageError) {
+        console.error(storageError.message);
+      }
+    }
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
