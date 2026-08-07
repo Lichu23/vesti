@@ -3,11 +3,14 @@
 > **Application language:** Spanish (UI, admin panel, WhatsApp messages,
 > emails and customer-facing content). Documentation and codebase are
 > written in English.
+> **Accent policy:** Do not use accent marks in UI copy, admin content,
+> WhatsApp messages, emails, docs, seeds, or identifiers unless an external
+> legal/source text must be preserved exactly.
 
 ## Vision
 
 Build a modern e-commerce platform for clothing stores. The first tenant
-is **Thoemia Íntimo**, but the architecture is designed to support
+is **Thoemia Intimo**, but the architecture is designed to support
 multiple stores in the future.
 
 ## MVP

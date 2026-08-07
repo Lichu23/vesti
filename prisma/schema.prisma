@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+}
+
+enum Audience {
+  WOMEN
+  MEN
+  KIDS
+  UNISEX
+}
+
+enum ColorMode {
+  NONE
+  VARIANTS
+  ASK
+  ASSORTED
+}
+
+enum SaleUnit {
+  UNIT
+  PACK
+}
+
+enum OrderStatus {
+  DRAFT
+  WHATSAPP_SENT
+  REVIEWING
+  CONFIRMED
+  CANCELLED
+}
+
+enum InventoryMovementType {
+  MANUAL_ADJUSTMENT
+  ORDER_CONFIRMATION
+  ORDER_CANCELLATION
+}
+
+model Store {
+  id                 String              @id @default(uuid()) @db.Uuid
+  name               String
+  slug               String              @unique
+  whatsapp           String?
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  brands             Brand[]
+  categories         Category[]
+  inventoryMovements InventoryMovement[]
+  orderItems         OrderItem[]
+  orders             Order[]
+  productImages      ProductImage[]
+  productVariants    ProductVariant[]
+  products           Product[]
+  sizeGuides         SizeGuide[]
+  users              User[]
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  storeId       String?   @db.Uuid
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  name          String?
+  role          UserRole  @default(ADMIN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  store         Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@index([storeId])
+}
+
+model Account {
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  storeId   String    @db.Uuid
+  name      String
+  slug      String
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive])
+}
+
+model Brand {
+  id        String    @id @default(uuid()) @db.Uuid
+  storeId   String    @db.Uuid
+  name      String
+  slug      String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive])
+}
+
+model Product {
+  id              String           @id @default(uuid()) @db.Uuid
+  storeId         String           @db.Uuid
+  categoryId      String           @db.Uuid
+  brandId         String?          @db.Uuid
+  sizeGuideId     String?          @db.Uuid
+  name            String
+  slug            String
+  modelCode       String?
+  description     String?
+  audience        Audience
+  basePrice       Decimal          @db.Decimal(10, 2)
+  saleUnit        SaleUnit         @default(UNIT)
+  packQuantity    Int?
+  colorMode       ColorMode        @default(NONE)
+  sizeDisplayText String?
+  isFeatured      Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  brand           Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  category        Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images          ProductImage[]
+  orderItems      OrderItem[]
+  sizeGuide       SizeGuide?       @relation(fields: [sizeGuideId], references: [id], onDelete: SetNull)
+  store           Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variants        ProductVariant[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive])
+  @@index([storeId, isFeatured])
+  @@index([storeId, audience])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([sizeGuideId])
+}
+
+model ProductVariant {
+  id                 String              @id @default(uuid()) @db.Uuid
+  storeId            String              @db.Uuid
+  productId          String              @db.Uuid
+  size               String
+  color              String?
+  stock              Int                 @default(0)
+  isActive           Boolean             @default(true)
+  sku                String?
+  price              Decimal?            @db.Decimal(10, 2)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  inventoryMovements InventoryMovement[]
+  orderItems         OrderItem[]
+  product            Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store              Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, sku])
+  @@index([storeId, isActive])
+  @@index([productId])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  storeId   String   @db.Uuid
+  productId String   @db.Uuid
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([productId])
+}
+
+model Order {
+  id            String      @id @default(uuid()) @db.Uuid
+  storeId       String      @db.Uuid
+  status        OrderStatus @default(DRAFT)
+  customerName  String
+  customerPhone String
+  notes         String?
+  total         Decimal     @default(0) @db.Decimal(10, 2)
+  confirmedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
+  store         Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status])
+  @@index([storeId, createdAt])
+}
+
+model OrderItem {
+  id           String         @id @default(uuid()) @db.Uuid
+  storeId      String         @db.Uuid
+  orderId      String         @db.Uuid
+  productId    String         @db.Uuid
+  variantId    String         @db.Uuid
+  productName  String
+  variantLabel String
+  quantity     Int
+  unitPrice    Decimal        @db.Decimal(10, 2)
+  subtotal     Decimal        @db.Decimal(10, 2)
+  order        Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  store        Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([storeId])
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+model InventoryMovement {
+  id          String                @id @default(uuid()) @db.Uuid
+  storeId     String                @db.Uuid
+  variantId   String                @db.Uuid
+  type        InventoryMovementType
+  quantity    Int
+  reason      String?
+  referenceId String?
+  createdAt   DateTime              @default(now())
+  store       Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variant     ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([storeId, createdAt])
+  @@index([variantId])
+}
+
+model SizeGuide {
+  id        String    @id @default(uuid()) @db.Uuid
+  storeId   String    @db.Uuid
+  name      String
+  content   Json
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, name])
+  @@index([storeId, isActive])
+}
