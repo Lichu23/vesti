@@ -347,11 +347,85 @@ async function validateProductRelations(storeId: string, data: ProductPayload) {
   return null;
 }
 
+async function validateProductColorMode(
+  storeId: string,
+  productId: string,
+  colorMode: ColorModeValue,
+) {
+  if (colorMode === ColorMode.VARIANTS) {
+    const uncoloredVariant = await prisma.productVariant.findFirst({
+      select: { id: true },
+      where: {
+        color: null,
+        productId,
+        storeId,
+      },
+    });
+
+    if (uncoloredVariant) {
+      return "Add colors to existing variants before changing color mode to VARIANTS.";
+    }
+
+    return null;
+  }
+
+  const variants = await prisma.productVariant.findMany({
+    select: { size: true },
+    where: {
+      productId,
+      storeId,
+    },
+  });
+  const seenSizes = new Set<string>();
+
+  for (const variant of variants) {
+    if (seenSizes.has(variant.size)) {
+      return "Delete duplicate sizes before changing color mode away from VARIANTS.";
+    }
+
+    seenSizes.add(variant.size);
+  }
+
+  return null;
+}
+
+function validateVariantColorMode(
+  colorMode: ColorModeValue,
+  color: string | null,
+) {
+  if (colorMode === ColorMode.VARIANTS && !color) {
+    return "Color is required when product color mode is VARIANTS.";
+  }
+
+  if (colorMode !== ColorMode.VARIANTS && color) {
+    return "Variant color is only allowed when product color mode is VARIANTS.";
+  }
+
+  return null;
+}
+
 function productError(error: unknown): ProductFormState {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
   ) {
+    const target = error.meta?.target;
+    const targetText = Array.isArray(target)
+      ? target.join(" ")
+      : String(target ?? "");
+
+    if (
+      targetText.includes("ProductVariant") ||
+      targetText.includes("productId") ||
+      targetText.includes("size") ||
+      targetText.includes("color")
+    ) {
+      return {
+        message: "Duplicate variant sizes prevent this color mode change.",
+        status: "error",
+      };
+    }
+
     return {
       message: "A product with this slug already exists.",
       status: "error",
@@ -509,13 +583,37 @@ export async function updateProduct(
     return { message: relationError, status: "error" };
   }
 
+  const colorModeError = await validateProductColorMode(
+    storeId,
+    id,
+    parsed.data.colorMode,
+  );
+
+  if (colorModeError) {
+    return { message: colorModeError, status: "error" };
+  }
+
   try {
-    await prisma.product.update({
-      data: parsed.data,
-      where: {
-        id,
-        storeId,
-      },
+    await prisma.$transaction(async (tx) => {
+      if (parsed.data.colorMode !== ColorMode.VARIANTS) {
+        await tx.productVariant.updateMany({
+          data: {
+            color: null,
+          },
+          where: {
+            productId: id,
+            storeId,
+          },
+        });
+      }
+
+      await tx.product.update({
+        data: parsed.data,
+        where: {
+          id,
+          storeId,
+        },
+      });
     });
   } catch (error) {
     return productError(error);
@@ -745,7 +843,7 @@ export async function createProductVariant(
   }
 
   const product = await prisma.product.findUnique({
-    select: { id: true },
+    select: { colorMode: true, id: true },
     where: {
       id: parsed.data.productId,
       storeId,
@@ -754,6 +852,15 @@ export async function createProductVariant(
 
   if (!product) {
     return { message: "Product not found.", status: "error" };
+  }
+
+  const colorModeError = validateVariantColorMode(
+    product.colorMode,
+    parsed.data.color,
+  );
+
+  if (colorModeError) {
+    return { message: colorModeError, status: "error" };
   }
 
   const duplicateVariant = await findDuplicateProductVariant(
@@ -806,7 +913,7 @@ export async function updateProductVariant(
   }
 
   const product = await prisma.product.findUnique({
-    select: { id: true },
+    select: { colorMode: true, id: true },
     where: {
       id: parsed.data.productId,
       storeId,
@@ -815,6 +922,15 @@ export async function updateProductVariant(
 
   if (!product) {
     return { message: "Product not found.", status: "error" };
+  }
+
+  const colorModeError = validateVariantColorMode(
+    product.colorMode,
+    parsed.data.color,
+  );
+
+  if (colorModeError) {
+    return { message: colorModeError, status: "error" };
   }
 
   const duplicateVariant = await findDuplicateProductVariant(

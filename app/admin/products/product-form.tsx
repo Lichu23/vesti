@@ -46,6 +46,13 @@ const audiences = ["WOMEN", "MEN", "KIDS", "UNISEX"];
 const saleUnits = ["UNIT", "PACK"];
 const colorModes = ["NONE", "VARIANTS", "ASK", "ASSORTED"];
 
+const colorModeDescriptions = [
+  "NONE: product has no color choice.",
+  "VARIANTS: customer selects color from variant colors.",
+  "ASK: customer asks for available colors by message.",
+  "ASSORTED: product ships with mixed colors.",
+];
+
 function fieldClassName() {
   return "rounded-md border px-3 py-2 text-sm";
 }
@@ -196,6 +203,9 @@ export function ProductForm({
               </option>
             ))}
           </select>
+          <span className="text-xs font-normal text-zinc-500">
+            {colorModeDescriptions.join(" ")}
+          </span>
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
