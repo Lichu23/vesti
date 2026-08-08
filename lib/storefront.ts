@@ -55,7 +55,12 @@ const productSelect = {
     take: 1,
   },
   variants: {
+    orderBy: [{ size: "asc" }, { color: "asc" }],
     select: {
+      color: true,
+      id: true,
+      price: true,
+      size: true,
       stock: true,
     },
     where: {

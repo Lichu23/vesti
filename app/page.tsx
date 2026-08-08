@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getStorefrontHome } from "@/lib/storefront";
+import { AddToCartButton, CartToggleButton } from "./cart-buttons";
 import { StorefrontSearch } from "./storefront-search";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
 
@@ -99,6 +100,10 @@ function ProductCard({ product }: { product: StorefrontProduct }) {
   const image = product.images[0];
   const stock = getProductStock(product);
   const hasStock = stock > 0;
+  const inStockVariants = product.variants.filter((variant) => variant.stock > 0);
+  const defaultVariant =
+    inStockVariants.length === 1 ? inStockVariants[0] : undefined;
+  const needsVariantSelection = inStockVariants.length > 1;
   const unitLabel = product.saleUnit === "PACK" ? "pack" : "c/u";
 
   return (
@@ -149,14 +154,30 @@ function ProductCard({ product }: { product: StorefrontProduct }) {
               {unitLabel}
             </span>
           </p>
-          <button
-            aria-label={`Agregar ${product.name} al carrito`}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-primary text-2xl leading-none text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
-            disabled={!hasStock}
-            type="button"
-          >
-            +
-          </button>
+          <AddToCartButton
+            disabled={!hasStock || needsVariantSelection}
+            disabledLabel={
+              needsVariantSelection
+                ? `Elegir talle para ${product.name}`
+                : undefined
+            }
+            item={
+              defaultVariant
+                ? {
+                    imageAlt: image?.alt,
+                    imageUrl: image?.url,
+                    maxQuantity: defaultVariant.stock,
+                    productId: product.id,
+                    productName: product.name,
+                    unitPrice: Number(defaultVariant.price ?? product.basePrice),
+                    variantColor: defaultVariant.color,
+                    variantId: defaultVariant.id,
+                    variantSize: defaultVariant.size,
+                  }
+                : undefined
+            }
+            productName={product.name}
+          />
         </div>
       </div>
     </article>
@@ -287,13 +308,7 @@ export default async function Home({ searchParams }: HomeProps) {
             key={params.buscar ?? "empty-search"}
           />
 
-          <button
-            aria-label="Abrir carrito"
-            className="ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary md:ml-0"
-            type="button"
-          >
-            &#128717;
-          </button>
+          <CartToggleButton />
         </div>
       </header>
 
