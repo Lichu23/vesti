@@ -25,6 +25,7 @@ type ProductVariantFormProps = {
     formData: FormData,
   ) => Promise<ProductVariantFormState>;
   buttonLabel: string;
+  colorMode: string;
   productId: string;
   variant?: ProductVariantFormVariant;
 };
@@ -36,6 +37,7 @@ function fieldClassName() {
 export function ProductVariantForm({
   action,
   buttonLabel,
+  colorMode,
   productId,
   variant,
 }: ProductVariantFormProps) {
@@ -43,6 +45,7 @@ export function ProductVariantForm({
     action,
     initialProductVariantFormState,
   );
+  const usesVariantColors = colorMode === "VARIANTS";
 
   return (
     <form action={formAction} className="grid gap-3 rounded-lg border p-3">
@@ -66,9 +69,16 @@ export function ProductVariantForm({
           <input
             className={fieldClassName()}
             defaultValue={variant?.color ?? ""}
+            disabled={!usesVariantColors}
             name="color"
             placeholder="Black"
+            required={usesVariantColors}
           />
+          <span className="text-xs font-normal text-zinc-500">
+            {usesVariantColors
+              ? "Required because this product uses variant colors."
+              : "Disabled unless product color mode is VARIANTS."}
+          </span>
         </label>
 
         <label className="grid gap-1 text-sm font-medium">

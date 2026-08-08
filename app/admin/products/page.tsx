@@ -89,7 +89,7 @@ export default async function AdminProductsPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-8">
       <header className="space-y-2">
-        <p className="text-sm text-zinc-500">Phase 2 Catalog</p>
+        <p className="text-sm text-zinc-500">Phase 3 Variants</p>
         <h1 className="text-3xl font-semibold">Products</h1>
         <p className="text-sm text-zinc-600">
           Manage storefront products, product images, and variants.
@@ -137,6 +137,9 @@ export default async function AdminProductsPage() {
                     <p className="text-sm text-zinc-600">
                       {product.audience} - ${product.basePrice.toString()} - {product.saleUnit}
                     </p>
+                    <p className="text-sm text-zinc-500">
+                      Color mode: {product.colorMode}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
@@ -155,6 +158,7 @@ export default async function AdminProductsPage() {
                   brands={brands}
                   buttonLabel="Update product"
                   categories={categories}
+                  key={`${product.id}-${product.updatedAt.toISOString()}`}
                   product={{
                     id: product.id,
                     name: product.name,
@@ -178,6 +182,9 @@ export default async function AdminProductsPage() {
                     <h4 className="font-semibold">Variants</h4>
                     <p className="text-sm text-zinc-600">
                       Add sellable size and color combinations for this product.
+                      {product.colorMode === "VARIANTS"
+                        ? " Color is required and becomes the customer color choice."
+                        : " Color is not selectable for this product mode."}
                     </p>
                   </div>
 
@@ -218,6 +225,7 @@ export default async function AdminProductsPage() {
                           <ProductVariantForm
                             action={updateProductVariant}
                             buttonLabel="Update variant"
+                            colorMode={product.colorMode}
                             productId={product.id}
                             variant={{
                               id: variant.id,
@@ -243,6 +251,7 @@ export default async function AdminProductsPage() {
                   <ProductVariantForm
                     action={createProductVariant}
                     buttonLabel="Create variant"
+                    colorMode={product.colorMode}
                     productId={product.id}
                   />
                 </section>
