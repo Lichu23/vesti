@@ -21,6 +21,7 @@ export type ProductFormState = {
 };
 
 export type ProductImageFormState = ProductFormState;
+export type ProductVariantFormState = ProductFormState;
 
 const allowedImageTypes = new Set([
   "image/avif",
@@ -57,6 +58,24 @@ type ProductFormData =
       error: string;
     };
 
+type ProductVariantPayload = {
+  productId: string;
+  size: string;
+  color: string | null;
+  stock: number;
+  isActive: boolean;
+  sku: string | null;
+  price: string | null;
+};
+
+type ProductVariantFormData =
+  | {
+      data: ProductVariantPayload;
+    }
+  | {
+      error: string;
+    };
+
 const audienceValues = Object.values(Audience) as AudienceValue[];
 const saleUnitValues = Object.values(SaleUnit) as SaleUnitValue[];
 const colorModeValues = Object.values(ColorMode) as ColorModeValue[];
@@ -88,6 +107,45 @@ function readSortOrder(value: FormDataEntryValue | null) {
   }
 
   return Number.parseInt(text, 10);
+}
+
+function readProductVariantForm(formData: FormData): ProductVariantFormData {
+  const productId = String(formData.get("productId") ?? "").trim();
+  const size = String(formData.get("size") ?? "").trim();
+  const color = optionalText(formData.get("color"));
+  const stockValue = String(formData.get("stock") ?? "").trim();
+  const sku = optionalText(formData.get("sku"));
+  const priceValue = String(formData.get("price") ?? "").trim();
+
+  if (!productId) {
+    return { error: "Product id is required." };
+  }
+
+  if (!size) {
+    return { error: "Size is required." };
+  }
+
+  if (!/^\d+$/.test(stockValue)) {
+    return { error: "Stock must be zero or more." };
+  }
+
+  if (priceValue && !/^\d+(\.\d{1,2})?$/.test(priceValue)) {
+    return {
+      error: "Variant price must be zero or more with up to 2 decimals.",
+    };
+  }
+
+  return {
+    data: {
+      productId,
+      size,
+      color,
+      stock: Number.parseInt(stockValue, 10),
+      isActive: formData.get("isActive") === "on",
+      sku,
+      price: priceValue || null,
+    },
+  };
 }
 
 function isAllowedImageUrl(value: string) {
@@ -321,6 +379,69 @@ function productError(error: unknown): ProductFormState {
   }
 
   throw error;
+}
+
+function productVariantError(error: unknown): ProductVariantFormState {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    const target = error.meta?.target;
+    const targetText = Array.isArray(target)
+      ? target.join(" ")
+      : String(target ?? "");
+
+    if (targetText.includes("sku")) {
+      return {
+        message: "A variant with this SKU already exists.",
+        status: "error",
+      };
+    }
+
+    return {
+      message: "A variant with this size and color already exists.",
+      status: "error",
+    };
+  }
+
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2025"
+  ) {
+    return {
+      message: "Variant not found.",
+      status: "error",
+    };
+  }
+
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2003"
+  ) {
+    return {
+      message: "Selected product is invalid.",
+      status: "error",
+    };
+  }
+
+  throw error;
+}
+
+async function findDuplicateProductVariant(
+  storeId: string,
+  data: ProductVariantPayload,
+  ignoredVariantId?: string,
+) {
+  return prisma.productVariant.findFirst({
+    select: { id: true },
+    where: {
+      color: data.color,
+      id: ignoredVariantId ? { not: ignoredVariantId } : undefined,
+      productId: data.productId,
+      size: data.size,
+      storeId,
+    },
+  });
 }
 
 export async function createProduct(
@@ -605,4 +726,182 @@ export async function deleteProductImage(formData: FormData) {
   }
 
   revalidatePath("/admin/products");
+}
+
+export async function createProductVariant(
+  _previousState: ProductVariantFormState,
+  formData: FormData,
+): Promise<ProductVariantFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const parsed = readProductVariantForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  const product = await prisma.product.findUnique({
+    select: { id: true },
+    where: {
+      id: parsed.data.productId,
+      storeId,
+    },
+  });
+
+  if (!product) {
+    return { message: "Product not found.", status: "error" };
+  }
+
+  const duplicateVariant = await findDuplicateProductVariant(
+    storeId,
+    parsed.data,
+  );
+
+  if (duplicateVariant) {
+    return {
+      message: "A variant with this size and color already exists.",
+      status: "error",
+    };
+  }
+
+  try {
+    await prisma.productVariant.create({
+      data: {
+        ...parsed.data,
+        storeId,
+      },
+    });
+  } catch (error) {
+    return productVariantError(error);
+  }
+
+  revalidatePath("/admin/products");
+
+  return { message: "Variant created.", status: "success" };
+}
+
+export async function updateProductVariant(
+  _previousState: ProductVariantFormState,
+  formData: FormData,
+): Promise<ProductVariantFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const id = String(formData.get("id") ?? "").trim();
+  const parsed = readProductVariantForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!id) {
+    return { message: "Variant id is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  const product = await prisma.product.findUnique({
+    select: { id: true },
+    where: {
+      id: parsed.data.productId,
+      storeId,
+    },
+  });
+
+  if (!product) {
+    return { message: "Product not found.", status: "error" };
+  }
+
+  const duplicateVariant = await findDuplicateProductVariant(
+    storeId,
+    parsed.data,
+    id,
+  );
+
+  if (duplicateVariant) {
+    return {
+      message: "A variant with this size and color already exists.",
+      status: "error",
+    };
+  }
+
+  try {
+    await prisma.productVariant.update({
+      data: {
+        size: parsed.data.size,
+        color: parsed.data.color,
+        stock: parsed.data.stock,
+        isActive: parsed.data.isActive,
+        sku: parsed.data.sku,
+        price: parsed.data.price,
+      },
+      where: {
+        id,
+        productId: parsed.data.productId,
+        storeId,
+      },
+    });
+  } catch (error) {
+    return productVariantError(error);
+  }
+
+  revalidatePath("/admin/products");
+
+  return { message: "Variant updated.", status: "success" };
+}
+
+export async function deleteProductVariant(
+  _previousState: ProductVariantFormState,
+  formData: FormData,
+): Promise<ProductVariantFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const id = String(formData.get("id") ?? "").trim();
+  const productId = String(formData.get("productId") ?? "").trim();
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!id || !productId) {
+    return { message: "Variant id is required.", status: "error" };
+  }
+
+  try {
+    await prisma.productVariant.delete({
+      where: {
+        id,
+        productId,
+        storeId,
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return { message: "Variant not found.", status: "error" };
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      return {
+        message: "Variant cannot be deleted because it is already used.",
+        status: "error",
+      };
+    }
+
+    throw error;
+  }
+
+  revalidatePath("/admin/products");
+
+  return { message: "Variant deleted.", status: "success" };
 }
