@@ -30,7 +30,7 @@ feature/product-images feature/dynamic-categories
 -   [x] Product variants
 -   [ ] Size guides
 -   [x] Color modes
--   [ ] Inventory
+-   [x] Inventory
 
 Branches: feature/product-variants feature/size-guides feature/inventory
 

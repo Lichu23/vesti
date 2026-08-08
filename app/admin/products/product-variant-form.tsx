@@ -27,6 +27,7 @@ type ProductVariantFormProps = {
   buttonLabel: string;
   colorMode: string;
   productId: string;
+  stockLocked?: boolean;
   variant?: ProductVariantFormVariant;
 };
 
@@ -39,6 +40,7 @@ export function ProductVariantForm({
   buttonLabel,
   colorMode,
   productId,
+  stockLocked = false,
   variant,
 }: ProductVariantFormProps) {
   const [state, formAction, pending] = useActionState(
@@ -83,15 +85,24 @@ export function ProductVariantForm({
 
         <label className="grid gap-1 text-sm font-medium">
           Stock
+          {stockLocked ? (
+            <input name="stock" type="hidden" value={variant?.stock ?? 0} />
+          ) : null}
           <input
             className={fieldClassName()}
             defaultValue={variant?.stock ?? 0}
+            disabled={stockLocked}
             min="0"
             name="stock"
             required
             step="1"
             type="number"
           />
+          {stockLocked ? (
+            <span className="text-xs font-normal text-zinc-500">
+              Use inventory adjustments to change stock.
+            </span>
+          ) : null}
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
