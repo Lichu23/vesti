@@ -2,6 +2,7 @@
 
 ## Project Rules
 
+- [x] Application language is Spanish for UI, admin panel, WhatsApp messages, emails, and customer-facing content. Documentation and codebase remain in English unless a specific artifact requires Spanish.
 - [x] Do not use accent marks in UI copy, admin content, WhatsApp messages, emails, docs, seeds, or identifiers unless an external legal/source text must be preserved exactly.
 
 
@@ -36,7 +37,7 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 
 ## Phase 4 Storefront
 
--   [ ] Home
+-   [x] Home
 -   [ ] Audience pages
 -   [ ] Category pages
 -   [ ] Product page
