@@ -109,6 +109,24 @@ Search updates automatically with debounce. Category and sort use deliberate app
 - Add button is circular and uses `primary`.
 - If active variant stock total is zero, show `Sin stock` overlay and disable the add button.
 
+## Storefront Cart
+
+Before implementing or changing the Cart UI, inspect both references:
+
+- `docs/cart-mobile.png`
+- `docs/cart-desktop.png`
+
+Use the cart as a right-side drawer on desktop and a full-width panel on mobile.
+
+### Cart structure
+
+- Background page dims while the cart is open.
+- Header uses `Mi carrito` and a close action.
+- Items show product image, name, quantity marker, `Talle`, optional `Color`, quantity stepper, remove action, and line subtotal.
+- Footer stays anchored at the bottom with `Total`, `Finalizar pedido`, and `Vaciar carrito`.
+- Quantity controls must not go below `1` or above available stock.
+- Empty cart state uses quiet Spanish no-accent copy.
+
 ## Content and language
 
 - UI copy is Spanish, Argentina/Rioplatense vocabulary, without accent marks.
@@ -136,3 +154,4 @@ Search updates automatically with debounce. Category and sort use deliberate app
 - [ ] Mobile uses search + category select + sort select + `Aplicar filtros`.
 - [ ] Product cards show Spanish no-accent copy and ARS prices.
 - [ ] Stock state is based on active variant stock.
+- [ ] Cart follows `docs/cart-mobile.png` and `docs/cart-desktop.png`.
