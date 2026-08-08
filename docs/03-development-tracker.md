@@ -27,7 +27,7 @@ feature/product-images feature/dynamic-categories
 
 ## Phase 3 Variants
 
--   [ ] Product variants
+-   [x] Product variants
 -   [ ] Size guides
 -   [ ] Color modes
 -   [ ] Inventory

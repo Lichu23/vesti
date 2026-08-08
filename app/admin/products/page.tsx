@@ -1,10 +1,17 @@
 import { ProductForm } from "@/app/admin/products/product-form";
 import { ProductImageForm } from "@/app/admin/products/product-image-form";
 import {
+  ProductVariantDeleteForm,
+  ProductVariantForm,
+} from "@/app/admin/products/product-variant-form";
+import {
+  createProductVariant,
   createProduct,
   deleteProduct,
   deleteProductImage,
+  deleteProductVariant,
   updateProduct,
+  updateProductVariant,
 } from "@/app/admin/products/actions";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -59,6 +66,18 @@ export default async function AdminProductsPage() {
             url: true,
           },
         },
+        variants: {
+          orderBy: [{ size: "asc" }, { color: "asc" }],
+          select: {
+            id: true,
+            color: true,
+            isActive: true,
+            price: true,
+            size: true,
+            sku: true,
+            stock: true,
+          },
+        },
       },
       orderBy: [{ name: "asc" }],
       where: {
@@ -73,8 +92,7 @@ export default async function AdminProductsPage() {
         <p className="text-sm text-zinc-500">Phase 2 Catalog</p>
         <h1 className="text-3xl font-semibold">Products</h1>
         <p className="text-sm text-zinc-600">
-          Manage storefront products and product images. Variants come in a
-          later slice.
+          Manage storefront products, product images, and variants.
         </p>
       </header>
 
@@ -154,6 +172,80 @@ export default async function AdminProductsPage() {
                     isActive: product.isActive,
                   }}
                 />
+
+                <section className="grid gap-3 rounded-xl bg-zinc-50 p-4">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold">Variants</h4>
+                    <p className="text-sm text-zinc-600">
+                      Add sellable size and color combinations for this product.
+                    </p>
+                  </div>
+
+                  {product.variants.length === 0 ? (
+                    <p className="rounded-lg border bg-white p-3 text-sm text-zinc-600">
+                      No variants yet.
+                    </p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {product.variants.map((variant) => (
+                        <article
+                          className="grid gap-3 rounded-lg border bg-white p-3"
+                          key={variant.id}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-1 text-sm">
+                              <p className="font-medium">
+                                {variant.size}
+                                {variant.color ? ` - ${variant.color}` : ""}
+                              </p>
+                              <p className="text-zinc-600">
+                                Stock: {variant.stock}
+                                {variant.price
+                                  ? ` - $${variant.price.toString()}`
+                                  : " - Uses base price"}
+                              </p>
+                              {variant.sku ? (
+                                <p className="text-zinc-500">
+                                  SKU: {variant.sku}
+                                </p>
+                              ) : null}
+                            </div>
+                            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
+                              {variant.isActive ? "Active" : "Hidden"}
+                            </span>
+                          </div>
+
+                          <ProductVariantForm
+                            action={updateProductVariant}
+                            buttonLabel="Update variant"
+                            productId={product.id}
+                            variant={{
+                              id: variant.id,
+                              size: variant.size,
+                              color: variant.color,
+                              stock: variant.stock,
+                              isActive: variant.isActive,
+                              sku: variant.sku,
+                              price: variant.price?.toString() ?? null,
+                            }}
+                          />
+
+                          <ProductVariantDeleteForm
+                            action={deleteProductVariant}
+                            productId={product.id}
+                            variantId={variant.id}
+                          />
+                        </article>
+                      ))}
+                    </div>
+                  )}
+
+                  <ProductVariantForm
+                    action={createProductVariant}
+                    buttonLabel="Create variant"
+                    productId={product.id}
+                  />
+                </section>
 
                 <section className="grid gap-3 rounded-xl bg-zinc-50 p-4">
                   <div className="space-y-1">
