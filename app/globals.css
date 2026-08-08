@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4efe7;
+  --foreground: #515a73;
+  --primary: #566078;
+  --primary-foreground: #f8f2ea;
+  --card: #fbf8f2;
+  --muted: #ece4d8;
+  --muted-foreground: #6f778c;
+  --secondary: #e8dfd2;
+  --accent: #eadfcc;
+  --accent-foreground: #515a73;
+  --border: #ded5c8;
+  --input: #d8cec1;
+  --destructive: #9f5b50;
+  --destructive-foreground: #fff8f2;
+  --radius: 4px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --font-sans: var(--font-jost);
+  --font-serif: var(--font-cormorant);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jost), Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+html[data-storefront-viewport="mobile"] .storefront-shell {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html[data-storefront-viewport="mobile"] .storefront-desktop-only {
+  display: none !important;
+}
+
+html[data-storefront-viewport="mobile"] .storefront-mobile-only {
+  display: grid !important;
+}
+
+html[data-storefront-viewport="desktop"] .storefront-mobile-only {
+  display: none !important;
 }

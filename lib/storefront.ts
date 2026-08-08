@@ -1,6 +1,13 @@
 import { notFound } from "next/navigation";
 
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+
+type StorefrontHomeFilters = {
+  categorySlug?: string;
+  query?: string;
+  sort?: string;
+};
 
 export async function getPrimaryStore() {
   return prisma.store.findFirst({
@@ -19,18 +26,74 @@ export async function getPrimaryStore() {
   });
 }
 
-export async function getStorefrontHome() {
+const productSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  basePrice: true,
+  saleUnit: true,
+  packQuantity: true,
+  sizeDisplayText: true,
+  brand: {
+    select: {
+      name: true,
+    },
+  },
+  category: {
+    select: {
+      name: true,
+      slug: true,
+    },
+  },
+  images: {
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: {
+      alt: true,
+      url: true,
+    },
+    take: 1,
+  },
+  variants: {
+    select: {
+      stock: true,
+    },
+    where: {
+      isActive: true,
+    },
+  },
+} satisfies Prisma.ProductSelect;
+
+function getProductOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInput[] {
+  if (sort === "newest") {
+    return [{ updatedAt: "desc" as const }];
+  }
+
+  if (sort === "price-asc") {
+    return [{ basePrice: "asc" as const }, { name: "asc" as const }];
+  }
+
+  if (sort === "price-desc") {
+    return [{ basePrice: "desc" as const }, { name: "asc" as const }];
+  }
+
+  return [{ isFeatured: "desc" as const }, { updatedAt: "desc" as const }];
+}
+
+export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
   const store = await getPrimaryStore();
+  const query = filters.query?.trim();
 
   if (!store) {
     return {
+      activeCategory: null,
       categories: [],
-      featuredProducts: [],
+      products: [],
       store: null,
     };
   }
 
-  const [categories, featuredProducts] = await Promise.all([
+  const [categories, products, activeCategory] = await Promise.all([
     prisma.category.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       select: {
@@ -53,36 +116,63 @@ export async function getStorefrontHome() {
       },
     }),
     prisma.product.findMany({
-      orderBy: [{ updatedAt: "desc" }],
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        basePrice: true,
-        images: {
-          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-          select: {
-            alt: true,
-            url: true,
-          },
-          take: 1,
-        },
-      },
-      take: 6,
+      orderBy: getProductOrderBy(filters.sort),
+      select: productSelect,
+      take: 24,
       where: {
-        category: {
-          isActive: true,
-        },
+        ...(filters.categorySlug
+          ? {
+              category: {
+                isActive: true,
+                slug: filters.categorySlug,
+              },
+            }
+          : {
+              category: {
+                isActive: true,
+              },
+            }),
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: "insensitive" as const } },
+                {
+                  description: {
+                    contains: query,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  brand: {
+                    name: { contains: query, mode: "insensitive" as const },
+                  },
+                },
+              ],
+            }
+          : {}),
         isActive: true,
-        isFeatured: true,
         storeId: store.id,
       },
     }),
+    filters.categorySlug
+      ? prisma.category.findFirst({
+          select: {
+            name: true,
+            slug: true,
+          },
+          where: {
+            isActive: true,
+            slug: filters.categorySlug,
+            storeId: store.id,
+          },
+        })
+      : null,
   ]);
 
   return {
+    activeCategory,
     categories,
-    featuredProducts,
+    products,
     store,
   };
 }
@@ -101,20 +191,7 @@ export async function getCategoryPage(slug: string) {
       slug: true,
       products: {
         orderBy: [{ name: "asc" }],
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          basePrice: true,
-          images: {
-            orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-            select: {
-              alt: true,
-              url: true,
-            },
-            take: 1,
-          },
-        },
+        select: productSelect,
         where: {
           isActive: true,
         },
