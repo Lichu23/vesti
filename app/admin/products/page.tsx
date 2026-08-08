@@ -1,10 +1,12 @@
 import { ProductForm } from "@/app/admin/products/product-form";
 import { ProductImageForm } from "@/app/admin/products/product-image-form";
+import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
 import {
   ProductVariantDeleteForm,
   ProductVariantForm,
 } from "@/app/admin/products/product-variant-form";
 import {
+  adjustInventory,
   createProductVariant,
   createProduct,
   deleteProduct,
@@ -71,6 +73,17 @@ export default async function AdminProductsPage() {
           select: {
             id: true,
             color: true,
+            inventoryMovements: {
+              orderBy: [{ createdAt: "desc" }],
+              select: {
+                id: true,
+                createdAt: true,
+                quantity: true,
+                reason: true,
+                type: true,
+              },
+              take: 5,
+            },
             isActive: true,
             price: true,
             size: true,
@@ -227,6 +240,7 @@ export default async function AdminProductsPage() {
                             buttonLabel="Update variant"
                             colorMode={product.colorMode}
                             productId={product.id}
+                            stockLocked
                             variant={{
                               id: variant.id,
                               size: variant.size,
@@ -243,6 +257,60 @@ export default async function AdminProductsPage() {
                             productId={product.id}
                             variantId={variant.id}
                           />
+
+                          <section className="grid gap-3 rounded-lg bg-zinc-50 p-3">
+                            <div className="space-y-1">
+                              <h5 className="text-sm font-semibold">
+                                Inventory
+                              </h5>
+                              <p className="text-xs text-zinc-500">
+                                Add positive or negative manual adjustments.
+                                Stock cannot go below zero. Showing the last 5
+                                movements.
+                              </p>
+                            </div>
+
+                            <InventoryAdjustmentForm
+                              action={adjustInventory}
+                              productId={product.id}
+                              variantId={variant.id}
+                            />
+
+                            {variant.inventoryMovements.length === 0 ? (
+                              <p className="text-sm text-zinc-500">
+                                No recent inventory movements yet.
+                              </p>
+                            ) : (
+                              <div className="grid gap-2">
+                                {variant.inventoryMovements.map((movement) => (
+                                  <div
+                                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white p-2 text-sm"
+                                    key={movement.id}
+                                  >
+                                    <div>
+                                      <p className="font-medium">
+                                        {movement.quantity > 0 ? "+" : ""}
+                                        {movement.quantity}{" "}
+                                        <span className="text-zinc-500">
+                                          Manual adjustment
+                                        </span>
+                                      </p>
+                                      {movement.reason ? (
+                                        <p className="text-zinc-500">
+                                          {movement.reason}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                    <time className="text-xs text-zinc-500">
+                                      {movement.createdAt.toLocaleString(
+                                        "en-US",
+                                      )}
+                                    </time>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </section>
                         </article>
                       ))}
                     </div>

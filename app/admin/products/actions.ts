@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import {
   Audience,
   ColorMode,
+  InventoryMovementType,
   Prisma,
   SaleUnit,
   type Audience as AudienceValue,
@@ -21,6 +22,7 @@ export type ProductFormState = {
 };
 
 export type ProductImageFormState = ProductFormState;
+export type InventoryAdjustmentFormState = ProductFormState;
 export type ProductVariantFormState = ProductFormState;
 
 const allowedImageTypes = new Set([
@@ -71,6 +73,21 @@ type ProductVariantPayload = {
 type ProductVariantFormData =
   | {
       data: ProductVariantPayload;
+    }
+  | {
+      error: string;
+    };
+
+type InventoryAdjustmentPayload = {
+  productId: string;
+  quantity: number;
+  reason: string | null;
+  variantId: string;
+};
+
+type InventoryAdjustmentFormData =
+  | {
+      data: InventoryAdjustmentPayload;
     }
   | {
       error: string;
@@ -144,6 +161,36 @@ function readProductVariantForm(formData: FormData): ProductVariantFormData {
       isActive: formData.get("isActive") === "on",
       sku,
       price: priceValue || null,
+    },
+  };
+}
+
+function readInventoryAdjustmentForm(
+  formData: FormData,
+): InventoryAdjustmentFormData {
+  const productId = String(formData.get("productId") ?? "").trim();
+  const variantId = String(formData.get("variantId") ?? "").trim();
+  const quantityValue = String(formData.get("quantity") ?? "").trim();
+  const reason = optionalText(formData.get("reason"));
+
+  if (!productId) {
+    return { error: "Product id is required." };
+  }
+
+  if (!variantId) {
+    return { error: "Variant id is required." };
+  }
+
+  if (!/^[+-]?[1-9]\d*$/.test(quantityValue)) {
+    return { error: "Adjustment must be a non-zero whole number." };
+  }
+
+  return {
+    data: {
+      productId,
+      quantity: Number.parseInt(quantityValue, 10),
+      reason,
+      variantId,
     },
   };
 }
@@ -641,6 +688,11 @@ export async function deleteProduct(formData: FormData) {
             url: true,
           },
         },
+        variants: {
+          select: {
+            id: true,
+          },
+        },
       },
       where: {
         id,
@@ -652,11 +704,26 @@ export async function deleteProduct(formData: FormData) {
       return;
     }
 
-    await prisma.product.delete({
-      where: {
-        id,
-        storeId,
-      },
+    await prisma.$transaction(async (tx) => {
+      const variantIds = product.variants.map((variant) => variant.id);
+
+      if (variantIds.length > 0) {
+        await tx.inventoryMovement.deleteMany({
+          where: {
+            storeId,
+            variantId: {
+              in: variantIds,
+            },
+          },
+        });
+      }
+
+      await tx.product.delete({
+        where: {
+          id,
+          storeId,
+        },
+      });
     });
 
     const storagePaths = product.images
@@ -677,6 +744,13 @@ export async function deleteProduct(formData: FormData) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
+    ) {
+      return;
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
     ) {
       return;
     }
@@ -876,11 +950,25 @@ export async function createProductVariant(
   }
 
   try {
-    await prisma.productVariant.create({
-      data: {
-        ...parsed.data,
-        storeId,
-      },
+    await prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.create({
+        data: {
+          ...parsed.data,
+          storeId,
+        },
+      });
+
+      if (parsed.data.stock > 0) {
+        await tx.inventoryMovement.create({
+          data: {
+            quantity: parsed.data.stock,
+            reason: "Initial stock",
+            storeId,
+            type: InventoryMovementType.MANUAL_ADJUSTMENT,
+            variantId: variant.id,
+          },
+        });
+      }
     });
   } catch (error) {
     return productVariantError(error);
@@ -951,7 +1039,6 @@ export async function updateProductVariant(
       data: {
         size: parsed.data.size,
         color: parsed.data.color,
-        stock: parsed.data.stock,
         isActive: parsed.data.isActive,
         sku: parsed.data.sku,
         price: parsed.data.price,
@@ -969,6 +1056,102 @@ export async function updateProductVariant(
   revalidatePath("/admin/products");
 
   return { message: "Variant updated.", status: "success" };
+}
+
+export async function adjustInventory(
+  _previousState: InventoryAdjustmentFormState,
+  formData: FormData,
+): Promise<InventoryAdjustmentFormState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const parsed = readInventoryAdjustmentForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.findUnique({
+        select: { id: true },
+        where: {
+          id: parsed.data.variantId,
+          productId: parsed.data.productId,
+          storeId,
+        },
+      });
+
+      if (!variant) {
+        throw new Error("VARIANT_NOT_FOUND");
+      }
+
+      if (parsed.data.quantity < 0) {
+        const update = await tx.productVariant.updateMany({
+          data: {
+            stock: {
+              decrement: Math.abs(parsed.data.quantity),
+            },
+          },
+          where: {
+            id: parsed.data.variantId,
+            productId: parsed.data.productId,
+            stock: {
+              gte: Math.abs(parsed.data.quantity),
+            },
+            storeId,
+          },
+        });
+
+        if (update.count === 0) {
+          throw new Error("INSUFFICIENT_STOCK");
+        }
+      } else {
+        await tx.productVariant.update({
+          data: {
+            stock: {
+              increment: parsed.data.quantity,
+            },
+          },
+          where: {
+            id: parsed.data.variantId,
+            productId: parsed.data.productId,
+            storeId,
+          },
+        });
+      }
+
+      await tx.inventoryMovement.create({
+        data: {
+          quantity: parsed.data.quantity,
+          reason: parsed.data.reason,
+          storeId,
+          type: InventoryMovementType.MANUAL_ADJUSTMENT,
+          variantId: parsed.data.variantId,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "VARIANT_NOT_FOUND") {
+      return { message: "Variant not found.", status: "error" };
+    }
+
+    if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
+      return {
+        message: "Adjustment cannot reduce stock below zero.",
+        status: "error",
+      };
+    }
+
+    throw error;
+  }
+
+  revalidatePath("/admin/products");
+
+  return { message: "Stock adjusted.", status: "success" };
 }
 
 export async function deleteProductVariant(
@@ -989,12 +1172,21 @@ export async function deleteProductVariant(
   }
 
   try {
-    await prisma.productVariant.delete({
-      where: {
-        id,
-        productId,
-        storeId,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.inventoryMovement.deleteMany({
+        where: {
+          storeId,
+          variantId: id,
+        },
+      });
+
+      await tx.productVariant.delete({
+        where: {
+          id,
+          productId,
+          storeId,
+        },
+      });
     });
   } catch (error) {
     if (
