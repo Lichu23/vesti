@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { Audience, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -275,3 +276,41 @@ export async function getCategoryPage(slug: string) {
     store,
   };
 }
+
+export const getStorefrontProduct = cache(async (slug: string) => {
+  const store = await getPrimaryStore();
+
+  if (!store) {
+    notFound();
+  }
+
+  const product = await prisma.product.findFirst({
+    select: {
+      ...productSelect,
+      images: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          alt: true,
+          url: true,
+        },
+      },
+    },
+    where: {
+      category: {
+        isActive: true,
+      },
+      isActive: true,
+      slug,
+      storeId: store.id,
+    },
+  });
+
+  if (!product) {
+    notFound();
+  }
+
+  return {
+    product,
+    store,
+  };
+});
