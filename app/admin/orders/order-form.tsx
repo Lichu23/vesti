@@ -32,8 +32,15 @@ export function OrderForm({ action, variants }: OrderFormProps) {
   const selectedVariantIds = new Set(
     Object.values(selectedVariantIdsByRow).filter(Boolean),
   );
+  const variantsById = new Map(
+    variants.map((variant) => [variant.id, variant]),
+  );
+  const selectableVariantCount = variants.filter(
+    (variant) => variant.stock > 0,
+  ).length;
   const disabled = pending || variants.length === 0;
-  const canAddItemRow = !disabled && selectedVariantIds.size < variants.length;
+  const canAddItemRow =
+    !disabled && selectedVariantIds.size < selectableVariantCount;
 
   function addItemRow() {
     setItemRows((currentRows) => [
@@ -85,17 +92,25 @@ export function OrderForm({ action, variants }: OrderFormProps) {
         </label>
       </div>
 
-      <label className="grid gap-1 text-sm">
-        Estado del pago
-        <select
-          className="rounded-md border px-3 py-2"
-          defaultValue="REVIEWING"
-          name="status"
-        >
-          <option value="REVIEWING">Pendiente</option>
-          <option value="CONFIRMED">Completado</option>
-        </select>
-      </label>
+      <input name="status" type="hidden" value="REVIEWING" />
+
+      <div className="flex w-fit items-center gap-2 text-sm text-zinc-600">
+        <span>Estado del pago:</span>
+        <span className="font-medium text-zinc-900">Pendiente</span>
+        <span className="group relative inline-flex">
+          <button
+            aria-label="Informacion sobre el estado del pago"
+            className="flex size-5 items-center justify-center rounded-full border text-xs font-semibold text-zinc-500"
+            type="button"
+          >
+            i
+          </button>
+          <span className="pointer-events-none absolute left-0 top-7 z-10 hidden w-64 rounded-md border bg-white p-3 text-left text-xs leading-5 text-zinc-600 shadow-lg group-focus-within:block group-hover:block">
+            El pedido se crea como pendiente. Cuando confirmes el pedido, el
+            stock se descuenta automaticamente.
+          </span>
+        </span>
+      </div>
 
       <label className="grid gap-1 text-sm">
         Notas
@@ -115,57 +130,67 @@ export function OrderForm({ action, variants }: OrderFormProps) {
           </p>
         </div>
 
-        {itemRows.map((rowId) => (
-          <div
-            className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]"
-            key={rowId}
-          >
-            <label className="grid gap-1 text-sm">
-              Producto y variante
-              <select
-                className="rounded-md border px-3 py-2"
-                name="variantId"
-                onChange={(event) =>
-                  updateItemRowVariant(rowId, event.target.value)
-                }
-                value={selectedVariantIdsByRow[rowId] ?? ""}
-              >
-                <option value="">Seleccionar</option>
-                {variants.map((variant) => (
-                  <option
-                    disabled={
-                      selectedVariantIds.has(variant.id) &&
-                      selectedVariantIdsByRow[rowId] !== variant.id
-                    }
-                    key={variant.id}
-                    value={variant.id}
-                  >
-                    {variant.label} - Stock {variant.stock}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm">
-              Cantidad
-              <input
-                className="rounded-md border px-3 py-2"
-                min="1"
-                name="quantity"
-                placeholder="0"
-                type="number"
-              />
-            </label>
-            {itemRows.length > 1 ? (
-              <button
-                className="h-fit self-end rounded-md border px-3 py-2 text-sm"
-                onClick={() => removeItemRow(rowId)}
-                type="button"
-              >
-                Quitar
-              </button>
-            ) : null}
-          </div>
-        ))}
+        {itemRows.map((rowId) => {
+          const selectedVariant = variantsById.get(
+            selectedVariantIdsByRow[rowId] ?? "",
+          );
+
+          return (
+            <div
+              className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]"
+              key={rowId}
+            >
+              <label className="grid gap-1 text-sm">
+                Producto y variante
+                <select
+                  className="rounded-md border px-3 py-2"
+                  name="variantId"
+                  onChange={(event) =>
+                    updateItemRowVariant(rowId, event.target.value)
+                  }
+                  required
+                  value={selectedVariantIdsByRow[rowId] ?? ""}
+                >
+                  <option value="">Seleccionar</option>
+                  {variants.map((variant) => (
+                    <option
+                      disabled={
+                        variant.stock <= 0 ||
+                        (selectedVariantIds.has(variant.id) &&
+                          selectedVariantIdsByRow[rowId] !== variant.id)
+                      }
+                      key={variant.id}
+                      value={variant.id}
+                    >
+                      {variant.label} - Stock {variant.stock}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm">
+                Cantidad
+                <input
+                  className="rounded-md border px-3 py-2"
+                  defaultValue="1"
+                  max={selectedVariant?.stock}
+                  min="1"
+                  name="quantity"
+                  required
+                  type="number"
+                />
+              </label>
+              {itemRows.length > 1 ? (
+                <button
+                  className="h-fit self-end rounded-md border px-3 py-2 text-sm"
+                  onClick={() => removeItemRow(rowId)}
+                  type="button"
+                >
+                  Quitar
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
 
         <button
           className="w-fit rounded-md border px-3 py-2 text-sm font-medium"

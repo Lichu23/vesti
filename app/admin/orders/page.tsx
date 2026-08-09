@@ -1,4 +1,5 @@
-import { createManualOrder } from "@/app/admin/orders/actions";
+import { confirmOrder, createManualOrder } from "@/app/admin/orders/actions";
+import { ConfirmOrderForm } from "@/app/admin/orders/confirm-order-form";
 import { OrderForm } from "@/app/admin/orders/order-form";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -24,6 +25,18 @@ function formatStatus(status: string) {
   };
 
   return labels[status] ?? status;
+}
+
+function getStatusClassName(status: string) {
+  if (status === "CONFIRMED") {
+    return "bg-green-100 text-green-800";
+  }
+
+  if (status === "REVIEWING") {
+    return "bg-yellow-100 text-yellow-800";
+  }
+
+  return "bg-zinc-100 text-zinc-700";
 }
 
 export default async function AdminOrdersPage() {
@@ -108,8 +121,8 @@ export default async function AdminOrdersPage() {
         <p className="text-sm text-zinc-500">Phase 5 Orders</p>
         <h1 className="text-3xl font-semibold">Pedidos</h1>
         <p className="text-sm text-zinc-600">
-          Crea pedidos manuales desde conversaciones de WhatsApp. Confirmar y
-          descontar stock se hara en un paso separado.
+          Crea pedidos manuales desde conversaciones de WhatsApp. Confirma el
+          pedido para descontar stock.
         </p>
       </header>
 
@@ -139,12 +152,24 @@ export default async function AdminOrdersPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs ${getStatusClassName(
+                        order.status,
+                      )}`}
+                    >
                       {formatStatus(order.status)}
                     </span>
                     <p className="mt-2 font-serif text-2xl">
                       {formatPrice(order.total)}
                     </p>
+                    {order.status === "REVIEWING" ? (
+                      <div className="mt-3">
+                        <ConfirmOrderForm
+                          action={confirmOrder}
+                          orderId={order.id}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

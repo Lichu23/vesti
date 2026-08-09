@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
-import { Prisma, type OrderStatus as OrderStatusValue } from "@/generated/prisma/client";
+import {
+  InventoryMovementType,
+  OrderStatus,
+  Prisma,
+  type OrderStatus as OrderStatusValue,
+} from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -10,6 +15,8 @@ export type OrderFormState = {
   message: string;
   status: "idle" | "error" | "success";
 };
+
+export type ConfirmOrderState = OrderFormState;
 
 type OrderItemPayload = {
   quantity: number;
@@ -21,7 +28,7 @@ type OrderPayload = {
   customerPhone: string;
   items: OrderItemPayload[];
   notes: string | null;
-  status: Extract<OrderStatusValue, "REVIEWING" | "CONFIRMED">;
+  status: Extract<OrderStatusValue, "REVIEWING">;
 };
 
 type OrderFormData =
@@ -32,10 +39,7 @@ type OrderFormData =
       error: string;
     };
 
-const allowedCreateStatuses = new Set<OrderPayload["status"]>([
-  "REVIEWING",
-  "CONFIRMED",
-]);
+const allowedCreateStatuses = new Set<OrderPayload["status"]>(["REVIEWING"]);
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -262,7 +266,146 @@ export async function createManualOrder(
   revalidatePath("/admin/orders");
 
   return {
-    message: "Order created. Stock was not deducted.",
+    message: "Order created. Confirm it to deduct stock.",
     status: "success",
   };
+}
+
+export async function confirmOrder(
+  _previousState: ConfirmOrderState,
+  formData: FormData,
+): Promise<ConfirmOrderState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const orderId = String(formData.get("orderId") ?? "").trim();
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!orderId) {
+    return { message: "Order is required.", status: "error" };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const claim = await tx.order.updateMany({
+        data: {
+          confirmedAt: new Date(),
+          status: OrderStatus.CONFIRMED,
+        },
+        where: {
+          id: orderId,
+          status: OrderStatus.REVIEWING,
+          storeId,
+        },
+      });
+
+      if (claim.count === 0) {
+        const order = await tx.order.findUnique({
+          select: { status: true },
+          where: { id: orderId, storeId },
+        });
+
+        if (!order) {
+          throw new Error("ORDER_NOT_FOUND");
+        }
+
+        if (order.status === OrderStatus.CONFIRMED) {
+          throw new Error("ORDER_ALREADY_CONFIRMED");
+        }
+
+        throw new Error("ORDER_CANNOT_BE_CONFIRMED");
+      }
+
+      const order = await tx.order.findUnique({
+        select: {
+          id: true,
+          items: {
+            orderBy: [{ variantId: "asc" }],
+            select: {
+              productName: true,
+              quantity: true,
+              variantId: true,
+              variantLabel: true,
+            },
+          },
+        },
+        where: { id: orderId, storeId },
+      });
+
+      if (!order) {
+        throw new Error("ORDER_NOT_FOUND");
+      }
+
+      if (order.items.length === 0) {
+        throw new Error("ORDER_HAS_NO_ITEMS");
+      }
+
+      for (const item of order.items) {
+        const update = await tx.productVariant.updateMany({
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+          where: {
+            id: item.variantId,
+            stock: {
+              gte: item.quantity,
+            },
+            storeId,
+          },
+        });
+
+        if (update.count === 0) {
+          throw new Error("INSUFFICIENT_STOCK");
+        }
+
+        await tx.inventoryMovement.create({
+          data: {
+            quantity: -item.quantity,
+            reason: `Order confirmation: ${item.productName} (${item.variantLabel})`,
+            referenceId: order.id,
+            storeId,
+            type: InventoryMovementType.ORDER_CONFIRMATION,
+            variantId: item.variantId,
+          },
+        });
+      }
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
+      return { message: "Order not found.", status: "error" };
+    }
+
+    if (error instanceof Error && error.message === "ORDER_ALREADY_CONFIRMED") {
+      return { message: "Order is already confirmed.", status: "error" };
+    }
+
+    if (error instanceof Error && error.message === "ORDER_CANNOT_BE_CONFIRMED") {
+      return { message: "This order cannot be confirmed.", status: "error" };
+    }
+
+    if (error instanceof Error && error.message === "ORDER_HAS_NO_ITEMS") {
+      return {
+        message: "Order needs at least one item to be confirmed.",
+        status: "error",
+      };
+    }
+
+    if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
+      return {
+        message:
+          "Order cannot be confirmed because one or more items do not have enough stock.",
+        status: "error",
+      };
+    }
+
+    throw error;
+  }
+
+  revalidatePath("/admin/orders");
+
+  return { message: "Order confirmed and stock deducted.", status: "success" };
 }
