@@ -1,27 +1,26 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
+import { Audience } from "@/generated/prisma/client";
 import { getStorefrontHome } from "@/lib/storefront";
-import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
+
 import { CartToggleButton } from "./cart-buttons";
+import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
 import { StorefrontProductCard } from "./storefront-product-card";
 import { StorefrontSearch } from "./storefront-search";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
 
-type HomeSearchParams = {
-  categoria?: string | string[];
+type AudienceSearchParams = {
   buscar?: string | string[];
+  categoria?: string | string[];
   ordenar?: string | string[];
 };
 
-type HomeProps = {
-  searchParams: Promise<HomeSearchParams>;
-};
-
-type NormalizedHomeSearchParams = {
-  categoria?: string;
-  buscar?: string;
-  ordenar?: string;
+type AudienceConfig = {
+  audience: Audience;
+  description: string;
+  title: string;
 };
 
 const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
@@ -29,14 +28,8 @@ const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
 const SORT_OPTIONS = [
   { label: "Relevancia", value: "relevance" },
   { label: "Novedades", value: "newest" },
-  {
-    label: "Precio: menor a mayor",
-    value: "price-asc",
-  },
-  {
-    label: "Precio: mayor a menor",
-    value: "price-desc",
-  },
+  { label: "Precio: menor a mayor", value: "price-asc" },
+  { label: "Precio: mayor a menor", value: "price-desc" },
 ];
 
 function getSingleParam(value?: string | string[]) {
@@ -47,9 +40,7 @@ function getSingleParam(value?: string | string[]) {
   return value;
 }
 
-function normalizeSearchParams(
-  params: HomeSearchParams,
-): NormalizedHomeSearchParams {
+function normalizeSearchParams(params: AudienceSearchParams) {
   const ordenar = getSingleParam(params.ordenar);
 
   return {
@@ -59,7 +50,10 @@ function normalizeSearchParams(
   };
 }
 
-function buildHref(params: NormalizedHomeSearchParams) {
+function buildAudienceHref(
+  basePath: string,
+  params: ReturnType<typeof normalizeSearchParams>,
+) {
   const searchParams = new URLSearchParams();
 
   if (params.categoria) searchParams.set("categoria", params.categoria);
@@ -69,51 +63,34 @@ function buildHref(params: NormalizedHomeSearchParams) {
   }
 
   const query = searchParams.toString();
-  return query ? `/?${query}` : "/";
+  return query ? `${basePath}?${query}` : basePath;
 }
 
-function SortSidebar({
+export async function AudiencePage({
+  basePath,
+  config,
   searchParams,
 }: {
-  searchParams: NormalizedHomeSearchParams;
+  basePath: string;
+  config: AudienceConfig;
+  searchParams: Promise<AudienceSearchParams>;
 }) {
-  const currentSort = searchParams.ordenar ?? "relevance";
-
-  return (
-    <aside className="storefront-desktop-only hidden xl:block">
-      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-        Ordenar por
-      </p>
-      <ul className="space-y-5 text-base text-muted-foreground">
-        {SORT_OPTIONS.map((option) => (
-          <li key={option.value}>
-            <Link
-              className={`cursor-pointer text-left transition hover:text-foreground ${
-                currentSort === option.value
-                  ? "border-b-2 border-primary font-semibold text-foreground"
-                  : ""
-              }`}
-              href={buildHref({ ...searchParams, ordenar: option.value })}
-            >
-              {option.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </aside>
-  );
-}
-
-export default async function Home({ searchParams }: HomeProps) {
   const params = normalizeSearchParams(await searchParams);
   const { activeCategory, audienceCategories, products, store } =
     await getStorefrontHome({
+      audience: config.audience,
       categorySlug: params.categoria,
       query: params.buscar,
       sort: params.ordenar,
     });
-  const storeName = store?.name ?? "Thoemia Intimo";
-  const title = activeCategory?.name ?? "Todos los productos";
+
+  if (!store) {
+    notFound();
+  }
+
+  const title = activeCategory
+    ? `${config.title}: ${activeCategory.name}`
+    : config.title;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -121,6 +98,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
           <StorefrontMobileFilterDrawer
+            activeAudiencePath={basePath}
             activeCategory={params.categoria}
             categoryGroups={audienceCategories}
             searchParams={params}
@@ -150,6 +128,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <div className="storefront-shell grid gap-8 px-5 py-10 sm:px-8 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
         <StorefrontAudienceSidebar
+          activeAudiencePath={basePath}
           activeCategory={params.categoria}
           categoryGroups={audienceCategories}
           searchParams={params}
@@ -162,7 +141,7 @@ export default async function Home({ searchParams }: HomeProps) {
               initialValue={params.buscar}
               key={`mobile-${params.buscar ?? "empty-search"}`}
             />
-            <form action="/" className="storefront-mobile-only grid gap-3 xl:hidden">
+            <form action={basePath} className="storefront-mobile-only grid gap-3 xl:hidden">
               {params.buscar ? (
                 <input name="buscar" type="hidden" value={params.buscar} />
               ) : null}
@@ -189,6 +168,9 @@ export default async function Home({ searchParams }: HomeProps) {
               </button>
             </form>
             <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+                {config.description}
+              </p>
               <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {title}
               </h1>
@@ -211,10 +193,31 @@ export default async function Home({ searchParams }: HomeProps) {
           )}
         </section>
 
-        <SortSidebar searchParams={params} />
+        <aside className="storefront-desktop-only hidden xl:block">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+            Ordenar por
+          </p>
+          <ul className="space-y-5 text-base text-muted-foreground">
+            {SORT_OPTIONS.map((option) => (
+              <li key={option.value}>
+                <Link
+                  className={`cursor-pointer text-left transition hover:text-foreground ${
+                    (params.ordenar ?? "relevance") === option.value
+                      ? "border-b-2 border-primary font-semibold text-foreground"
+                      : ""
+                  }`}
+                  href={buildAudienceHref(basePath, {
+                    ...params,
+                    ordenar: option.value,
+                  })}
+                >
+                  {option.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
-
-      <span className="sr-only">Tienda online de {storeName}</span>
     </main>
   );
 }

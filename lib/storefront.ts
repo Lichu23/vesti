@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 
-import { Prisma } from "@/generated/prisma/client";
+import { Audience, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 type StorefrontHomeFilters = {
+  audience?: Audience;
   categorySlug?: string;
   query?: string;
   sort?: string;
 };
+
+const storefrontAudiences = [Audience.WOMEN, Audience.MEN, Audience.KIDS] as const;
 
 export async function getPrimaryStore() {
   return prisma.store.findFirst({
@@ -69,6 +72,21 @@ const productSelect = {
   },
 } satisfies Prisma.ProductSelect;
 
+const categorySelect = {
+  id: true,
+  name: true,
+  slug: true,
+  _count: {
+    select: {
+      products: {
+        where: {
+          isActive: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.CategorySelect;
+
 function getProductOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInput[] {
   if (sort === "newest") {
     return [{ updatedAt: "desc" as const }];
@@ -92,13 +110,19 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
   if (!store) {
     return {
       activeCategory: null,
+      audienceCategories: {
+        [Audience.WOMEN]: [],
+        [Audience.MEN]: [],
+        [Audience.KIDS]: [],
+      },
       categories: [],
       products: [],
       store: null,
     };
   }
 
-  const [categories, products, activeCategory] = await Promise.all([
+  const [categories, products, activeCategory, ...audienceCategoryLists] =
+    await Promise.all([
     prisma.category.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       select: {
@@ -109,6 +133,7 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
           select: {
             products: {
               where: {
+                ...(filters.audience ? { audience: filters.audience } : {}),
                 isActive: true,
               },
             },
@@ -117,6 +142,16 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
       },
       where: {
         isActive: true,
+        ...(filters.audience
+          ? {
+              products: {
+                some: {
+                  audience: filters.audience,
+                  isActive: true,
+                },
+              },
+            }
+          : {}),
         storeId: store.id,
       },
     }),
@@ -137,6 +172,7 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
                 isActive: true,
               },
             }),
+        ...(filters.audience ? { audience: filters.audience } : {}),
         ...(query
           ? {
               OR: [
@@ -172,10 +208,31 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
           },
         })
       : null,
+    ...storefrontAudiences.map((audience) =>
+      prisma.category.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: categorySelect,
+        where: {
+          isActive: true,
+          products: {
+            some: {
+              audience,
+              isActive: true,
+            },
+          },
+          storeId: store.id,
+        },
+      }),
+    ),
   ]);
 
   return {
     activeCategory,
+    audienceCategories: {
+      [Audience.WOMEN]: audienceCategoryLists[0],
+      [Audience.MEN]: audienceCategoryLists[1],
+      [Audience.KIDS]: audienceCategoryLists[2],
+    },
     categories,
     products,
     store,
