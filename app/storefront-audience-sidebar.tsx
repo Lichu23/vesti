@@ -14,7 +14,6 @@ type StorefrontSidebarCategoryGroups = {
 
 type StorefrontSidebarParams = {
   buscar?: string;
-  categoria?: string;
   ordenar?: string;
 };
 
@@ -24,17 +23,16 @@ const AUDIENCE_SECTIONS = [
   { href: "/ninos", key: "KIDS" as const, label: "Ninos" },
 ];
 
-function buildAudienceHref(basePath: string, params: StorefrontSidebarParams) {
+function buildCategoryHref(slug: string, params: StorefrontSidebarParams) {
   const searchParams = new URLSearchParams();
 
-  if (params.categoria) searchParams.set("categoria", params.categoria);
   if (params.buscar) searchParams.set("buscar", params.buscar);
   if (params.ordenar && params.ordenar !== "relevance") {
     searchParams.set("ordenar", params.ordenar);
   }
 
   const query = searchParams.toString();
-  return query ? `${basePath}?${query}` : basePath;
+  return query ? `/categories/${slug}?${query}` : `/categories/${slug}`;
 }
 
 export function StorefrontAudienceSidebar({
@@ -57,18 +55,24 @@ export function StorefrontAudienceSidebar({
       </p>
       <div className="space-y-4 text-base text-muted-foreground">
         {AUDIENCE_SECTIONS.map((section) => {
-          const isActiveAudience = activeAudiencePath === section.href;
           const categories = categoryGroups[section.key];
+          const hasActiveCategory = categories.some(
+            (category) => category.slug === activeCategory,
+          );
+          const isActiveAudience = activeAudiencePath === section.href;
+          const isOpen = isActiveAudience || hasActiveCategory;
 
           return (
             <details
               className="group border-b border-border pb-4"
               key={section.href}
-              open={isActiveAudience}
+              open={isOpen}
             >
               <summary
                 className={`flex cursor-pointer list-none items-center justify-between gap-3 ${
-                  isActiveAudience ? "font-semibold text-foreground" : ""
+                  isActiveAudience || hasActiveCategory
+                    ? "font-semibold text-foreground"
+                    : ""
                 }`}
               >
                 <span>{section.label}</span>
@@ -96,14 +100,11 @@ export function StorefrontAudienceSidebar({
                   <li key={`${section.href}-${category.id}`}>
                     <Link
                       className={`cursor-pointer transition hover:text-foreground ${
-                        isActiveAudience && activeCategory === category.slug
+                        activeCategory === category.slug
                           ? "font-semibold text-foreground"
                           : ""
                       }`}
-                      href={buildAudienceHref(section.href, {
-                        ...searchParams,
-                        categoria: category.slug,
-                      })}
+                      href={buildCategoryHref(category.slug, searchParams)}
                     >
                       {category.name}
                     </Link>
