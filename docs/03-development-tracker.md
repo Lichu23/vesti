@@ -38,14 +38,14 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 ## Phase 4 Storefront
 
 -   [x] Home
--   [ ] Audience pages
+-   [x] Audience pages
 -   [ ] Category pages
 -   [ ] Product page
 -   [x] Size/variant selector on product cards
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
-Branches: feat/storefront feat/cart feat/storefront-variant-selector
+Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages
 
 ## Phase 5 Orders
 

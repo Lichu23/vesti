@@ -19,13 +19,13 @@ type AddToCartButtonProps = {
   productName: string;
 };
 
-export function CartToggleButton() {
+export function CartToggleButton({ className = "" }: { className?: string }) {
   const { itemCount, openCart } = useCart();
 
   return (
     <button
       aria-label="Abrir carrito"
-      className="relative ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary md:ml-0"
+      className={`relative ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary md:ml-0 ${className}`}
       onClick={openCart}
       type="button"
     >
