@@ -123,9 +123,10 @@ Use the cart as a right-side drawer on desktop and a full-width panel on mobile.
 - Background page dims while the cart is open.
 - Header uses `Mi carrito` and a close action.
 - Items show product image, name, quantity marker, `Talle`, optional `Color`, quantity stepper, remove action, and line subtotal.
-- Footer stays anchored at the bottom with `Total`, `Finalizar pedido`, and `Vaciar carrito`.
+- Footer stays anchored at the bottom with `Total`, `Consultar pedido`, and `Vaciar carrito`.
 - Quantity controls must not go below `1` or above available stock.
 - Empty cart state uses quiet Spanish no-accent copy.
+- `Consultar pedido` opens WhatsApp with the cart items, variants, quantities, and total. It does not create an internal order.
 
 ## Content and language
 
