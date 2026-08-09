@@ -61,9 +61,12 @@ export function ProductVariantForm({
             className={fieldClassName()}
             defaultValue={variant?.size ?? ""}
             name="size"
-            placeholder="S, M, L, 85, 90"
+            placeholder="S"
             required
           />
+          <span className="text-xs font-normal text-zinc-500">
+            One size per variant. Sizes are saved in uppercase.
+          </span>
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
