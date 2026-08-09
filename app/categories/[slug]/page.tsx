@@ -1,67 +1,220 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { getCategoryPage } from "@/lib/storefront";
+import { getStorefrontHome } from "@/lib/storefront";
+
+import { CartToggleButton } from "../../cart-buttons";
+import { StorefrontAudienceSidebar } from "../../storefront-audience-sidebar";
+import { StorefrontMobileFilterDrawer } from "../../storefront-mobile-filter-drawer";
+import { StorefrontProductCard } from "../../storefront-product-card";
+import { StorefrontSearch } from "../../storefront-search";
+import { StorefrontViewportMode } from "../../storefront-viewport-mode";
 
 type CategoryPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams: Promise<{
+    buscar?: string | string[];
+    ordenar?: string | string[];
+  }>;
 };
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { slug } = await params;
-  const { category, store } = await getCategoryPage(slug);
+type NormalizedCategorySearchParams = {
+  buscar?: string;
+  ordenar?: string;
+};
+
+const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
+
+const SORT_OPTIONS = [
+  { label: "Relevancia", value: "relevance" },
+  { label: "Novedades", value: "newest" },
+  { label: "Precio: menor a mayor", value: "price-asc" },
+  { label: "Precio: mayor a menor", value: "price-desc" },
+];
+
+function getSingleParam(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function normalizeSearchParams(
+  params: Awaited<CategoryPageProps["searchParams"]>,
+): NormalizedCategorySearchParams {
+  const ordenar = getSingleParam(params.ordenar);
+
+  return {
+    buscar: getSingleParam(params.buscar),
+    ordenar: ordenar && SORT_VALUES.includes(ordenar) ? ordenar : undefined,
+  };
+}
+
+function buildCategoryHref(
+  slug: string,
+  params: NormalizedCategorySearchParams,
+) {
+  const searchParams = new URLSearchParams();
+
+  if (params.buscar) searchParams.set("buscar", params.buscar);
+  if (params.ordenar && params.ordenar !== "relevance") {
+    searchParams.set("ordenar", params.ordenar);
+  }
+
+  const query = searchParams.toString();
+  return query ? `/categories/${slug}?${query}` : `/categories/${slug}`;
+}
+
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
+  const [{ slug }, rawSearchParams] = await Promise.all([params, searchParams]);
+  const currentParams = normalizeSearchParams(rawSearchParams);
+  const { activeCategory, audienceCategories, products, store } =
+    await getStorefrontHome({
+      categorySlug: slug,
+      query: currentParams.buscar,
+      sort: currentParams.ordenar,
+    });
+
+  if (!store || !activeCategory) {
+    notFound();
+  }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 p-8">
-      <header className="space-y-4">
-        <Link className="text-sm font-medium text-zinc-600" href="/">
-          Back to categories
-        </Link>
-        <div className="space-y-2">
-          <p className="text-sm text-zinc-500">{store.name}</p>
-          <h1 className="text-3xl font-semibold">{category.name}</h1>
-          <p className="text-sm text-zinc-600">
-            Products available in this category.
-          </p>
+    <main className="min-h-screen bg-background text-foreground">
+      <StorefrontViewportMode />
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
+        <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
+          <StorefrontMobileFilterDrawer
+            activeCategory={slug}
+            categoryGroups={audienceCategories}
+            searchParams={currentParams}
+          />
+
+          <Link
+            aria-label="Ir al inicio"
+            className="cursor-pointer justify-self-center md:justify-self-auto"
+            href="/"
+          >
+            <span className="block font-serif text-3xl leading-none text-foreground">
+              Thoemia
+            </span>
+            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
+              Intimo
+            </span>
+          </Link>
+
+          <StorefrontSearch
+            initialValue={currentParams.buscar}
+            key={currentParams.buscar ?? "empty-search"}
+          />
+
+          <CartToggleButton className="ml-0 justify-self-end" />
         </div>
       </header>
 
-      {category.products.length === 0 ? (
-        <p className="rounded-xl border p-4 text-sm text-zinc-600">
-          No products available in this category yet.
-        </p>
-      ) : (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {category.products.map((product) => {
-            const image = product.images[0];
+      <div className="storefront-shell grid gap-8 px-5 py-10 sm:px-8 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
+        <StorefrontAudienceSidebar
+          activeCategory={slug}
+          categoryGroups={audienceCategories}
+          searchParams={currentParams}
+        />
 
-            return (
-              <article className="rounded-xl border p-4" key={product.id}>
-                {image ? (
-                  <div
-                    aria-label={image.alt ?? product.name}
-                    className="mb-4 aspect-square rounded-lg bg-zinc-100 bg-cover bg-center"
-                    role="img"
-                    style={{ backgroundImage: `url(${image.url})` }}
-                  />
-                ) : (
-                  <div className="mb-4 flex aspect-square items-center justify-center rounded-lg bg-zinc-100 text-sm text-zinc-500">
-                    No image
-                  </div>
-                )}
-                <div className="space-y-1">
-                  <h2 className="font-semibold">{product.name}</h2>
-                  <p className="text-sm text-zinc-500">/{product.slug}</p>
-                  <p className="text-sm font-medium">
-                    ${product.basePrice.toString()}
-                  </p>
-                </div>
-              </article>
-            );
-          })}
+        <section className="min-w-0 space-y-8">
+          <div className="space-y-4">
+            <StorefrontSearch
+              className="flex w-full md:hidden"
+              initialValue={currentParams.buscar}
+              key={`mobile-${currentParams.buscar ?? "empty-search"}`}
+            />
+            <form
+              action={`/categories/${slug}`}
+              className="storefront-mobile-only grid gap-3 xl:hidden"
+            >
+              {currentParams.buscar ? (
+                <input
+                  name="buscar"
+                  type="hidden"
+                  value={currentParams.buscar}
+                />
+              ) : null}
+              <select
+                aria-label="Ordenar productos"
+                className="min-w-0 cursor-pointer rounded-full border border-input bg-card px-4 py-3 text-sm text-foreground outline-none"
+                defaultValue={currentParams.ordenar ?? "relevance"}
+                name="ordenar"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="w-full cursor-pointer rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
+                type="submit"
+              >
+                Aplicar filtros
+              </button>
+            </form>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+                Categoria
+              </p>
+              <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+                {activeCategory.name}
+              </h1>
+              <p className="mt-3 text-lg text-muted-foreground">
+                {products.length} productos
+              </p>
+            </div>
+          </div>
+
+          {products.length === 0 ? (
+            <div className="rounded-[4px] border border-border bg-card p-8 text-center text-muted-foreground">
+              Todavia no hay productos activos para mostrar.
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {products.map((product) => (
+                <StorefrontProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </section>
-      )}
+
+        <aside className="storefront-desktop-only hidden xl:block">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+            Ordenar por
+          </p>
+          <ul className="space-y-5 text-base text-muted-foreground">
+            {SORT_OPTIONS.map((option) => (
+              <li key={option.value}>
+                <Link
+                  className={`cursor-pointer text-left transition hover:text-foreground ${
+                    (currentParams.ordenar ?? "relevance") === option.value
+                      ? "border-b-2 border-primary font-semibold text-foreground"
+                      : ""
+                  }`}
+                  href={buildCategoryHref(slug, {
+                    ...currentParams,
+                    ordenar: option.value,
+                  })}
+                >
+                  {option.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+
+      <span className="sr-only">Tienda online de {store.name}</span>
     </main>
   );
 }
