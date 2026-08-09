@@ -51,7 +51,7 @@ Branches: feat/storefront feat/cart
 
 -   [x] Admin manual order creation
 -   [x] Admin order list/detail
--   [ ] Admin order editing
+-   [x] Admin order editing
 -   [x] Confirm order
 -   [x] Inventory deduction
 
@@ -66,7 +66,7 @@ Order flow:
 5. Admin creates the order manually from the WhatsApp conversation.
 6. Inventory is deducted only when the order is confirmed.
 
-Branches: feat/whatsapp-handoff feat/admin-orders
+Branches: feat/whatsapp-handoff feat/admin-orders feat/order-confirmation feat/order-editing
 
 ## Phase 6 Admin
 

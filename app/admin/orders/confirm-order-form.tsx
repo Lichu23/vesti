@@ -24,7 +24,7 @@ export function ConfirmOrderForm({ action, orderId }: ConfirmOrderFormProps) {
     <form action={formAction} className="grid justify-items-end gap-2">
       <input name="orderId" type="hidden" value={orderId} />
       <button
-        className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="cursor-pointer rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
