@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { getStorefrontHome } from "@/lib/storefront";
 
 import { StorefrontVariantSelector } from "./storefront-variant-selector";
@@ -25,7 +27,11 @@ export function StorefrontProductCard({
 
   return (
     <article className="group overflow-hidden rounded-[4px] border border-border bg-card transition hover:border-primary">
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <Link
+        aria-label={`Ver ${product.name}`}
+        className="relative block aspect-square cursor-pointer overflow-hidden bg-muted"
+        href={`/products/${product.slug}`}
+      >
         {image ? (
           <div
             aria-label={image.alt ?? product.name}
@@ -46,13 +52,15 @@ export function StorefrontProductCard({
             </span>
           </div>
         ) : null}
-      </div>
+      </Link>
 
       <div className="flex min-h-56 flex-col gap-4 p-5">
         <div className="space-y-2">
-          <h3 className="font-serif text-xl font-semibold leading-tight text-foreground">
-            {product.name}
-          </h3>
+          <Link className="cursor-pointer" href={`/products/${product.slug}`}>
+            <h3 className="font-serif text-xl font-semibold leading-tight text-foreground transition hover:text-primary">
+              {product.name}
+            </h3>
+          </Link>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>Talle: {getSizeLabel(product)}</p>
             <p>Marca: {product.brand?.name ?? "Thoemia"}</p>
