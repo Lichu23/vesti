@@ -135,26 +135,26 @@ function readProductVariantForm(formData: FormData): ProductVariantFormData {
   const priceValue = String(formData.get("price") ?? "").trim();
 
   if (!productId) {
-    return { error: "Product id is required." };
+    return { error: "El id del producto es obligatorio." };
   }
 
   if (!size) {
-    return { error: "Size is required." };
+    return { error: "El talle es obligatorio." };
   }
 
   if (/[,+/;|]/.test(size) || /\b(AND|Y)\b/.test(size)) {
     return {
-      error: "Create one variant per size. Do not combine sizes in one variant.",
+      error: "Crea una variante por talle. No combines talles en una variante.",
     };
   }
 
   if (!/^\d+$/.test(stockValue)) {
-    return { error: "Stock must be zero or more." };
+    return { error: "El stock debe ser cero o mayor." };
   }
 
   if (priceValue && !/^\d+(\.\d{1,2})?$/.test(priceValue)) {
     return {
-      error: "Variant price must be zero or more with up to 2 decimals.",
+      error: "El precio de la variante debe ser cero o mayor y hasta 2 decimales.",
     };
   }
 
@@ -180,15 +180,15 @@ function readInventoryAdjustmentForm(
   const reason = optionalText(formData.get("reason"));
 
   if (!productId) {
-    return { error: "Product id is required." };
+    return { error: "El id del producto es obligatorio." };
   }
 
   if (!variantId) {
-    return { error: "Variant id is required." };
+    return { error: "El id de la variante es obligatorio." };
   }
 
   if (!/^[+-]?[1-9]\d*$/.test(quantityValue)) {
-    return { error: "Adjustment must be a non-zero whole number." };
+    return { error: "El ajuste debe ser un numero entero distinto de cero." };
   }
 
   return {
@@ -270,7 +270,7 @@ async function uploadProductImageFile(
 
   if (!supabase) {
     return {
-      error: "Supabase Storage env vars are required for image uploads.",
+      error: "Las variables de entorno de Supabase Storage son obligatorias para subir imagenes.",
     };
   }
 
@@ -309,39 +309,39 @@ function readProductForm(formData: FormData): ProductFormData {
   const sizeDisplayText = optionalText(formData.get("sizeDisplayText"));
 
   if (!name) {
-    return { error: "Name is required." };
+    return { error: "El nombre es obligatorio." };
   }
 
   const slug = slugify(name);
 
   if (!slug) {
-    return { error: "Name must contain at least one letter or number." };
+    return { error: "El nombre debe incluir al menos una letra o numero." };
   }
 
   if (!categoryId) {
-    return { error: "Category is required." };
+    return { error: "La categoria es obligatoria." };
   }
 
   if (!audienceValues.includes(audience as AudienceValue)) {
-    return { error: "Audience is invalid." };
+    return { error: "La audiencia no es valida." };
   }
 
   if (!saleUnitValues.includes(saleUnit as SaleUnitValue)) {
-    return { error: "Sale unit is invalid." };
+    return { error: "La unidad de venta no es valida." };
   }
 
   if (!colorModeValues.includes(colorMode as ColorModeValue)) {
-    return { error: "Color mode is invalid." };
+    return { error: "El modo de color no es valido." };
   }
 
   if (!/^\d+(\.\d{1,2})?$/.test(basePrice)) {
     return {
-      error: "Base price must be zero or more with up to 2 decimals.",
+      error: "El precio base debe ser cero o mayor y hasta 2 decimales.",
     };
   }
 
   if (packQuantityValue && !/^[1-9]\d*$/.test(packQuantityValue)) {
-    return { error: "Pack quantity must be a positive whole number." };
+    return { error: "La cantidad del pack debe ser un numero entero positivo." };
   }
 
   const packQuantity = packQuantityValue
@@ -378,7 +378,7 @@ async function validateProductRelations(storeId: string, data: ProductPayload) {
   });
 
   if (!category) {
-    return "Selected category is invalid.";
+    return "La categoria seleccionada no es valida.";
   }
 
   if (!data.brandId) {
@@ -394,7 +394,7 @@ async function validateProductRelations(storeId: string, data: ProductPayload) {
   });
 
   if (!brand) {
-    return "Selected brand is invalid.";
+    return "La marca seleccionada no es valida.";
   }
 
   return null;
@@ -416,7 +416,7 @@ async function validateProductColorMode(
     });
 
     if (uncoloredVariant) {
-      return "Add colors to existing variants before changing color mode to VARIANTS.";
+      return "Agrega colores a las variantes existentes antes de cambiar el modo de color a VARIANTS.";
     }
 
     return null;
@@ -429,14 +429,14 @@ async function validateProductColorMode(
       storeId,
     },
   });
-  const seenSizes = new Set<string>();
+  const seenTalles = new Set<string>();
 
   for (const variant of variants) {
-    if (seenSizes.has(variant.size)) {
-      return "Delete duplicate sizes before changing color mode away from VARIANTS.";
+    if (seenTalles.has(variant.size)) {
+      return "Elimina talles duplicados antes de cambiar el modo de color desde VARIANTS.";
     }
 
-    seenSizes.add(variant.size);
+    seenTalles.add(variant.size);
   }
 
   return null;
@@ -447,11 +447,11 @@ function validateVariantColorMode(
   color: string | null,
 ) {
   if (colorMode === ColorMode.VARIANTS && !color) {
-    return "Color is required when product color mode is VARIANTS.";
+    return "El color es obligatorio cuando el modo de color del producto es VARIANTS.";
   }
 
   if (colorMode !== ColorMode.VARIANTS && color) {
-    return "Variant color is only allowed when product color mode is VARIANTS.";
+    return "El color de variante solo se permite cuando el modo de color del producto es VARIANTS.";
   }
 
   return null;
@@ -474,13 +474,13 @@ function productError(error: unknown): ProductFormState {
       targetText.includes("color")
     ) {
       return {
-        message: "Duplicate variant sizes prevent this color mode change.",
+        message: "Hay talles duplicados que impiden cambiar este modo de color.",
         status: "error",
       };
     }
 
     return {
-      message: "A product with this slug already exists.",
+      message: "Ya existe un producto con este slug.",
       status: "error",
     };
   }
@@ -490,7 +490,7 @@ function productError(error: unknown): ProductFormState {
     error.code === "P2025"
   ) {
     return {
-      message: "Product not found.",
+      message: "Producto no encontrado.",
       status: "error",
     };
   }
@@ -500,7 +500,7 @@ function productError(error: unknown): ProductFormState {
     error.code === "P2003"
   ) {
     return {
-      message: "Selected category or brand is invalid.",
+      message: "La categoria o marca seleccionada no es valida.",
       status: "error",
     };
   }
@@ -520,13 +520,13 @@ function productVariantError(error: unknown): ProductVariantFormState {
 
     if (targetText.includes("sku")) {
       return {
-        message: "A variant with this SKU already exists.",
+        message: "Ya existe una variante con este SKU.",
         status: "error",
       };
     }
 
     return {
-      message: "A variant with this size and color already exists.",
+      message: "Ya existe una variante con este talle y color.",
       status: "error",
     };
   }
@@ -536,7 +536,7 @@ function productVariantError(error: unknown): ProductVariantFormState {
     error.code === "P2025"
   ) {
     return {
-      message: "Variant not found.",
+      message: "Variante no encontrada.",
       status: "error",
     };
   }
@@ -546,7 +546,7 @@ function productVariantError(error: unknown): ProductVariantFormState {
     error.code === "P2003"
   ) {
     return {
-      message: "Selected product is invalid.",
+      message: "El producto seleccionado no es valido.",
       status: "error",
     };
   }
@@ -580,7 +580,7 @@ export async function createProduct(
   const parsed = readProductForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -606,7 +606,7 @@ export async function createProduct(
 
   revalidatePath("/admin/products");
 
-  return { message: "Product created.", status: "success" };
+  return { message: "Producto creado.", status: "success" };
 }
 
 export async function updateProduct(
@@ -619,11 +619,11 @@ export async function updateProduct(
   const parsed = readProductForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!id) {
-    return { message: "Product id is required.", status: "error" };
+    return { message: "El id del producto es obligatorio.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -674,7 +674,7 @@ export async function updateProduct(
 
   revalidatePath("/admin/products");
 
-  return { message: "Product updated.", status: "success" };
+  return { message: "Producto actualizado.", status: "success" };
 }
 
 export async function deleteProduct(formData: FormData) {
@@ -780,26 +780,26 @@ export async function createProductImage(
   const sortOrder = readSortOrder(formData.get("sortOrder"));
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!productId) {
-    return { message: "Product id is required.", status: "error" };
+    return { message: "El id del producto es obligatorio.", status: "error" };
   }
 
   if (!urlValue && !(fileValue instanceof File && fileValue.size > 0)) {
-    return { message: "Image file or URL is required.", status: "error" };
+    return { message: "La imagen o URL es obligatoria.", status: "error" };
   }
 
   if (urlValue && !isAllowedImageUrl(urlValue)) {
     return {
-      message: "Image URL must start with http://, https://, or /.",
+      message: "La URL de imagen debe comenzar con http://, https:// o /.",
       status: "error",
     };
   }
 
   if (sortOrder === null) {
-    return { message: "Sort order must be zero or more.", status: "error" };
+    return { message: "El orden debe ser cero o mayor.", status: "error" };
   }
 
   const product = await prisma.product.findUnique({
@@ -811,7 +811,7 @@ export async function createProductImage(
   });
 
   if (!product) {
-    return { message: "Product not found.", status: "error" };
+    return { message: "Producto no encontrado.", status: "error" };
   }
 
   let url = urlValue;
@@ -819,14 +819,14 @@ export async function createProductImage(
   if (fileValue instanceof File && fileValue.size > 0) {
     if (!allowedImageTypes.has(fileValue.type)) {
       return {
-        message: "Image file must be AVIF, JPG, PNG, or WebP.",
+        message: "La imagen debe ser AVIF, JPG, PNG o WebP.",
         status: "error",
       };
     }
 
     if (fileValue.size > maxImageSize) {
       return {
-        message: "Image file must be 5 MB or smaller.",
+        message: "La imagen debe pesar 5 MB o menos.",
         status: "error",
       };
     }
@@ -852,7 +852,7 @@ export async function createProductImage(
 
   revalidatePath("/admin/products");
 
-  return { message: "Image added.", status: "success" };
+  return { message: "Imagen agregada.", status: "success" };
 }
 
 export async function deleteProductImage(formData: FormData) {
@@ -915,7 +915,7 @@ export async function createProductVariant(
   const parsed = readProductVariantForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -931,7 +931,7 @@ export async function createProductVariant(
   });
 
   if (!product) {
-    return { message: "Product not found.", status: "error" };
+    return { message: "Producto no encontrado.", status: "error" };
   }
 
   const colorModeError = validateVariantColorMode(
@@ -950,7 +950,7 @@ export async function createProductVariant(
 
   if (duplicateVariant) {
     return {
-      message: "A variant with this size and color already exists.",
+      message: "Ya existe una variante con este talle y color.",
       status: "error",
     };
   }
@@ -968,7 +968,7 @@ export async function createProductVariant(
         await tx.inventoryMovement.create({
           data: {
             quantity: parsed.data.stock,
-            reason: "Initial stock",
+            reason: "Stock inicial",
             storeId,
             type: InventoryMovementType.MANUAL_ADJUSTMENT,
             variantId: variant.id,
@@ -982,7 +982,7 @@ export async function createProductVariant(
 
   revalidatePath("/admin/products");
 
-  return { message: "Variant created.", status: "success" };
+  return { message: "Variante creada.", status: "success" };
 }
 
 export async function updateProductVariant(
@@ -995,11 +995,11 @@ export async function updateProductVariant(
   const parsed = readProductVariantForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!id) {
-    return { message: "Variant id is required.", status: "error" };
+    return { message: "El id de la variante es obligatorio.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -1015,7 +1015,7 @@ export async function updateProductVariant(
   });
 
   if (!product) {
-    return { message: "Product not found.", status: "error" };
+    return { message: "Producto no encontrado.", status: "error" };
   }
 
   const colorModeError = validateVariantColorMode(
@@ -1035,7 +1035,7 @@ export async function updateProductVariant(
 
   if (duplicateVariant) {
     return {
-      message: "A variant with this size and color already exists.",
+      message: "Ya existe una variante con este talle y color.",
       status: "error",
     };
   }
@@ -1061,7 +1061,7 @@ export async function updateProductVariant(
 
   revalidatePath("/admin/products");
 
-  return { message: "Variant updated.", status: "success" };
+  return { message: "Variante actualizada.", status: "success" };
 }
 
 export async function adjustInventory(
@@ -1073,7 +1073,7 @@ export async function adjustInventory(
   const parsed = readInventoryAdjustmentForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -1142,12 +1142,12 @@ export async function adjustInventory(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "VARIANT_NOT_FOUND") {
-      return { message: "Variant not found.", status: "error" };
+      return { message: "Variante no encontrada.", status: "error" };
     }
 
     if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
       return {
-        message: "Adjustment cannot reduce stock below zero.",
+        message: "El ajuste no puede dejar el stock debajo de cero.",
         status: "error",
       };
     }
@@ -1157,7 +1157,7 @@ export async function adjustInventory(
 
   revalidatePath("/admin/products");
 
-  return { message: "Stock adjusted.", status: "success" };
+  return { message: "Stock ajustado.", status: "success" };
 }
 
 export async function deleteProductVariant(
@@ -1170,11 +1170,11 @@ export async function deleteProductVariant(
   const productId = String(formData.get("productId") ?? "").trim();
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!id || !productId) {
-    return { message: "Variant id is required.", status: "error" };
+    return { message: "El id de la variante es obligatorio.", status: "error" };
   }
 
   try {
@@ -1199,7 +1199,7 @@ export async function deleteProductVariant(
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
-      return { message: "Variant not found.", status: "error" };
+      return { message: "Variante no encontrada.", status: "error" };
     }
 
     if (
@@ -1207,7 +1207,7 @@ export async function deleteProductVariant(
       error.code === "P2003"
     ) {
       return {
-        message: "Variant cannot be deleted because it is already used.",
+        message: "La variante no se puede eliminar porque ya esta en uso.",
         status: "error",
       };
     }
@@ -1217,5 +1217,5 @@ export async function deleteProductVariant(
 
   revalidatePath("/admin/products");
 
-  return { message: "Variant deleted.", status: "success" };
+  return { message: "Variante eliminada.", status: "success" };
 }

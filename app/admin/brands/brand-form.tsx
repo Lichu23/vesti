@@ -37,7 +37,7 @@ export function BrandForm({
       {brand ? <input name="id" type="hidden" value={brand.id} /> : null}
 
       <label className="grid gap-1 text-sm font-medium">
-        Name
+        Nombre
         <input
           className="rounded-md border px-3 py-2 text-sm"
           defaultValue={brand?.name}
@@ -52,7 +52,7 @@ export function BrandForm({
           name="isActive"
           type="checkbox"
         />
-        Active
+        Activo
       </label>
 
       {state.message ? (
@@ -71,7 +71,7 @@ export function BrandForm({
         disabled={pending}
         type="submit"
       >
-        {pending ? "Saving..." : buttonLabel}
+        {pending ? "Guardando..." : buttonLabel}
       </button>
     </form>
   );

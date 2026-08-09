@@ -37,13 +37,13 @@ function readBrandForm(formData: FormData): BrandFormData {
   const name = String(formData.get("name") ?? "").trim();
 
   if (!name) {
-    return { error: "Name is required." };
+    return { error: "El nombre es obligatorio." };
   }
 
   const slug = slugify(name);
 
   if (!slug) {
-    return { error: "Name must contain at least one letter or number." };
+    return { error: "El nombre debe incluir al menos una letra o numero." };
   }
 
   return {
@@ -61,7 +61,7 @@ function brandError(error: unknown): BrandFormState {
     error.code === "P2002"
   ) {
     return {
-      message: "A brand with this slug already exists.",
+      message: "Ya existe una marca con este slug.",
       status: "error",
     };
   }
@@ -71,7 +71,7 @@ function brandError(error: unknown): BrandFormState {
     error.code === "P2025"
   ) {
     return {
-      message: "Brand not found.",
+      message: "Marca no encontrada.",
       status: "error",
     };
   }
@@ -88,7 +88,7 @@ export async function createBrand(
   const parsed = readBrandForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -108,7 +108,7 @@ export async function createBrand(
 
   revalidatePath("/admin/brands");
 
-  return { message: "Brand created.", status: "success" };
+  return { message: "Marca creada.", status: "success" };
 }
 
 export async function updateBrand(
@@ -121,11 +121,11 @@ export async function updateBrand(
   const parsed = readBrandForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!id) {
-    return { message: "Brand id is required.", status: "error" };
+    return { message: "El id de la marca es obligatorio.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -146,7 +146,7 @@ export async function updateBrand(
 
   revalidatePath("/admin/brands");
 
-  return { message: "Brand updated.", status: "success" };
+  return { message: "Marca actualizada.", status: "success" };
 }
 
 export async function deleteBrand(formData: FormData) {

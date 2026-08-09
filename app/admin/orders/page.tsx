@@ -124,7 +124,7 @@ export default async function AdminOrdersPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-8">
       <header className="space-y-2">
-        <p className="text-sm text-zinc-500">Phase 5 Orders</p>
+        <p className="text-sm text-zinc-500">Pedidos</p>
         <h1 className="text-3xl font-semibold">Pedidos</h1>
         <p className="text-sm text-zinc-600">
           Crea pedidos manuales desde conversaciones de WhatsApp. Confirma el

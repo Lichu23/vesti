@@ -52,7 +52,7 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
 
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_8rem]">
         <label className="grid gap-1 text-sm font-medium md:col-span-3">
-          Image file
+          Archivo de imagen
           <input
             accept="image/avif,image/jpeg,image/png,image/webp"
             className={fieldClassName()}
@@ -64,9 +64,9 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
 
         {previewUrl ? (
           <div className="md:col-span-3">
-            <p className="mb-2 text-sm font-medium">Selected preview</p>
+            <p className="mb-2 text-sm font-medium">Vista previa seleccionada</p>
             <div
-              aria-label="Selected product preview"
+              aria-label="Vista previa del producto seleccionado"
               className="h-24 w-24 rounded-md border bg-cover bg-center"
               role="img"
               style={{ backgroundImage: `url(${previewUrl})` }}
@@ -75,7 +75,7 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
         ) : null}
 
         <label className="grid gap-1 text-sm font-medium">
-          Image URL fallback
+          URL de imagen alternativa
           <input
             className={fieldClassName()}
             name="url"
@@ -84,16 +84,16 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Alt text
+          Texto alternativo
           <input
             className={fieldClassName()}
             name="alt"
-            placeholder="Product front view"
+            placeholder="Vista frontal del producto"
           />
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Sort order
+          Orden
           <input
             className={fieldClassName()}
             defaultValue="0"
@@ -117,11 +117,11 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
       ) : null}
 
       <button
-        className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Adding..." : "Add image"}
+        {pending ? "Agregando..." : "Agregar imagen"}
       </button>
     </form>
   );

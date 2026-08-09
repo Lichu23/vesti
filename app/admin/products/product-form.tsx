@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { type ProductFormState } from "@/app/admin/products/actions";
 
@@ -9,12 +9,12 @@ const initialProductFormState: ProductFormState = {
   status: "idle",
 };
 
-type ProductOption = {
+export type ProductOption = {
   id: string;
   name: string;
 };
 
-type ProductFormProduct = {
+export type ProductFormProduct = {
   id: string;
   name: string;
   categoryId: string;
@@ -39,6 +39,7 @@ type ProductFormProps = {
   brands: ProductOption[];
   buttonLabel: string;
   categories: ProductOption[];
+  onSuccess?: () => void;
   product?: ProductFormProduct;
 };
 
@@ -47,10 +48,10 @@ const saleUnits = ["UNIT", "PACK"];
 const colorModes = ["NONE", "VARIANTS", "ASK", "ASSORTED"];
 
 const colorModeDescriptions = [
-  "NONE: product has no color choice.",
-  "VARIANTS: customer selects color from variant colors.",
-  "ASK: customer asks for available colors by message.",
-  "ASSORTED: product ships with mixed colors.",
+  "NONE: el producto no tiene seleccion de color.",
+  "VARIANTS: el cliente elige color desde las variantes.",
+  "ASK: el cliente consulta colores disponibles por mensaje.",
+  "ASSORTED: el producto se envia con colores surtidos.",
 ];
 
 function fieldClassName() {
@@ -62,6 +63,7 @@ export function ProductForm({
   brands,
   buttonLabel,
   categories,
+  onSuccess,
   product,
 }: ProductFormProps) {
   const [state, formAction, pending] = useActionState(
@@ -69,13 +71,19 @@ export function ProductForm({
     initialProductFormState,
   );
 
+  useEffect(() => {
+    if (state.status === "success") {
+      onSuccess?.();
+    }
+  }, [onSuccess, state.status]);
+
   return (
     <form action={formAction} className="grid gap-4 rounded-xl border p-4">
       {product ? <input name="id" type="hidden" value={product.id} /> : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-medium">
-          Name
+          Nombre
           <input
             className={fieldClassName()}
             defaultValue={product?.name}
@@ -85,7 +93,7 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Model code
+          Codigo de modelo
           <input
             className={fieldClassName()}
             defaultValue={product?.modelCode ?? ""}
@@ -96,14 +104,14 @@ export function ProductForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-medium">
-          Category
+          Categoria
           <select
             className={fieldClassName()}
             defaultValue={product?.categoryId ?? ""}
             name="categoryId"
             required
           >
-            <option value="">Select category</option>
+            <option value="">Seleccionar categoria</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -113,13 +121,13 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Brand
+          Marca
           <select
             className={fieldClassName()}
             defaultValue={product?.brandId ?? ""}
             name="brandId"
           >
-            <option value="">No brand</option>
+            <option value="">Sin marca</option>
             {brands.map((brand) => (
               <option key={brand.id} value={brand.id}>
                 {brand.name}
@@ -131,7 +139,7 @@ export function ProductForm({
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid gap-1 text-sm font-medium">
-          Audience
+          Audiencia
           <select
             className={fieldClassName()}
             defaultValue={product?.audience ?? "WOMEN"}
@@ -147,7 +155,7 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Base price
+          Precio base
           <input
             className={fieldClassName()}
             defaultValue={product?.basePrice ?? "0.00"}
@@ -160,7 +168,7 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Sale unit
+          Unidad de venta
           <select
             className={fieldClassName()}
             defaultValue={product?.saleUnit ?? "UNIT"}
@@ -178,7 +186,7 @@ export function ProductForm({
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid gap-1 text-sm font-medium">
-          Pack quantity
+          Cantidad del pack
           <input
             className={fieldClassName()}
             defaultValue={product?.packQuantity ?? ""}
@@ -190,7 +198,7 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Color mode
+          Modo de color
           <select
             className={fieldClassName()}
             defaultValue={product?.colorMode ?? "NONE"}
@@ -209,17 +217,18 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Size display text
+          Texto de talle visible
           <input
             className={fieldClassName()}
             defaultValue={product?.sizeDisplayText ?? ""}
             name="sizeDisplayText"
+            placeholder="ej: S al XL o 80/90"
           />
         </label>
       </div>
 
       <label className="grid gap-1 text-sm font-medium">
-        Description
+        Descripcion
         <textarea
           className="min-h-24 rounded-md border px-3 py-2 text-sm"
           defaultValue={product?.description ?? ""}
@@ -234,7 +243,7 @@ export function ProductForm({
             name="isActive"
             type="checkbox"
           />
-          Active
+          Activo
         </label>
 
         <label className="flex items-center gap-2 text-sm">
@@ -243,7 +252,7 @@ export function ProductForm({
             name="isFeatured"
             type="checkbox"
           />
-          Featured
+          Destacado
         </label>
       </div>
 
@@ -259,11 +268,11 @@ export function ProductForm({
       ) : null}
 
       <button
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending || categories.length === 0}
         type="submit"
       >
-        {pending ? "Saving..." : buttonLabel}
+        {pending ? "Guardando..." : buttonLabel}
       </button>
     </form>
   );

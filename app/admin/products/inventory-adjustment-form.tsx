@@ -35,11 +35,11 @@ export function InventoryAdjustmentForm({
 
       <div className="grid gap-3 md:grid-cols-[180px_1fr]">
         <label className="grid gap-1 text-sm font-medium">
-          Adjustment
+          Ajuste
           <input
             className="rounded-md border px-3 py-2 text-sm"
             name="quantity"
-            placeholder="+5 or -2"
+            placeholder="+5 o -2"
             required
             step="1"
             type="number"
@@ -47,12 +47,12 @@ export function InventoryAdjustmentForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Reason
+          Motivo
           <input
             className="rounded-md border px-3 py-2 text-sm"
             maxLength={160}
             name="reason"
-            placeholder="Restock, correction, damaged item"
+            placeholder="Reposicion, correccion, producto danado"
           />
         </label>
       </div>
@@ -69,11 +69,11 @@ export function InventoryAdjustmentForm({
       ) : null}
 
       <button
-        className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Saving..." : "Adjust stock"}
+        {pending ? "Guardando..." : "Ajustar stock"}
       </button>
     </form>
   );
