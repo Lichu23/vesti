@@ -1,5 +1,10 @@
-import { confirmOrder, createManualOrder } from "@/app/admin/orders/actions";
+import {
+  confirmOrder,
+  createManualOrder,
+  updateManualOrder,
+} from "@/app/admin/orders/actions";
 import { ConfirmOrderForm } from "@/app/admin/orders/confirm-order-form";
+import { EditOrderModal } from "@/app/admin/orders/edit-order-modal";
 import { OrderForm } from "@/app/admin/orders/order-form";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -86,6 +91,7 @@ export default async function AdminOrdersPage() {
             quantity: true,
             subtotal: true,
             unitPrice: true,
+            variantId: true,
             variantLabel: true,
           },
         },
@@ -128,7 +134,11 @@ export default async function AdminOrdersPage() {
 
       <section className="grid gap-4">
         <h2 className="text-xl font-semibold">Nuevo pedido manual</h2>
-        <OrderForm action={createManualOrder} variants={variantOptions} />
+        <OrderForm
+          action={createManualOrder}
+          buttonLabel="Crear pedido"
+          variants={variantOptions}
+        />
       </section>
 
       <section className="grid gap-4">
@@ -140,7 +150,10 @@ export default async function AdminOrdersPage() {
         ) : (
           <div className="grid gap-4">
             {orders.map((order) => (
-              <article className="grid gap-4 rounded-xl border p-4" key={order.id}>
+              <article
+                className="grid gap-4 rounded-xl border p-4"
+                key={order.id}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <h3 className="font-semibold">{order.customerName}</h3>
@@ -163,7 +176,22 @@ export default async function AdminOrdersPage() {
                       {formatPrice(order.total)}
                     </p>
                     {order.status === "REVIEWING" ? (
-                      <div className="mt-3">
+                      <div className="mt-3 flex flex-wrap justify-end gap-2">
+                        <EditOrderModal
+                          action={updateManualOrder}
+                          order={{
+                            customerName: order.customerName,
+                            customerPhone: order.customerPhone,
+                            id: order.id,
+                            items: order.items.map((item) => ({
+                              id: item.id,
+                              quantity: item.quantity,
+                              variantId: item.variantId,
+                            })),
+                            notes: order.notes,
+                          }}
+                          variants={variantOptions}
+                        />
                         <ConfirmOrderForm
                           action={confirmOrder}
                           orderId={order.id}

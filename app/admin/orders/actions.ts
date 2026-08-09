@@ -17,6 +17,7 @@ export type OrderFormState = {
 };
 
 export type ConfirmOrderState = OrderFormState;
+export type UpdateOrderState = OrderFormState;
 
 type OrderItemPayload = {
   quantity: number;
@@ -269,6 +270,172 @@ export async function createManualOrder(
     message: "Order created. Confirm it to deduct stock.",
     status: "success",
   };
+}
+
+export async function updateManualOrder(
+  _previousState: UpdateOrderState,
+  formData: FormData,
+): Promise<UpdateOrderState> {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+  const orderId = String(formData.get("orderId") ?? "").trim();
+  const parsed = readOrderForm(formData);
+
+  if (!storeId) {
+    return { message: "Store access is required.", status: "error" };
+  }
+
+  if (!orderId) {
+    return { message: "Order id is required.", status: "error" };
+  }
+
+  if ("error" in parsed) {
+    return { message: parsed.error, status: "error" };
+  }
+
+  const variantIds = parsed.data.items.map((item) => item.variantId);
+  const variants = await prisma.productVariant.findMany({
+    select: {
+      color: true,
+      id: true,
+      price: true,
+      product: {
+        select: {
+          basePrice: true,
+          id: true,
+          name: true,
+        },
+      },
+      size: true,
+      stock: true,
+    },
+    where: {
+      id: {
+        in: variantIds,
+      },
+      isActive: true,
+      product: {
+        isActive: true,
+      },
+      storeId,
+    },
+  });
+
+  if (variants.length !== variantIds.length) {
+    return {
+      message: "One or more selected variants are unavailable.",
+      status: "error",
+    };
+  }
+
+  const variantsById = new Map(
+    variants.map((variant) => [variant.id, variant]),
+  );
+
+  for (const item of parsed.data.items) {
+    const variant = variantsById.get(item.variantId);
+
+    if (!variant) {
+      return { message: "Variant not found.", status: "error" };
+    }
+
+    if (item.quantity > variant.stock) {
+      return {
+        message: "Order quantity cannot exceed current stock.",
+        status: "error",
+      };
+    }
+  }
+
+  let total = new Prisma.Decimal(0);
+
+  const orderItems = parsed.data.items.map((item) => {
+    const variant = variantsById.get(item.variantId)!;
+
+    const unitPrice = variant.price ?? variant.product.basePrice;
+    const subtotal = unitPrice.mul(item.quantity);
+    total = total.add(subtotal);
+
+    return {
+      productId: variant.product.id,
+      productName: variant.product.name,
+      quantity: item.quantity,
+      storeId,
+      subtotal,
+      unitPrice,
+      variantId: variant.id,
+      variantLabel: getVariantLabel(variant),
+    };
+  });
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const claim = await tx.order.updateMany({
+        data: {
+          updatedAt: new Date(),
+        },
+        where: {
+          id: orderId,
+          status: OrderStatus.REVIEWING,
+          storeId,
+        },
+      });
+
+      if (claim.count === 0) {
+        const order = await tx.order.findUnique({
+          select: { status: true },
+          where: { id: orderId, storeId },
+        });
+
+        if (!order) {
+          throw new Error("ORDER_NOT_FOUND");
+        }
+
+        throw new Error("ORDER_CANNOT_BE_EDITED");
+      }
+
+      await tx.orderItem.deleteMany({
+        where: {
+          orderId,
+          storeId,
+        },
+      });
+
+      await tx.order.update({
+        data: {
+          customerName: parsed.data.customerName,
+          customerPhone: parsed.data.customerPhone,
+          items: {
+            create: orderItems,
+          },
+          notes: parsed.data.notes,
+          total,
+        },
+        where: {
+          id: orderId,
+          storeId,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
+      return { message: "Order not found.", status: "error" };
+    }
+
+    if (error instanceof Error && error.message === "ORDER_CANNOT_BE_EDITED") {
+      return {
+        message: "Only pending orders can be edited.",
+        status: "error",
+      };
+    }
+
+    return orderError(error);
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+
+  return { message: "Order updated.", status: "success" };
 }
 
 export async function confirmOrder(

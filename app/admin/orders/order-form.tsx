@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import type { OrderFormState } from "@/app/admin/orders/actions";
 
@@ -10,12 +10,32 @@ type OrderVariantOption = {
   stock: number;
 };
 
+type OrderFormOrder = {
+  customerName: string;
+  customerPhone: string;
+  id: string;
+  items: {
+    id: string;
+    quantity: number;
+    variantId: string;
+  }[];
+  notes: string | null;
+};
+
 type OrderFormProps = {
   action: (
     previousState: OrderFormState,
     formData: FormData,
   ) => Promise<OrderFormState>;
+  buttonLabel?: string;
+  onSuccess?: () => void;
+  order?: OrderFormOrder;
   variants: OrderVariantOption[];
+};
+
+type OrderItemRow = {
+  id: number;
+  item: OrderFormOrder["items"][number] | null;
 };
 
 const initialState: OrderFormState = {
@@ -23,12 +43,29 @@ const initialState: OrderFormState = {
   status: "idle",
 };
 
-export function OrderForm({ action, variants }: OrderFormProps) {
+export function OrderForm({
+  action,
+  buttonLabel = "Crear pedido",
+  onSuccess,
+  order,
+  variants,
+}: OrderFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [itemRows, setItemRows] = useState([0]);
+  const initialRows: OrderItemRow[] =
+    order && order.items.length > 0
+      ? order.items.map((item, index) => ({
+          id: index,
+          item,
+        }))
+      : [{ id: 0, item: null }];
+  const [itemRows, setItemRows] = useState(initialRows);
   const [selectedVariantIdsByRow, setSelectedVariantIdsByRow] = useState<
     Record<number, string>
-  >({});
+  >(
+    Object.fromEntries(
+      initialRows.map((row) => [row.id, row.item?.variantId ?? ""]),
+    ),
+  );
   const selectedVariantIds = new Set(
     Object.values(selectedVariantIdsByRow).filter(Boolean),
   );
@@ -42,10 +79,19 @@ export function OrderForm({ action, variants }: OrderFormProps) {
   const canAddItemRow =
     !disabled && selectedVariantIds.size < selectableVariantCount;
 
+  useEffect(() => {
+    if (state.status === "success") {
+      onSuccess?.();
+    }
+  }, [onSuccess, state.status]);
+
   function addItemRow() {
     setItemRows((currentRows) => [
       ...currentRows,
-      Math.max(...currentRows) + 1,
+      {
+        id: Math.max(...currentRows.map((row) => row.id)) + 1,
+        item: null,
+      },
     ]);
   }
 
@@ -53,7 +99,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
     setItemRows((currentRows) =>
       currentRows.length === 1
         ? currentRows
-        : currentRows.filter((itemRow) => itemRow !== rowId),
+        : currentRows.filter((itemRow) => itemRow.id !== rowId),
     );
     setSelectedVariantIdsByRow((currentValues) => {
       const nextValues = { ...currentValues };
@@ -71,11 +117,13 @@ export function OrderForm({ action, variants }: OrderFormProps) {
 
   return (
     <form action={formAction} className="grid gap-4 rounded-xl border p-4">
+      {order ? <input name="orderId" type="hidden" value={order.id} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm">
           Nombre del cliente
           <input
             className="rounded-md border px-3 py-2"
+            defaultValue={order?.customerName}
             name="customerName"
             placeholder="Nombre"
             required
@@ -85,6 +133,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
           Telefono
           <input
             className="rounded-md border px-3 py-2"
+            defaultValue={order?.customerPhone}
             name="customerPhone"
             placeholder="5491123456789"
             required
@@ -100,7 +149,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
         <span className="group relative inline-flex">
           <button
             aria-label="Informacion sobre el estado del pago"
-            className="flex size-5 items-center justify-center rounded-full border text-xs font-semibold text-zinc-500"
+            className="flex size-5 cursor-pointer items-center justify-center rounded-full border text-xs font-semibold text-zinc-500"
             type="button"
           >
             i
@@ -116,6 +165,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
         Notas
         <textarea
           className="min-h-24 rounded-md border px-3 py-2"
+          defaultValue={order?.notes ?? ""}
           name="notes"
           placeholder="Datos del chat, envio o comentarios"
         />
@@ -130,15 +180,15 @@ export function OrderForm({ action, variants }: OrderFormProps) {
           </p>
         </div>
 
-        {itemRows.map((rowId) => {
+        {itemRows.map((row) => {
           const selectedVariant = variantsById.get(
-            selectedVariantIdsByRow[rowId] ?? "",
+            selectedVariantIdsByRow[row.id] ?? "",
           );
 
           return (
             <div
               className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]"
-              key={rowId}
+              key={row.id}
             >
               <label className="grid gap-1 text-sm">
                 Producto y variante
@@ -146,10 +196,10 @@ export function OrderForm({ action, variants }: OrderFormProps) {
                   className="rounded-md border px-3 py-2"
                   name="variantId"
                   onChange={(event) =>
-                    updateItemRowVariant(rowId, event.target.value)
+                    updateItemRowVariant(row.id, event.target.value)
                   }
                   required
-                  value={selectedVariantIdsByRow[rowId] ?? ""}
+                  value={selectedVariantIdsByRow[row.id] ?? ""}
                 >
                   <option value="">Seleccionar</option>
                   {variants.map((variant) => (
@@ -157,7 +207,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
                       disabled={
                         variant.stock <= 0 ||
                         (selectedVariantIds.has(variant.id) &&
-                          selectedVariantIdsByRow[rowId] !== variant.id)
+                          selectedVariantIdsByRow[row.id] !== variant.id)
                       }
                       key={variant.id}
                       value={variant.id}
@@ -171,7 +221,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
                 Cantidad
                 <input
                   className="rounded-md border px-3 py-2"
-                  defaultValue="1"
+                  defaultValue={row.item?.quantity ?? 1}
                   max={selectedVariant?.stock}
                   min="1"
                   name="quantity"
@@ -181,8 +231,8 @@ export function OrderForm({ action, variants }: OrderFormProps) {
               </label>
               {itemRows.length > 1 ? (
                 <button
-                  className="h-fit self-end rounded-md border px-3 py-2 text-sm"
-                  onClick={() => removeItemRow(rowId)}
+                  className="h-fit cursor-pointer self-end rounded-md border px-3 py-2 text-sm"
+                  onClick={() => removeItemRow(row.id)}
                   type="button"
                 >
                   Quitar
@@ -193,7 +243,7 @@ export function OrderForm({ action, variants }: OrderFormProps) {
         })}
 
         <button
-          className="w-fit rounded-md border px-3 py-2 text-sm font-medium"
+          className="w-fit cursor-pointer rounded-md border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed"
           disabled={!canAddItemRow}
           onClick={addItemRow}
           type="button"
@@ -221,11 +271,11 @@ export function OrderForm({ action, variants }: OrderFormProps) {
       ) : null}
 
       <button
-        className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         type="submit"
       >
-        {pending ? "Creando..." : "Crear pedido"}
+        {pending ? "Guardando..." : buttonLabel}
       </button>
     </form>
   );
