@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import { getStorefrontHome } from "@/lib/storefront";
-import { AddToCartButton, CartToggleButton } from "./cart-buttons";
+import { CartToggleButton } from "./cart-buttons";
 import { StorefrontSearch } from "./storefront-search";
+import { StorefrontVariantSelector } from "./storefront-variant-selector";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
 
 type HomeSearchParams = {
@@ -64,17 +65,6 @@ function normalizeSearchParams(
   };
 }
 
-function formatPrice(value: StorefrontProduct["basePrice"]) {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-    style: "currency",
-  })
-    .format(Number(value))
-    .replace(/\$\s*/, "$ ");
-}
-
 function getProductStock(product: StorefrontProduct) {
   return product.variants.reduce((total, variant) => total + variant.stock, 0);
 }
@@ -100,11 +90,6 @@ function ProductCard({ product }: { product: StorefrontProduct }) {
   const image = product.images[0];
   const stock = getProductStock(product);
   const hasStock = stock > 0;
-  const inStockVariants = product.variants.filter((variant) => variant.stock > 0);
-  const defaultVariant =
-    inStockVariants.length === 1 ? inStockVariants[0] : undefined;
-  const needsVariantSelection = inStockVariants.length > 1;
-  const unitLabel = product.saleUnit === "PACK" ? "pack" : "c/u";
 
   return (
     <article className="group overflow-hidden rounded-[4px] border border-border bg-card transition hover:border-primary">
@@ -147,38 +132,21 @@ function ProductCard({ product }: { product: StorefrontProduct }) {
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-4">
-          <p className="font-serif text-2xl text-foreground">
-            {formatPrice(product.basePrice)}
-            <span className="ml-1 font-sans text-xs text-muted-foreground">
-              {unitLabel}
-            </span>
-          </p>
-          <AddToCartButton
-            disabled={!hasStock || needsVariantSelection}
-            disabledLabel={
-              needsVariantSelection
-                ? `Elegir talle para ${product.name}`
-                : undefined
-            }
-            item={
-              defaultVariant
-                ? {
-                    imageAlt: image?.alt,
-                    imageUrl: image?.url,
-                    maxQuantity: defaultVariant.stock,
-                    productId: product.id,
-                    productName: product.name,
-                    unitPrice: Number(defaultVariant.price ?? product.basePrice),
-                    variantColor: defaultVariant.color,
-                    variantId: defaultVariant.id,
-                    variantSize: defaultVariant.size,
-                  }
-                : undefined
-            }
-            productName={product.name}
-          />
-        </div>
+        <StorefrontVariantSelector
+          basePrice={Number(product.basePrice)}
+          imageAlt={image?.alt}
+          imageUrl={image?.url}
+          productId={product.id}
+          productName={product.name}
+          saleUnit={product.saleUnit}
+          variants={product.variants.map((variant) => ({
+            color: variant.color,
+            id: variant.id,
+            price: Number(variant.price ?? product.basePrice),
+            size: variant.size,
+            stock: variant.stock,
+          }))}
+        />
       </div>
     </article>
   );
