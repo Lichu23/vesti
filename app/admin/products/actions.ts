@@ -128,7 +128,7 @@ function readSortOrder(value: FormDataEntryValue | null) {
 
 function readProductVariantForm(formData: FormData): ProductVariantFormData {
   const productId = String(formData.get("productId") ?? "").trim();
-  const size = String(formData.get("size") ?? "").trim();
+  const size = String(formData.get("size") ?? "").trim().toUpperCase();
   const color = optionalText(formData.get("color"));
   const stockValue = String(formData.get("stock") ?? "").trim();
   const sku = optionalText(formData.get("sku"));
@@ -140,6 +140,12 @@ function readProductVariantForm(formData: FormData): ProductVariantFormData {
 
   if (!size) {
     return { error: "Size is required." };
+  }
+
+  if (/[,+/;|]/.test(size) || /\b(AND|Y)\b/.test(size)) {
+    return {
+      error: "Create one variant per size. Do not combine sizes in one variant.",
+    };
   }
 
   if (!/^\d+$/.test(stockValue)) {

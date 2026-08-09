@@ -41,6 +41,7 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 -   [ ] Audience pages
 -   [ ] Category pages
 -   [ ] Product page
+-   [ ] Size/variant selector on product cards
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
@@ -48,8 +49,8 @@ Branches: feat/storefront feat/cart
 
 ## Phase 5 Orders
 
--   [ ] Admin manual order creation
--   [ ] Admin order list/detail
+-   [x] Admin manual order creation
+-   [x] Admin order list/detail
 -   [ ] Admin order editing
 -   [ ] Confirm order
 -   [ ] Inventory deduction
