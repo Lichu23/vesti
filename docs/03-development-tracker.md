@@ -52,8 +52,8 @@ Branches: feat/storefront feat/cart
 -   [x] Admin manual order creation
 -   [x] Admin order list/detail
 -   [ ] Admin order editing
--   [ ] Confirm order
--   [ ] Inventory deduction
+-   [x] Confirm order
+-   [x] Inventory deduction
 
 Decision: storefront checkout should not require a customer form before WhatsApp. The customer sends the cart through WhatsApp first, then the store creates or completes the internal order manually in admin using the WhatsApp conversation data.
 
