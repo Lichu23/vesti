@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
+import { getPrimaryStore } from "@/lib/storefront";
 import { CartProvider } from "./cart-context";
 import "./globals.css";
 
@@ -20,14 +21,18 @@ export const metadata: Metadata = {
   description: "Catalogo online de Thoemia Intimo",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const store = await getPrimaryStore();
+
   return (
     <html
       lang="es-AR"
       className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <CartProvider>{children}</CartProvider>
+        <CartProvider storeName={store?.name} storeWhatsapp={store?.whatsapp}>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

@@ -38,6 +38,8 @@ type CartContextValue = {
   items: CartItem[];
   openCart: () => void;
   removeItem: (variantId: string) => void;
+  storeName: string;
+  storeWhatsapp?: string | null;
   total: number;
 };
 
@@ -76,6 +78,57 @@ function getVariantLabel(item: CartItem) {
   }
 
   return parts.join(" / ");
+}
+
+function sanitizeWhatsappNumber(value?: string | null) {
+  return value?.replace(/\D/g, "") ?? "";
+}
+
+function buildWhatsappMessage({
+  items,
+  storeName,
+  total,
+}: {
+  items: CartItem[];
+  storeName: string;
+  total: number;
+}) {
+  const lines = [
+    `Hola ${storeName}! Quiero hacer este pedido:`,
+    "",
+    ...items.flatMap((item, index) => [
+      `${index + 1}. ${item.productName}`,
+      `Cantidad: ${item.quantity}`,
+      getVariantLabel(item),
+      `Subtotal: ${formatPrice(item.unitPrice * item.quantity)}`,
+      "",
+    ]),
+    `Total: ${formatPrice(total)}`,
+    "",
+    "Te paso mis datos por este chat.",
+  ];
+
+  return lines.join("\n");
+}
+
+function buildWhatsappUrl({
+  items,
+  storeName,
+  storeWhatsapp,
+  total,
+}: {
+  items: CartItem[];
+  storeName: string;
+  storeWhatsapp?: string | null;
+  total: number;
+}) {
+  const phone = sanitizeWhatsappNumber(storeWhatsapp);
+
+  if (!phone || items.length === 0) return null;
+
+  const message = buildWhatsappMessage({ items, storeName, total });
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
 function parseStoredCart(value: string | null): CartItem[] {
@@ -150,7 +203,15 @@ function subscribeCart(listener: () => void) {
   };
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  storeName = "Thoemia Intimo",
+  storeWhatsapp,
+}: {
+  children: React.ReactNode;
+  storeName?: string | null;
+  storeWhatsapp?: string | null;
+}) {
   const items = useSyncExternalStore(
     subscribeCart,
     readCartSnapshot,
@@ -263,6 +324,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       items,
       openCart,
       removeItem,
+      storeName: storeName ?? "Thoemia Intimo",
+      storeWhatsapp,
       total,
     };
   }, [
@@ -275,6 +338,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     items,
     openCart,
     removeItem,
+    storeName,
+    storeWhatsapp,
   ]);
 
   return (
@@ -305,6 +370,8 @@ function CartDrawer() {
     isOpen,
     items,
     removeItem,
+    storeName,
+    storeWhatsapp,
     total,
   } = useCart();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -360,6 +427,14 @@ function CartDrawer() {
   }, [closeCart, isOpen]);
 
   if (!isOpen) return null;
+
+  const whatsappNumber = sanitizeWhatsappNumber(storeWhatsapp);
+  const whatsappUrl = buildWhatsappUrl({
+    items,
+    storeName,
+    storeWhatsapp,
+    total,
+  });
 
   return (
     <div
@@ -497,11 +572,25 @@ function CartDrawer() {
           </div>
           <button
             className="w-full cursor-pointer rounded-full bg-primary px-6 py-4 text-sm font-semibold uppercase tracking-[0.06em] text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
-            disabled={items.length === 0}
+            disabled={!whatsappUrl}
+            onClick={() => {
+              if (!whatsappUrl) return;
+              window.location.href = whatsappUrl;
+            }}
             type="button"
           >
-            Finalizar pedido
+            Consultar pedido
           </button>
+          {!storeWhatsapp ? (
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              WhatsApp de la tienda no configurado.
+            </p>
+          ) : null}
+          {storeWhatsapp && !whatsappNumber ? (
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              WhatsApp de la tienda no es valido.
+            </p>
+          ) : null}
           <button
             className="mt-4 w-full cursor-pointer text-sm text-muted-foreground transition hover:text-destructive disabled:cursor-not-allowed disabled:opacity-45"
             disabled={items.length === 0}
