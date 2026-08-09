@@ -40,17 +40,17 @@ function readCategoryForm(formData: FormData): CategoryFormData {
   const sortOrder = Number.parseInt(sortOrderValue, 10);
 
   if (!name) {
-    return { error: "Name is required." };
+    return { error: "El nombre es obligatorio." };
   }
 
   const slug = slugify(name);
 
   if (!slug) {
-    return { error: "Name must contain at least one letter or number." };
+    return { error: "El nombre debe incluir al menos una letra o numero." };
   }
 
   if (Number.isNaN(sortOrder)) {
-    return { error: "Sort order must be a number." };
+    return { error: "El orden debe ser un numero." };
   }
 
   return {
@@ -69,7 +69,7 @@ function categoryError(error: unknown): CategoryFormState {
     error.code === "P2002"
   ) {
     return {
-      message: "A category with this slug already exists.",
+      message: "Ya existe una categoria con este slug.",
       status: "error",
     };
   }
@@ -86,7 +86,7 @@ export async function createCategory(
   const parsed = readCategoryForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -106,7 +106,7 @@ export async function createCategory(
 
   revalidatePath("/admin/categories");
 
-  return { message: "Category created.", status: "success" };
+  return { message: "Categoria creada.", status: "success" };
 }
 
 export async function updateCategory(
@@ -119,11 +119,11 @@ export async function updateCategory(
   const parsed = readCategoryForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!id) {
-    return { message: "Category id is required.", status: "error" };
+    return { message: "El id de la categoria es obligatorio.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -144,7 +144,7 @@ export async function updateCategory(
 
   revalidatePath("/admin/categories");
 
-  return { message: "Category updated.", status: "success" };
+  return { message: "Categoria actualizada.", status: "success" };
 }
 
 export async function deleteCategory(formData: FormData) {

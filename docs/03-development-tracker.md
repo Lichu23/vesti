@@ -70,6 +70,7 @@ Branches: feat/whatsapp-handoff feat/admin-orders feat/order-confirmation feat/o
 
 ## Phase 6 Admin
 
+-   [ ] Admin UI update
 -   [ ] Dashboard
 -   [ ] Settings
 -   [ ] Store configuration

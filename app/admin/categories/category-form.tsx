@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { type CategoryFormState } from "@/app/admin/categories/actions";
 
@@ -21,24 +21,32 @@ type CategoryFormProps = {
     isActive: boolean;
     sortOrder: number;
   };
+  onSuccess?: () => void;
 };
 
 export function CategoryForm({
   action,
   buttonLabel,
   category,
+  onSuccess,
 }: CategoryFormProps) {
   const [state, formAction, pending] = useActionState(
     action,
     initialCategoryFormState,
   );
 
+  useEffect(() => {
+    if (state.status === "success") {
+      onSuccess?.();
+    }
+  }, [onSuccess, state.status]);
+
   return (
     <form action={formAction} className="grid gap-3 rounded-xl border p-4">
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
 
       <label className="grid gap-1 text-sm font-medium">
-        Name
+        Nombre
         <input
           className="rounded-md border px-3 py-2 text-sm"
           defaultValue={category?.name}
@@ -48,7 +56,7 @@ export function CategoryForm({
       </label>
 
       <label className="grid gap-1 text-sm font-medium">
-        Sort order
+        Orden
         <input
           className="rounded-md border px-3 py-2 text-sm"
           defaultValue={category?.sortOrder ?? 0}
@@ -63,7 +71,7 @@ export function CategoryForm({
           name="isActive"
           type="checkbox"
         />
-        Active
+        Activo
       </label>
 
       {state.message ? (
@@ -78,11 +86,11 @@ export function CategoryForm({
       ) : null}
 
       <button
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Saving..." : buttonLabel}
+        {pending ? "Guardando..." : buttonLabel}
       </button>
     </form>
   );

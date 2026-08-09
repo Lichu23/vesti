@@ -60,15 +60,15 @@ function readOrderForm(formData: FormData): OrderFormData {
   );
 
   if (!customerName) {
-    return { error: "Customer name is required." };
+    return { error: "El nombre del cliente es obligatorio." };
   }
 
   if (!customerPhone) {
-    return { error: "Customer phone is required." };
+    return { error: "El telefono del cliente es obligatorio." };
   }
 
   if (!allowedCreateStatuses.has(status as OrderPayload["status"])) {
-    return { error: "Order status is invalid." };
+    return { error: "El estado del pedido no es valido." };
   }
 
   const items: OrderItemPayload[] = [];
@@ -82,11 +82,11 @@ function readOrderForm(formData: FormData): OrderFormData {
     }
 
     if (!variantId) {
-      return { error: "Each order item needs a product variant." };
+      return { error: "Cada item del pedido necesita una variante de producto." };
     }
 
     if (!/^[1-9]\d*$/.test(quantityValue)) {
-      return { error: "Each order item quantity must be positive." };
+      return { error: "La cantidad de cada item debe ser positiva." };
     }
 
     items.push({
@@ -96,14 +96,14 @@ function readOrderForm(formData: FormData): OrderFormData {
   }
 
   if (items.length === 0) {
-    return { error: "Add at least one order item." };
+    return { error: "Agrega al menos un item al pedido." };
   }
 
   const duplicateVariantIds = new Set<string>();
 
   for (const item of items) {
     if (duplicateVariantIds.has(item.variantId)) {
-      return { error: "Do not repeat the same variant in one order." };
+      return { error: "No repitas la misma variante en un pedido." };
     }
 
     duplicateVariantIds.add(item.variantId);
@@ -136,7 +136,7 @@ function orderError(error: unknown): OrderFormState {
     error.code === "P2003"
   ) {
     return {
-      message: "Selected order item is invalid.",
+      message: "El item seleccionado no es valido.",
       status: "error",
     };
   }
@@ -153,7 +153,7 @@ export async function createManualOrder(
   const parsed = readOrderForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -190,7 +190,7 @@ export async function createManualOrder(
 
   if (variants.length !== variantIds.length) {
     return {
-      message: "One or more selected variants are unavailable.",
+      message: "Una o mas variantes seleccionadas no estan disponibles.",
       status: "error",
     };
   }
@@ -203,12 +203,12 @@ export async function createManualOrder(
     const variant = variantsById.get(item.variantId);
 
     if (!variant) {
-      return { message: "Variant not found.", status: "error" };
+      return { message: "Variante no encontrada.", status: "error" };
     }
 
     if (item.quantity > variant.stock) {
       return {
-        message: "Order quantity cannot exceed current stock.",
+        message: "La cantidad del pedido no puede superar el stock actual.",
         status: "error",
       };
     }
@@ -252,13 +252,13 @@ export async function createManualOrder(
   } catch (error) {
     if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
       return {
-        message: "Order quantity cannot exceed current stock.",
+        message: "La cantidad del pedido no puede superar el stock actual.",
         status: "error",
       };
     }
 
     if (error instanceof Error && error.message === "VARIANT_NOT_FOUND") {
-      return { message: "Variant not found.", status: "error" };
+      return { message: "Variante no encontrada.", status: "error" };
     }
 
     return orderError(error);
@@ -267,7 +267,7 @@ export async function createManualOrder(
   revalidatePath("/admin/orders");
 
   return {
-    message: "Order created. Confirm it to deduct stock.",
+    message: "Pedido creado. Confirmalo para descontar stock.",
     status: "success",
   };
 }
@@ -282,11 +282,11 @@ export async function updateManualOrder(
   const parsed = readOrderForm(formData);
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!orderId) {
-    return { message: "Order id is required.", status: "error" };
+    return { message: "El id del pedido es obligatorio.", status: "error" };
   }
 
   if ("error" in parsed) {
@@ -323,7 +323,7 @@ export async function updateManualOrder(
 
   if (variants.length !== variantIds.length) {
     return {
-      message: "One or more selected variants are unavailable.",
+      message: "Una o mas variantes seleccionadas no estan disponibles.",
       status: "error",
     };
   }
@@ -336,12 +336,12 @@ export async function updateManualOrder(
     const variant = variantsById.get(item.variantId);
 
     if (!variant) {
-      return { message: "Variant not found.", status: "error" };
+      return { message: "Variante no encontrada.", status: "error" };
     }
 
     if (item.quantity > variant.stock) {
       return {
-        message: "Order quantity cannot exceed current stock.",
+        message: "La cantidad del pedido no puede superar el stock actual.",
         status: "error",
       };
     }
@@ -419,12 +419,12 @@ export async function updateManualOrder(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
-      return { message: "Order not found.", status: "error" };
+      return { message: "Pedido no encontrado.", status: "error" };
     }
 
     if (error instanceof Error && error.message === "ORDER_CANNOT_BE_EDITED") {
       return {
-        message: "Only pending orders can be edited.",
+        message: "Solo se pueden editar pedidos pendientes.",
         status: "error",
       };
     }
@@ -435,7 +435,7 @@ export async function updateManualOrder(
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 
-  return { message: "Order updated.", status: "success" };
+  return { message: "Pedido actualizado.", status: "success" };
 }
 
 export async function confirmOrder(
@@ -447,11 +447,11 @@ export async function confirmOrder(
   const orderId = String(formData.get("orderId") ?? "").trim();
 
   if (!storeId) {
-    return { message: "Store access is required.", status: "error" };
+    return { message: "Se requiere acceso a la tienda.", status: "error" };
   }
 
   if (!orderId) {
-    return { message: "Order is required.", status: "error" };
+    return { message: "El pedido es obligatorio.", status: "error" };
   }
 
   try {
@@ -543,20 +543,20 @@ export async function confirmOrder(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "ORDER_NOT_FOUND") {
-      return { message: "Order not found.", status: "error" };
+      return { message: "Pedido no encontrado.", status: "error" };
     }
 
     if (error instanceof Error && error.message === "ORDER_ALREADY_CONFIRMED") {
-      return { message: "Order is already confirmed.", status: "error" };
+      return { message: "El pedido ya esta confirmado.", status: "error" };
     }
 
     if (error instanceof Error && error.message === "ORDER_CANNOT_BE_CONFIRMED") {
-      return { message: "This order cannot be confirmed.", status: "error" };
+      return { message: "Este pedido no se puede confirmar.", status: "error" };
     }
 
     if (error instanceof Error && error.message === "ORDER_HAS_NO_ITEMS") {
       return {
-        message: "Order needs at least one item to be confirmed.",
+        message: "El pedido necesita al menos un item para confirmarse.",
         status: "error",
       };
     }
@@ -564,7 +564,7 @@ export async function confirmOrder(
     if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
       return {
         message:
-          "Order cannot be confirmed because one or more items do not have enough stock.",
+          "El pedido no se puede confirmar porque uno o mas items no tienen stock suficiente.",
         status: "error",
       };
     }
@@ -574,5 +574,5 @@ export async function confirmOrder(
 
   revalidatePath("/admin/orders");
 
-  return { message: "Order confirmed and stock deducted.", status: "success" };
+  return { message: "Pedido confirmado y stock descontado.", status: "success" };
 }

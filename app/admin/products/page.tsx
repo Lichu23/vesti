@@ -1,398 +1,645 @@
-import { ProductForm } from "@/app/admin/products/product-form";
-import { ProductImageForm } from "@/app/admin/products/product-image-form";
-import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
 import {
-  ProductVariantDeleteForm,
-  ProductVariantForm,
-} from "@/app/admin/products/product-variant-form";
+  AdminEmptyState,
+  AdminPagination,
+  AdminShell,
+  formatAdminPrice,
+  InventoryStats,
+  SearchIcon,
+  TrashIcon,
+} from "@/app/admin/admin-ui";
+import { ProductModal } from "@/app/admin/products/product-modal";
 import {
-  adjustInventory,
-  createProductVariant,
   createProduct,
+  createProductVariant,
   deleteProduct,
   deleteProductImage,
   deleteProductVariant,
   updateProduct,
   updateProductVariant,
+  adjustInventory,
 } from "@/app/admin/products/actions";
+import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
+import { ProductImageForm } from "@/app/admin/products/product-image-form";
+import {
+  ProductVariantDeleteForm,
+  ProductVariantForm,
+} from "@/app/admin/products/product-variant-form";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
-export default async function AdminProductsPage() {
+type AdminProductsPageProps = {
+  searchParams: Promise<{
+    buscar?: string | string[];
+    categoria?: string | string[];
+    pagina?: string | string[];
+  }>;
+};
+
+const productsPerPage = 10;
+
+function getSingleParam(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function getProductStock(product: {
+  variants: {
+    stock: number;
+  }[];
+}) {
+  return product.variants.reduce((total, variant) => total + variant.stock, 0);
+}
+
+function getStockLabel(stock: number) {
+  return stock > 0 ? "En stock" : "Sin stock";
+}
+
+function getPageParam(value?: string | string[]) {
+  const page = Number.parseInt(getSingleParam(value) ?? "1", 10);
+
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+export default async function AdminProductsPage({
+  searchParams,
+}: AdminProductsPageProps) {
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
+  const params = await searchParams;
+  const query = getSingleParam(params.buscar)?.trim();
+  const categoryId = getSingleParam(params.categoria);
+  const currentPage = getPageParam(params.pagina);
 
   if (!storeId) {
     return null;
   }
 
-  const [categories, brands, products] = await Promise.all([
-    prisma.category.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-      },
-      where: {
-        storeId,
-      },
-    }),
-    prisma.brand.findMany({
-      orderBy: [{ name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-      },
-      where: {
-        storeId,
-      },
-    }),
-    prisma.product.findMany({
-      include: {
-        brand: {
-          select: {
-            name: true,
-          },
-        },
-        category: {
-          select: {
-            name: true,
-          },
-        },
-        images: {
-          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-          select: {
-            id: true,
-            alt: true,
-            sortOrder: true,
-            url: true,
-          },
-        },
-        variants: {
-          orderBy: [{ size: "asc" }, { color: "asc" }],
-          select: {
-            id: true,
-            color: true,
-            inventoryMovements: {
-              orderBy: [{ createdAt: "desc" }],
-              select: {
-                id: true,
-                createdAt: true,
-                quantity: true,
-                reason: true,
-                type: true,
+  const productWhere = {
+    ...(categoryId ? { categoryId } : {}),
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            {
+              category: {
+                name: {
+                  contains: query,
+                  mode: "insensitive" as const,
+                },
               },
-              take: 5,
             },
-            isActive: true,
-            price: true,
-            size: true,
-            sku: true,
-            stock: true,
+            {
+              brand: {
+                name: {
+                  contains: query,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    storeId,
+  };
+
+  const [store, categories, brands, metricProducts, productCount] =
+    await Promise.all([
+      prisma.store.findUnique({
+        select: {
+          name: true,
+        },
+        where: {
+          id: storeId,
+        },
+      }),
+      prisma.category.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          storeId,
+        },
+      }),
+      prisma.brand.findMany({
+        orderBy: [{ name: "asc" }],
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          storeId,
+        },
+      }),
+      prisma.product.findMany({
+        select: {
+          basePrice: true,
+          variants: {
+            select: {
+              price: true,
+              stock: true,
+            },
+            where: {
+              isActive: true,
+            },
           },
         },
+        where: {
+          storeId,
+        },
+      }),
+      prisma.product.count({
+        where: productWhere,
+      }),
+    ]);
+  const totalPages = Math.max(1, Math.ceil(productCount / productsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const products = await prisma.product.findMany({
+    include: {
+      brand: {
+        select: {
+          name: true,
+        },
       },
-      orderBy: [{ name: "asc" }],
-      where: {
-        storeId,
+      category: {
+        select: {
+          name: true,
+        },
       },
-    }),
-  ]);
+      images: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          alt: true,
+          sortOrder: true,
+          url: true,
+        },
+      },
+      variants: {
+        orderBy: [{ size: "asc" }, { color: "asc" }],
+        select: {
+          id: true,
+          color: true,
+          inventoryMovements: {
+            orderBy: [{ createdAt: "desc" }],
+            select: {
+              id: true,
+              createdAt: true,
+              quantity: true,
+              reason: true,
+              type: true,
+            },
+            take: 5,
+          },
+          isActive: true,
+          price: true,
+          size: true,
+          sku: true,
+          stock: true,
+        },
+      },
+    },
+    orderBy: [{ name: "asc" }],
+    skip: (safeCurrentPage - 1) * productsPerPage,
+    take: productsPerPage,
+    where: productWhere,
+  });
+
+  const outOfStockCount = metricProducts.filter(
+    (product) =>
+      product.variants.length === 0 ||
+      product.variants.every((variant) => variant.stock <= 0),
+  ).length;
+  const stockValue = metricProducts.reduce(
+    (productTotal, product) =>
+      productTotal +
+      product.variants.reduce(
+        (variantTotal, variant) =>
+          variantTotal +
+          variant.stock * Number(variant.price ?? product.basePrice),
+        0,
+      ),
+    0,
+  );
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-8">
-      <header className="space-y-2">
-        <p className="text-sm text-zinc-500">Phase 3 Variants</p>
-        <h1 className="text-3xl font-semibold">Products</h1>
-        <p className="text-sm text-zinc-600">
-          Manage storefront products, product images, and variants.
+    <AdminShell activeSection="products">
+      <div className="space-y-2">
+        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+          Panel de inventario
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Administra los productos y colecciones de{" "}
+          {store?.name ?? "Thoemia Intimo"}.
         </p>
-      </header>
+      </div>
+
+      <InventoryStats
+        categoryCount={categories.length}
+        outOfStockCount={outOfStockCount}
+        productCount={metricProducts.length}
+        stockValue={stockValue}
+      />
 
       {categories.length === 0 ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Create at least one category before creating products.
+        <p className="rounded-[4px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Crea al menos una categoria antes de crear productos.
         </p>
       ) : null}
 
-      <section className="grid gap-4">
-        <h2 className="text-xl font-semibold">New product</h2>
-        <ProductForm
-          action={createProduct}
-          brands={brands}
-          buttonLabel="Create product"
-          categories={categories}
-        />
-      </section>
+      <section className="space-y-6">
+        <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto_auto]">
+          <label className="flex min-h-14 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground">
+            <SearchIcon />
+            <input
+              className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+              defaultValue={query}
+              name="buscar"
+              placeholder="Buscar por nombre, marca o categoria..."
+              type="search"
+            />
+          </label>
 
-      <section className="grid gap-4">
-        <h2 className="text-xl font-semibold">Existing products</h2>
+          <select
+            className="min-h-14 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none"
+            defaultValue={categoryId ?? ""}
+            name="categoria"
+          >
+            <option value="">Todas las categorias</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
 
-        {products.length === 0 ? (
-          <p className="rounded-xl border p-4 text-sm text-zinc-600">
-            No products yet.
-          </p>
-        ) : (
-          <div className="grid gap-4">
-            {products.map((product) => (
-              <article
-                className="grid gap-4 rounded-xl border p-4"
-                key={product.id}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold">{product.name}</h3>
-                    <p className="text-sm text-zinc-500">/{product.slug}</p>
-                    <p className="text-sm text-zinc-600">
-                      {product.category.name}
-                      {product.brand ? ` - ${product.brand.name}` : ""}
-                    </p>
-                    <p className="text-sm text-zinc-600">
-                      {product.audience} - ${product.basePrice.toString()} - {product.saleUnit}
-                    </p>
-                    <p className="text-sm text-zinc-500">
-                      Color mode: {product.colorMode}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
-                      {product.isActive ? "Active" : "Hidden"}
-                    </span>
-                    {product.isFeatured ? (
-                      <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs text-white">
-                        Featured
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
+          <button
+            className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:border-primary"
+            type="submit"
+          >
+            Filtrar
+          </button>
 
-                <ProductForm
-                  action={updateProduct}
-                  brands={brands}
-                  buttonLabel="Update product"
-                  categories={categories}
-                  key={`${product.id}-${product.updatedAt.toISOString()}`}
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    categoryId: product.categoryId,
-                    brandId: product.brandId,
-                    modelCode: product.modelCode,
-                    description: product.description,
-                    audience: product.audience,
-                    basePrice: product.basePrice.toString(),
-                    saleUnit: product.saleUnit,
-                    packQuantity: product.packQuantity,
-                    colorMode: product.colorMode,
-                    sizeDisplayText: product.sizeDisplayText,
-                    isFeatured: product.isFeatured,
-                    isActive: product.isActive,
-                  }}
+          <ProductModal
+            action={createProduct}
+            brands={brands}
+            buttonLabel="Crear producto"
+            categories={categories}
+            description="Crea el producto base desde una ventana dedicada."
+            title="Nuevo producto"
+            trigger={{ label: "Nuevo producto", type: "button" }}
+          />
+        </form>
+
+        <div className="overflow-x-auto rounded-[4px] border border-border bg-card">
+          <div className="grid grid-cols-[minmax(320px,1.7fr)_180px_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <span>Producto</span>
+            <span>Categoria</span>
+            <span>Marca</span>
+            <span>Precio</span>
+            <span>Stock</span>
+            <span className="text-right">Acciones</span>
+          </div>
+
+          {products.length === 0 ? (
+            <div className="p-5">
+              {metricProducts.length === 0 ? (
+                <AdminEmptyState
+                  action={
+                    <ProductModal
+                      action={createProduct}
+                      brands={brands}
+                      buttonLabel="Crear producto"
+                      categories={categories}
+                      description="Crea el producto base desde una ventana dedicada."
+                      title="Nuevo producto"
+                      trigger={{ label: "Crear producto", type: "button" }}
+                    />
+                  }
+                  description="Crea tu primer producto para empezar a cargar el catalogo."
+                  title="Todavia no hay productos"
                 />
+              ) : (
+                <AdminEmptyState
+                  action={null}
+                  description="Proba cambiar la busqueda o elegir otra categoria."
+                  title="No hay productos para mostrar"
+                />
+              )}
+            </div>
+          ) : (
+            <div>
+              {products.map((product) => {
+                const image = product.images[0];
+                const stock = getProductStock(product);
 
-                <section className="grid gap-3 rounded-xl bg-zinc-50 p-4">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold">Variants</h4>
-                    <p className="text-sm text-zinc-600">
-                      Add sellable size and color combinations for this product.
-                      {product.colorMode === "VARIANTS"
-                        ? " Color is required and becomes the customer color choice."
-                        : " Color is not selectable for this product mode."}
-                    </p>
-                  </div>
+                return (
+                  <article
+                    className="grid grid-cols-[minmax(320px,1.7fr)_180px_180px_140px_140px_110px] items-center border-b border-border px-5 py-4 last:border-b-0"
+                    key={product.id}
+                  >
+                    <div className="flex items-center gap-4">
+                      {image ? (
+                        <div
+                          aria-label={image.alt ?? product.name}
+                          className="size-16 rounded-[4px] bg-muted bg-cover bg-center"
+                          role="img"
+                          style={{ backgroundImage: `url(${image.url})` }}
+                        />
+                      ) : (
+                        <div className="flex size-16 items-center justify-center rounded-[4px] bg-muted text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                          Sin imagen
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h2 className="truncate text-base font-semibold text-foreground">
+                          {product.name}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          Talle: {product.sizeDisplayText ?? "Unico"}
+                        </p>
+                      </div>
+                    </div>
 
-                  {product.variants.length === 0 ? (
-                    <p className="rounded-lg border bg-white p-3 text-sm text-zinc-600">
-                      No variants yet.
-                    </p>
-                  ) : (
-                    <div className="grid gap-3">
-                      {product.variants.map((variant) => (
-                        <article
-                          className="grid gap-3 rounded-lg border bg-white p-3"
-                          key={variant.id}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="space-y-1 text-sm">
-                              <p className="font-medium">
-                                {variant.size}
-                                {variant.color ? ` - ${variant.color}` : ""}
-                              </p>
-                              <p className="text-zinc-600">
-                                Stock: {variant.stock}
-                                {variant.price
-                                  ? ` - $${variant.price.toString()}`
-                                  : " - Uses base price"}
-                              </p>
-                              {variant.sku ? (
-                                <p className="text-zinc-500">
-                                  SKU: {variant.sku}
-                                </p>
-                              ) : null}
-                            </div>
-                            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
-                              {variant.isActive ? "Active" : "Hidden"}
-                            </span>
+                    <span className="text-muted-foreground">
+                      {product.category.name}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {product.brand?.name ?? "Thoemia"}
+                    </span>
+                    <span className="font-serif text-xl text-foreground">
+                      {formatAdminPrice(Number(product.basePrice))}
+                    </span>
+                    <span
+                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                        stock > 0
+                          ? "bg-secondary text-foreground"
+                          : "bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      {getStockLabel(stock)}
+                    </span>
+                    <div className="flex justify-end gap-4 text-muted-foreground">
+                      <ProductModal
+                        action={updateProduct}
+                        brands={brands}
+                        buttonLabel="Actualizar producto"
+                        categories={categories}
+                        description="Edita la informacion base del producto."
+                        product={{
+                          id: product.id,
+                          name: product.name,
+                          categoryId: product.categoryId,
+                          brandId: product.brandId,
+                          modelCode: product.modelCode,
+                          description: product.description,
+                          audience: product.audience,
+                          basePrice: product.basePrice.toString(),
+                          saleUnit: product.saleUnit,
+                          packQuantity: product.packQuantity,
+                          colorMode: product.colorMode,
+                          sizeDisplayText: product.sizeDisplayText,
+                          isFeatured: product.isFeatured,
+                          isActive: product.isActive,
+                        }}
+                        title="Editar producto"
+                        trigger={{
+                          label: `Editar ${product.name}`,
+                          type: "icon",
+                        }}
+                      >
+                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
+                          <div className="space-y-1">
+                            <h4 className="font-semibold">Variantes</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Carga talles, colores, precios y stock por
+                              variante.
+                            </p>
                           </div>
 
-                          <ProductVariantForm
-                            action={updateProductVariant}
-                            buttonLabel="Update variant"
-                            colorMode={product.colorMode}
-                            productId={product.id}
-                            stockLocked
-                            variant={{
-                              id: variant.id,
-                              size: variant.size,
-                              color: variant.color,
-                              stock: variant.stock,
-                              isActive: variant.isActive,
-                              sku: variant.sku,
-                              price: variant.price?.toString() ?? null,
-                            }}
-                          />
-
-                          <ProductVariantDeleteForm
-                            action={deleteProductVariant}
-                            productId={product.id}
-                            variantId={variant.id}
-                          />
-
-                          <section className="grid gap-3 rounded-lg bg-zinc-50 p-3">
-                            <div className="space-y-1">
-                              <h5 className="text-sm font-semibold">
-                                Inventory
-                              </h5>
-                              <p className="text-xs text-zinc-500">
-                                Add positive or negative manual adjustments.
-                                Stock cannot go below zero. Showing the last 5
-                                movements.
-                              </p>
-                            </div>
-
-                            <InventoryAdjustmentForm
-                              action={adjustInventory}
-                              productId={product.id}
-                              variantId={variant.id}
-                            />
-
-                            {variant.inventoryMovements.length === 0 ? (
-                              <p className="text-sm text-zinc-500">
-                                No recent inventory movements yet.
-                              </p>
-                            ) : (
-                              <div className="grid gap-2">
-                                {variant.inventoryMovements.map((movement) => (
-                                  <div
-                                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white p-2 text-sm"
-                                    key={movement.id}
-                                  >
-                                    <div>
+                          {product.variants.length === 0 ? (
+                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
+                              Todavia no hay variantes.
+                            </p>
+                          ) : (
+                            <div className="grid gap-3">
+                              {product.variants.map((variant) => (
+                                <article
+                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
+                                  key={variant.id}
+                                >
+                                  <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="space-y-1 text-sm">
                                       <p className="font-medium">
-                                        {movement.quantity > 0 ? "+" : ""}
-                                        {movement.quantity}{" "}
-                                        <span className="text-zinc-500">
-                                          Manual adjustment
-                                        </span>
+                                        {variant.size}
+                                        {variant.color
+                                          ? ` - ${variant.color}`
+                                          : ""}
                                       </p>
-                                      {movement.reason ? (
-                                        <p className="text-zinc-500">
-                                          {movement.reason}
+                                      <p className="text-muted-foreground">
+                                        Stock: {variant.stock}
+                                        {variant.price
+                                          ? ` - ${formatAdminPrice(Number(variant.price))}`
+                                          : " - Usa precio base"}
+                                      </p>
+                                      {variant.sku ? (
+                                        <p className="text-muted-foreground">
+                                          SKU: {variant.sku}
                                         </p>
                                       ) : null}
                                     </div>
-                                    <time className="text-xs text-zinc-500">
-                                      {movement.createdAt.toLocaleString(
-                                        "en-US",
-                                      )}
-                                    </time>
+                                    <span className="rounded-full bg-secondary px-3 py-1 text-xs">
+                                      {variant.isActive ? "Activo" : "Oculto"}
+                                    </span>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                          </section>
-                        </article>
-                      ))}
-                    </div>
-                  )}
 
-                  <ProductVariantForm
-                    action={createProductVariant}
-                    buttonLabel="Create variant"
-                    colorMode={product.colorMode}
-                    productId={product.id}
-                  />
-                </section>
+                                  <ProductVariantForm
+                                    action={updateProductVariant}
+                                    buttonLabel="Actualizar variante"
+                                    colorMode={product.colorMode}
+                                    productId={product.id}
+                                    stockLocked
+                                    variant={{
+                                      id: variant.id,
+                                      size: variant.size,
+                                      color: variant.color,
+                                      stock: variant.stock,
+                                      isActive: variant.isActive,
+                                      sku: variant.sku,
+                                      price: variant.price?.toString() ?? null,
+                                    }}
+                                  />
 
-                <section className="grid gap-3 rounded-xl bg-zinc-50 p-4">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold">Images</h4>
-                    <p className="text-sm text-zinc-600">
-                      Upload a product image or add an image URL.
-                    </p>
-                  </div>
+                                  <ProductVariantDeleteForm
+                                    action={deleteProductVariant}
+                                    productId={product.id}
+                                    variantId={variant.id}
+                                  />
 
-                  {product.images.length === 0 ? (
-                    <p className="rounded-lg border bg-white p-3 text-sm text-zinc-600">
-                      No images yet.
-                    </p>
-                  ) : (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {product.images.map((image) => (
-                        <article
-                          className="grid gap-3 rounded-lg border bg-white p-3"
-                          key={image.id}
-                        >
-                          <div
-                            aria-label={image.alt ?? product.name}
-                            className="aspect-square w-full rounded-md bg-zinc-100 bg-cover bg-center"
-                            role="img"
-                            style={{ backgroundImage: `url(${image.url})` }}
+                                  <section className="grid gap-3 rounded-[4px] bg-background p-3">
+                                    <div className="space-y-1">
+                                      <h5 className="text-sm font-semibold">
+                                        Inventario
+                                      </h5>
+                                      <p className="text-xs text-muted-foreground">
+                                        Agrega ajustes manuales positivos o
+                                        negativos.
+                                      </p>
+                                    </div>
+
+                                    <InventoryAdjustmentForm
+                                      action={adjustInventory}
+                                      productId={product.id}
+                                      variantId={variant.id}
+                                    />
+
+                                    {variant.inventoryMovements.length ===
+                                    0 ? (
+                                      <p className="text-sm text-muted-foreground">
+                                        Sin movimientos recientes.
+                                      </p>
+                                    ) : (
+                                      <div className="grid gap-2">
+                                        {variant.inventoryMovements.map(
+                                          (movement) => (
+                                            <div
+                                              className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border bg-card p-2 text-sm"
+                                              key={movement.id}
+                                            >
+                                              <div>
+                                                <p className="font-medium">
+                                                  {movement.quantity > 0
+                                                    ? "+"
+                                                    : ""}
+                                                  {movement.quantity}{" "}
+                                                  <span className="text-muted-foreground">
+                                                    Ajuste manual
+                                                  </span>
+                                                </p>
+                                                {movement.reason ? (
+                                                  <p className="text-muted-foreground">
+                                                    {movement.reason}
+                                                  </p>
+                                                ) : null}
+                                              </div>
+                                              <time className="text-xs text-muted-foreground">
+                                                {movement.createdAt.toLocaleString(
+                                                  "en-US",
+                                                )}
+                                              </time>
+                                            </div>
+                                          ),
+                                        )}
+                                      </div>
+                                    )}
+                                  </section>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+
+                          <ProductVariantForm
+                            action={createProductVariant}
+                            buttonLabel="Crear variante"
+                            colorMode={product.colorMode}
+                            productId={product.id}
                           />
-                          <div className="space-y-1 text-sm">
-                            <p className="break-all text-zinc-600">
-                              {image.url}
+                        </section>
+
+                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
+                          <div className="space-y-1">
+                            <h4 className="font-semibold">Imagenes</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Carga imagenes del producto.
                             </p>
-                            <p className="text-zinc-500">
-                              Sort order: {image.sortOrder}
-                            </p>
-                            {image.alt ? (
-                              <p className="text-zinc-500">
-                                Alt: {image.alt}
-                              </p>
-                            ) : null}
                           </div>
-                          <form action={deleteProductImage}>
-                            <input name="id" type="hidden" value={image.id} />
-                            <button
-                              className="text-sm font-medium text-red-600"
-                              type="submit"
-                            >
-                              Delete image
-                            </button>
-                          </form>
-                        </article>
-                      ))}
+
+                          {product.images.length === 0 ? (
+                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
+                              Todavia no hay imagenes.
+                            </p>
+                          ) : (
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {product.images.map((image) => (
+                                <article
+                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
+                                  key={image.id}
+                                >
+                                  <div
+                                    aria-label={image.alt ?? product.name}
+                                    className="aspect-square w-full rounded-[4px] bg-muted bg-cover bg-center"
+                                    role="img"
+                                    style={{
+                                      backgroundImage: `url(${image.url})`,
+                                    }}
+                                  />
+                                  <div className="space-y-1 text-sm">
+                                    <p className="break-all text-muted-foreground">
+                                      {image.url}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      Orden: {image.sortOrder}
+                                    </p>
+                                    {image.alt ? (
+                                      <p className="text-muted-foreground">
+                                        Alt: {image.alt}
+                                      </p>
+                                    ) : null}
+                                  </div>
+                                  <form action={deleteProductImage}>
+                                    <input
+                                      name="id"
+                                      type="hidden"
+                                      value={image.id}
+                                    />
+                                    <button
+                                      className="cursor-pointer text-sm font-medium text-destructive"
+                                      type="submit"
+                                    >
+                                      Eliminar imagen
+                                    </button>
+                                  </form>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+
+                          <ProductImageForm productId={product.id} />
+                        </section>
+                      </ProductModal>
+                      <form action={deleteProduct}>
+                        <input name="id" type="hidden" value={product.id} />
+                        <button
+                          aria-label={`Eliminar ${product.name}`}
+                          className="cursor-pointer transition hover:text-destructive"
+                          type="submit"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </form>
                     </div>
-                  )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                  <ProductImageForm productId={product.id} />
-                </section>
-
-                <form action={deleteProduct}>
-                  <input name="id" type="hidden" value={product.id} />
-                  <button
-                    className="text-sm font-medium text-red-600"
-                    type="submit"
-                  >
-                    Delete product
-                  </button>
-                </form>
-              </article>
-            ))}
-          </div>
-        )}
+        <AdminPagination
+          basePath="/admin/products"
+          currentPage={safeCurrentPage}
+          searchParams={{
+            buscar: query,
+            categoria: categoryId,
+          }}
+          totalPages={totalPages}
+        />
       </section>
-    </main>
+
+    </AdminShell>
   );
 }

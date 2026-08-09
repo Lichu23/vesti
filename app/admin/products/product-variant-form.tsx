@@ -56,7 +56,7 @@ export function ProductVariantForm({
 
       <div className="grid gap-3 md:grid-cols-4">
         <label className="grid gap-1 text-sm font-medium">
-          Size
+          Talle
           <input
             className={fieldClassName()}
             defaultValue={variant?.size ?? ""}
@@ -65,7 +65,7 @@ export function ProductVariantForm({
             required
           />
           <span className="text-xs font-normal text-zinc-500">
-            One size per variant. Sizes are saved in uppercase.
+            One size per variant. Talles are saved in uppercase.
           </span>
         </label>
 
@@ -76,13 +76,13 @@ export function ProductVariantForm({
             defaultValue={variant?.color ?? ""}
             disabled={!usesVariantColors}
             name="color"
-            placeholder="Black"
+            placeholder="Negro"
             required={usesVariantColors}
           />
           <span className="text-xs font-normal text-zinc-500">
             {usesVariantColors
-              ? "Required because this product uses variant colors."
-              : "Disabled unless product color mode is VARIANTS."}
+              ? "Obligatorio porque este producto usa colores por variante."
+              : "Deshabilitado salvo que el modo de color sea VARIANTS."}
           </span>
         </label>
 
@@ -103,19 +103,19 @@ export function ProductVariantForm({
           />
           {stockLocked ? (
             <span className="text-xs font-normal text-zinc-500">
-              Use inventory adjustments to change stock.
+              Usa ajustes de inventario para cambiar el stock.
             </span>
           ) : null}
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Price override
+          Precio especial
           <input
             className={fieldClassName()}
             defaultValue={variant?.price ?? ""}
             min="0"
             name="price"
-            placeholder="Optional"
+            placeholder="Opcional"
             step="0.01"
             type="number"
           />
@@ -129,7 +129,7 @@ export function ProductVariantForm({
             className={fieldClassName()}
             defaultValue={variant?.sku ?? ""}
             name="sku"
-            placeholder="Optional unique SKU"
+            placeholder="Opcional unique SKU"
           />
         </label>
 
@@ -139,7 +139,7 @@ export function ProductVariantForm({
             name="isActive"
             type="checkbox"
           />
-          Active
+          Activo
         </label>
       </div>
 
@@ -155,11 +155,11 @@ export function ProductVariantForm({
       ) : null}
 
       <button
-        className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Saving..." : buttonLabel}
+        {pending ? "Guardando..." : buttonLabel}
       </button>
     </form>
   );
@@ -189,11 +189,11 @@ export function ProductVariantDeleteForm({
       <input name="id" type="hidden" value={variantId} />
       <input name="productId" type="hidden" value={productId} />
       <button
-        className="w-fit text-sm font-medium text-red-600 disabled:opacity-60"
+        className="w-fit cursor-pointer text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
-        {pending ? "Deleting..." : "Delete variant"}
+        {pending ? "Eliminando..." : "Eliminar variante"}
       </button>
 
       {state.message ? (
