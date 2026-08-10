@@ -73,13 +73,13 @@ export function ProductModal({
       {isOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 text-left"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-0 text-left sm:p-4"
           role="dialog"
         >
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="h-full max-h-screen w-full max-w-5xl overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h3 className="font-serif text-3xl text-foreground">
+                <h3 className="font-serif text-2xl text-foreground sm:text-3xl">
                   {title}
                 </h3>
                 <p className="text-sm text-muted-foreground">{description}</p>

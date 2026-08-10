@@ -53,7 +53,7 @@ const colorModeDescriptions = [
 ];
 
 function fieldClassName() {
-  return "rounded-md border px-3 py-2 text-sm";
+  return "rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
 
 export function ProductForm({
@@ -75,7 +75,7 @@ export function ProductForm({
   }, [onSuccess, state.status]);
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-xl border p-4">
+    <form action={formAction} className="grid gap-4 rounded-xl border p-3 sm:p-4">
       {product ? <input name="id" type="hidden" value={product.id} /> : null}
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -209,7 +209,7 @@ export function ProductForm({
       <label className="grid gap-1 text-sm font-medium">
         Descripcion
         <textarea
-          className="min-h-24 rounded-md border px-3 py-2 text-sm"
+          className="min-h-24 rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           defaultValue={product?.description ?? ""}
           name="description"
         />
@@ -247,7 +247,7 @@ export function ProductForm({
       ) : null}
 
       <button
-        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending || categories.length === 0}
         type="submit"
       >

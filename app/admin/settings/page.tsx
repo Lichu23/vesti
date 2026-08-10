@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { AdminShell, SettingsIcon, StoreIcon } from "@/app/admin/admin-ui";
+import { AdminShell, SettingsIcon } from "@/app/admin/admin-ui";
 import {
   createStoreInvite,
   removeStoreAdmin,
@@ -72,7 +72,7 @@ export default async function AdminSettingsPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Configuracion
         </p>
-        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Configuracion de tienda
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -80,8 +80,8 @@ export default async function AdminSettingsPage() {
         </p>
       </header>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]">
-        <div className="rounded-[4px] border border-border bg-card p-6">
+      <section className="grid gap-5">
+        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
           <div className="mb-5 flex items-center gap-3">
             <SettingsIcon />
             <h2 className="font-serif text-3xl text-foreground">
@@ -104,23 +104,10 @@ export default async function AdminSettingsPage() {
           )}
         </div>
 
-        <aside className="grid h-fit gap-4 rounded-[4px] border border-border bg-card p-6">
-          <div className="flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
-            <StoreIcon />
-          </div>
-          <h2 className="font-serif text-3xl text-foreground">
-            Antes de entregar
-          </h2>
-          <ul className="grid gap-3 text-sm text-muted-foreground">
-            <li>Verifica que el nombre sea el de la tienda real.</li>
-            <li>Confirma que el WhatsApp recibe el resumen del carrito.</li>
-            <li>Manten la tienda activa si el catalogo ya esta listo.</li>
-          </ul>
-        </aside>
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="rounded-[4px] border border-border bg-card p-6">
+        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
           <div className="mb-5 space-y-1">
             <h2 className="font-serif text-3xl text-foreground">
               Accesos actuales
@@ -141,7 +128,7 @@ export default async function AdminSettingsPage() {
                     {user.name || user.email || "Usuario sin nombre"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {user.email} · {user.role === "OWNER" ? "Owner" : "Admin"}
+                    {user.email} - {user.role === "OWNER" ? "Owner" : "Admin"}
                   </p>
                 </div>
                 {isOwner &&
@@ -165,7 +152,7 @@ export default async function AdminSettingsPage() {
         <div className="grid h-fit gap-5">
           {isOwner ? <StoreInviteForm action={createStoreInvite} /> : null}
 
-          <div className="rounded-[4px] border border-border bg-card p-6">
+          <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
             <div className="mb-5 space-y-1">
               <h2 className="font-serif text-3xl text-foreground">
                 Invitaciones pendientes
@@ -187,7 +174,7 @@ export default async function AdminSettingsPage() {
                         {invite.email}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {invite.role === "OWNER" ? "Owner" : "Admin"} ·{" "}
+                        {invite.role === "OWNER" ? "Owner" : "Admin"} -{" "}
                         {invite.createdAt.toLocaleDateString("es-AR")}
                       </p>
                     </div>

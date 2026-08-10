@@ -111,7 +111,7 @@ export default async function AdminOrdersPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Pedidos
         </p>
-        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Pedidos
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -120,7 +120,7 @@ export default async function AdminOrdersPage() {
         </p>
       </header>
 
-      <section className="grid gap-4 rounded-[4px] border border-border bg-card p-6">
+      <section className="grid gap-4 rounded-[4px] border border-border bg-card p-5 sm:p-6">
         <div className="flex items-center gap-3">
           <OrdersIcon />
           <h2 className="font-serif text-3xl text-foreground">
@@ -161,7 +161,7 @@ export default async function AdminOrdersPage() {
                       {order.createdAt.toLocaleString("es-AR")}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="w-full text-left sm:w-auto sm:text-right">
                     <span
                       className={`rounded-full px-3 py-1 text-xs ${getStatusClassName(
                         order.status,
@@ -173,7 +173,7 @@ export default async function AdminOrdersPage() {
                       {formatAdminPrice(Number(order.total))}
                     </p>
                     {order.status === "REVIEWING" ? (
-                      <div className="mt-3 flex flex-wrap justify-end gap-2">
+                      <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                         <EditOrderModal
                           action={updateManualOrder}
                           order={{
@@ -200,8 +200,8 @@ export default async function AdminOrdersPage() {
 
                 <ul className="grid gap-2">
                   {order.items.map((item) => (
-                  <li
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] bg-background p-3 text-sm"
+                    <li
+                      className="grid gap-3 rounded-[4px] bg-background p-3 text-sm sm:flex sm:flex-wrap sm:items-center sm:justify-between"
                       key={item.id}
                     >
                       <div>
@@ -215,7 +215,7 @@ export default async function AdminOrdersPage() {
                           Unitario: {formatAdminPrice(Number(item.unitPrice))}
                         </p>
                       </div>
-                      <p className="font-medium">
+                      <p className="font-medium sm:text-right">
                         {formatAdminPrice(Number(item.subtotal))}
                       </p>
                     </li>

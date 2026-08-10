@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-type AdminSection =
+import { AdminMobileMenu } from "@/app/admin/admin-mobile-menu";
+
+export type AdminSection =
   | "categories"
   | "dashboard"
   | "orders"
@@ -243,7 +245,7 @@ export function TrashIcon() {
 
 export function StatCard({ icon, label, value }: StatCardProps) {
   return (
-    <article className="rounded-[4px] border border-border bg-card p-6">
+    <article className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
       <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
         {icon}
       </div>
@@ -284,35 +286,38 @@ function AdminNavLink({
 export function AdminShell({ activeSection, children }: AdminShellProps) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex min-h-24 max-w-[1720px] items-center justify-between gap-6 px-6 sm:px-10">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur lg:static lg:bg-background lg:backdrop-blur-none">
+        <div className="mx-auto flex min-h-20 max-w-[1720px] items-center justify-between gap-4 px-4 sm:min-h-24 sm:px-10">
           <Link aria-label="Ir al admin" className="cursor-pointer" href="/admin">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3 sm:gap-5">
               <div>
-                <span className="block font-serif text-3xl leading-none">
+                <span className="block font-serif text-2xl leading-none sm:text-3xl">
                   Thoemia
                 </span>
-                <span className="mt-2 block text-xs uppercase tracking-[0.45em]">
+                <span className="mt-1 block text-[10px] uppercase tracking-[0.35em] sm:mt-2 sm:text-xs sm:tracking-[0.45em]">
                   Intimo
                 </span>
               </div>
-              <span className="rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              <span className="hidden rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:block">
                 Admin
               </span>
             </div>
           </Link>
 
-          <Link
-            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition hover:border-primary"
-            href="/"
-          >
-            <StoreIcon />
-            Ver tienda
-          </Link>
+          <div className="flex items-center gap-2 sm:order-2">
+            <Link
+              className="hidden cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition hover:border-primary sm:inline-flex"
+              href="/"
+            >
+              <StoreIcon />
+              Ver tienda
+            </Link>
+          </div>
+          <AdminMobileMenu activeSection={activeSection} />
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1720px] gap-10 px-6 py-10 sm:px-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-[1720px] gap-6 px-4 py-6 sm:px-10 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
         <aside className="hidden lg:block">
           <p className="mb-6 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
             Gestion
@@ -355,47 +360,6 @@ export function AdminShell({ activeSection, children }: AdminShellProps) {
             </AdminNavLink>
           </nav>
         </aside>
-
-        <nav
-          aria-label="Navegacion admin"
-          className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:hidden"
-        >
-          <AdminNavLink
-            active={activeSection === "dashboard"}
-            href="/admin"
-            icon={<DashboardIcon />}
-          >
-            Dashboard
-          </AdminNavLink>
-          <AdminNavLink
-            active={activeSection === "products"}
-            href="/admin/products"
-            icon={<BoxIcon />}
-          >
-            Productos
-          </AdminNavLink>
-          <AdminNavLink
-            active={activeSection === "categories"}
-            href="/admin/categories"
-            icon={<CategoryIcon />}
-          >
-            Categorias
-          </AdminNavLink>
-          <AdminNavLink
-            active={activeSection === "orders"}
-            href="/admin/orders"
-            icon={<OrdersIcon />}
-          >
-            Pedidos
-          </AdminNavLink>
-          <AdminNavLink
-            active={activeSection === "settings"}
-            href="/admin/settings"
-            icon={<SettingsIcon />}
-          >
-            Configuracion
-          </AdminNavLink>
-        </nav>
 
         <section className="min-w-0 space-y-10">{children}</section>
       </div>

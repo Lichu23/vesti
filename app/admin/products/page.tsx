@@ -3,10 +3,9 @@ import {
   AdminPagination,
   AdminShell,
   formatAdminPrice,
-  InventoryStats,
-  SearchIcon,
   TrashIcon,
 } from "@/app/admin/admin-ui";
+import { AdminProductsFilterForm } from "@/app/admin/products/admin-products-filter-form";
 import { ProductModal } from "@/app/admin/products/product-modal";
 import {
   createProduct,
@@ -97,7 +96,7 @@ export default async function AdminProductsPage({
     storeId,
   };
 
-  const [store, categories, metricProducts, productCount] =
+  const [store, categories, productCount, totalProductCount] =
     await Promise.all([
       prisma.store.findUnique({
         select: {
@@ -117,25 +116,13 @@ export default async function AdminProductsPage({
           storeId,
         },
       }),
-      prisma.product.findMany({
-        select: {
-          basePrice: true,
-          variants: {
-            select: {
-              price: true,
-              stock: true,
-            },
-            where: {
-              isActive: true,
-            },
-          },
-        },
+      prisma.product.count({
+        where: productWhere,
+      }),
+      prisma.product.count({
         where: {
           storeId,
         },
-      }),
-      prisma.product.count({
-        where: productWhere,
       }),
     ]);
   const totalPages = Math.max(1, Math.ceil(productCount / productsPerPage));
@@ -186,27 +173,10 @@ export default async function AdminProductsPage({
     where: productWhere,
   });
 
-  const outOfStockCount = metricProducts.filter(
-    (product) =>
-      product.variants.length === 0 ||
-      product.variants.every((variant) => variant.stock <= 0),
-  ).length;
-  const stockValue = metricProducts.reduce(
-    (productTotal, product) =>
-      productTotal +
-      product.variants.reduce(
-        (variantTotal, variant) =>
-          variantTotal +
-          variant.stock * Number(variant.price ?? product.basePrice),
-        0,
-      ),
-    0,
-  );
-
   return (
     <AdminShell activeSection="products">
       <div className="space-y-2">
-        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Panel de inventario
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -214,13 +184,6 @@ export default async function AdminProductsPage({
           {store?.name ?? "Thoemia Intimo"}.
         </p>
       </div>
-
-      <InventoryStats
-        categoryCount={categories.length}
-        outOfStockCount={outOfStockCount}
-        productCount={metricProducts.length}
-        stockValue={stockValue}
-      />
 
       {categories.length === 0 ? (
         <p className="rounded-[4px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -230,38 +193,11 @@ export default async function AdminProductsPage({
 
       <section className="space-y-6">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
-          <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto]">
-            <label className="flex min-h-14 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground">
-              <SearchIcon />
-              <input
-                className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-                defaultValue={query}
-                name="buscar"
-                placeholder="Buscar por nombre o categoria..."
-                type="search"
-              />
-            </label>
-
-            <select
-              className="min-h-14 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none"
-              defaultValue={categoryId ?? ""}
-              name="categoria"
-            >
-              <option value="">Todas las categorias</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-
-            <button
-              className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:border-primary"
-              type="submit"
-            >
-              Filtrar
-            </button>
-          </form>
+          <AdminProductsFilterForm
+            categories={categories}
+            categoryId={categoryId}
+            query={query}
+          />
 
           <ProductModal
             action={createProduct}
@@ -273,8 +209,8 @@ export default async function AdminProductsPage({
           />
         </div>
 
-        <div className="overflow-x-auto rounded-[4px] border border-border bg-card">
-          <div className="grid grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="overflow-hidden rounded-[4px] border border-border bg-card">
+          <div className="hidden grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground md:grid">
             <span>Producto</span>
             <span>Categoria</span>
             <span>Precio</span>
@@ -284,7 +220,7 @@ export default async function AdminProductsPage({
 
           {products.length === 0 ? (
             <div className="p-5">
-              {metricProducts.length === 0 ? (
+              {totalProductCount === 0 ? (
                 <AdminEmptyState
                   action={
                     <ProductModal
@@ -315,7 +251,7 @@ export default async function AdminProductsPage({
 
                 return (
                   <article
-                    className="grid grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] items-center border-b border-border px-5 py-4 last:border-b-0"
+                    className="grid gap-4 border-b border-border p-4 last:border-b-0 md:grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] md:items-center md:px-5 md:py-4"
                     key={product.id}
                   >
                     <div className="flex items-center gap-4">
@@ -341,22 +277,38 @@ export default async function AdminProductsPage({
                       </div>
                     </div>
 
-                    <span className="text-muted-foreground">
-                      {product.category.name}
-                    </span>
-                    <span className="font-serif text-xl text-foreground">
-                      {formatAdminPrice(Number(product.basePrice))}
-                    </span>
-                    <span
-                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                        stock > 0
-                          ? "bg-secondary text-foreground"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {getStockLabel(stock)}
-                    </span>
-                    <div className="flex justify-end gap-4 text-muted-foreground">
+                    <div className="grid gap-3 text-sm md:contents">
+                      <p className="flex items-center justify-between gap-3 text-muted-foreground md:block">
+                        <span className="font-medium text-foreground md:hidden">
+                          Categoria
+                        </span>
+                        {product.category.name}
+                      </p>
+                      <p className="flex items-center justify-between gap-3 md:block">
+                        <span className="font-medium text-foreground md:hidden">
+                          Precio
+                        </span>
+                        <span className="font-serif text-xl text-foreground">
+                          {formatAdminPrice(Number(product.basePrice))}
+                        </span>
+                      </p>
+                      <p className="flex items-center justify-between gap-3 md:block">
+                        <span className="font-medium text-foreground md:hidden">
+                          Stock
+                        </span>
+                        <span
+                          className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                            stock > 0
+                              ? "bg-secondary text-foreground"
+                              : "bg-destructive/10 text-destructive"
+                          }`}
+                        >
+                          {getStockLabel(stock)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-4 border-t border-border pt-3 text-muted-foreground md:border-t-0 md:pt-0">
                       <ProductModal
                         action={updateProduct}
                         buttonLabel="Actualizar producto"

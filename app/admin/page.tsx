@@ -68,7 +68,7 @@ function DashboardAction({
   title: string;
 }) {
   return (
-    <article className="rounded-[4px] border border-border bg-card p-6">
+    <article className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
       <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
         {icon}
       </div>
@@ -160,7 +160,6 @@ export default async function AdminDashboardPage() {
       },
     }),
   ]);
-
   const outOfStockCount = getOutOfStockCount(products);
   const stockValue = getStockValue(products);
 
@@ -174,7 +173,7 @@ export default async function AdminDashboardPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Dashboard
         </p>
-        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Resumen de {store.name}
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -218,7 +217,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-[4px] border border-border bg-card p-6">
+        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
           <div className="mb-5 flex items-center gap-3">
             <OrdersIcon />
             <h2 className="font-serif text-3xl text-foreground">
@@ -255,7 +254,7 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        <div className="rounded-[4px] border border-border bg-card p-6">
+        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
           <div className="mb-5 flex items-center gap-3">
             <WarningIcon />
             <h2 className="font-serif text-3xl text-foreground">

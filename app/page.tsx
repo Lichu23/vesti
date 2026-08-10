@@ -4,6 +4,7 @@ import { getStorefrontHome } from "@/lib/storefront";
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 import { CartToggleButton } from "./cart-buttons";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
+import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
 import { StorefrontProductCard } from "./storefront-product-card";
 import { StorefrontSearch } from "./storefront-search";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
@@ -162,32 +163,13 @@ export default async function Home({ searchParams }: HomeProps) {
               initialValue={params.buscar}
               key={`mobile-${params.buscar ?? "empty-search"}`}
             />
-            <form action="/" className="storefront-mobile-only grid gap-3 xl:hidden">
-              {params.buscar ? (
-                <input name="buscar" type="hidden" value={params.buscar} />
-              ) : null}
-              {params.categoria ? (
-                <input name="categoria" type="hidden" value={params.categoria} />
-              ) : null}
-              <select
-                aria-label="Ordenar productos"
-                className="min-w-0 cursor-pointer rounded-full border border-input bg-card px-4 py-3 text-sm text-foreground outline-none"
-                defaultValue={params.ordenar ?? "relevance"}
-                name="ordenar"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="w-full cursor-pointer rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
-                type="submit"
-              >
-                Aplicar filtros
-              </button>
-            </form>
+            <StorefrontMobileSortForm
+              action="/"
+              category={params.categoria}
+              query={params.buscar}
+              sort={params.ordenar}
+              sortOptions={SORT_OPTIONS}
+            />
             <div>
               <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {title}

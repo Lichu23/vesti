@@ -72,6 +72,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "database",
   },
   callbacks: {
+    redirect({ baseUrl, url }) {
+      const adminUrl = `${baseUrl}/admin`;
+
+      if (url.startsWith("/")) {
+        return url.startsWith("/admin") ? `${baseUrl}${url}` : adminUrl;
+      }
+
+      const redirectUrl = new URL(url);
+
+      if (redirectUrl.origin === baseUrl && redirectUrl.pathname.startsWith("/admin")) {
+        return url;
+      }
+
+      return adminUrl;
+    },
     session({ session, user }) {
       session.user.id = user.id;
       session.user.role = user.role;

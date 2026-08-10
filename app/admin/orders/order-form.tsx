@@ -116,13 +116,13 @@ export function OrderForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-xl border p-4">
+    <form action={formAction} className="grid gap-4 rounded-xl border p-3 sm:p-4">
       {order ? <input name="orderId" type="hidden" value={order.id} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm">
           Nombre del cliente
           <input
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             defaultValue={order?.customerName}
             name="customerName"
             placeholder="Nombre"
@@ -132,7 +132,7 @@ export function OrderForm({
         <label className="grid gap-1 text-sm">
           Telefono
           <input
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             defaultValue={order?.customerPhone}
             name="customerPhone"
             placeholder="5491123456789"
@@ -143,7 +143,7 @@ export function OrderForm({
 
       <input name="status" type="hidden" value="REVIEWING" />
 
-      <div className="flex w-fit items-center gap-2 text-sm text-zinc-600">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-600">
         <span>Estado del pago:</span>
         <span className="font-medium text-zinc-900">Pendiente</span>
         <span className="group relative inline-flex">
@@ -164,7 +164,7 @@ export function OrderForm({
       <label className="grid gap-1 text-sm">
         Notas
         <textarea
-          className="min-h-24 rounded-md border px-3 py-2"
+          className="min-h-24 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           defaultValue={order?.notes ?? ""}
           name="notes"
           placeholder="Datos del chat, envio o comentarios"
@@ -193,7 +193,7 @@ export function OrderForm({
               <label className="grid gap-1 text-sm">
                 Producto y variante
                 <select
-                  className="rounded-md border px-3 py-2"
+                  className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                   name="variantId"
                   onChange={(event) =>
                     updateItemRowVariant(row.id, event.target.value)
@@ -220,7 +220,7 @@ export function OrderForm({
               <label className="grid gap-1 text-sm">
                 Cantidad
                 <input
-                  className="rounded-md border px-3 py-2"
+                  className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                   defaultValue={row.item?.quantity ?? 1}
                   max={selectedVariant?.stock}
                   min="1"
@@ -231,7 +231,7 @@ export function OrderForm({
               </label>
               {itemRows.length > 1 ? (
                 <button
-                  className="h-fit cursor-pointer self-end rounded-md border px-3 py-2 text-sm"
+                  className="h-fit w-full cursor-pointer self-end rounded-md border px-3 py-2 text-sm sm:w-auto"
                   onClick={() => removeItemRow(row.id)}
                   type="button"
                 >
@@ -243,7 +243,7 @@ export function OrderForm({
         })}
 
         <button
-          className="w-fit cursor-pointer rounded-md border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed"
+          className="w-full cursor-pointer rounded-md border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed sm:w-fit"
           disabled={!canAddItemRow}
           onClick={addItemRow}
           type="button"
@@ -271,7 +271,7 @@ export function OrderForm({
       ) : null}
 
       <button
-        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
         disabled={disabled}
         type="submit"
       >

@@ -18,7 +18,7 @@ type StoreInviteFormProps = {
 };
 
 function fieldClassName() {
-  return "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none";
+  return "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
 
 export function StoreInviteForm({ action }: StoreInviteFormProps) {
@@ -28,7 +28,7 @@ export function StoreInviteForm({ action }: StoreInviteFormProps) {
   );
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-[4px] border border-border bg-card p-6">
+    <form action={formAction} className="grid gap-4 rounded-[4px] border border-border bg-card p-5 sm:p-6">
       <div className="space-y-1">
         <h2 className="font-serif text-3xl text-foreground">Invitar acceso</h2>
         <p className="text-sm text-muted-foreground">
@@ -49,7 +49,11 @@ export function StoreInviteForm({ action }: StoreInviteFormProps) {
 
       <label className="grid gap-1 text-sm font-medium">
         Rol
-        <select className={fieldClassName()} defaultValue={UserRole.ADMIN} name="role">
+        <select
+          className={fieldClassName()}
+          defaultValue={UserRole.ADMIN}
+          name="role"
+        >
           <option value={UserRole.ADMIN}>Admin</option>
           <option value={UserRole.OWNER}>Owner</option>
         </select>
@@ -69,7 +73,7 @@ export function StoreInviteForm({ action }: StoreInviteFormProps) {
       ) : null}
 
       <button
-        className="w-fit cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >

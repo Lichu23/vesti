@@ -21,10 +21,10 @@ export function ConfirmOrderForm({ action, orderId }: ConfirmOrderFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="grid justify-items-end gap-2">
+    <form action={formAction} className="grid gap-2 sm:justify-items-end">
       <input name="orderId" type="hidden" value={orderId} />
       <button
-        className="cursor-pointer rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         disabled={pending}
         type="submit"
       >
@@ -32,7 +32,7 @@ export function ConfirmOrderForm({ action, orderId }: ConfirmOrderFormProps) {
       </button>
       {state.status !== "idle" ? (
         <p
-          className={`max-w-xs text-right text-sm ${
+          className={`max-w-xs text-left text-sm sm:text-right ${
             state.status === "error" ? "text-red-600" : "text-green-700"
           }`}
         >
