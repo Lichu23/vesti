@@ -18,7 +18,6 @@ export type ProductFormProduct = {
   id: string;
   name: string;
   categoryId: string;
-  brandId: string | null;
   modelCode: string | null;
   description: string | null;
   audience: string;
@@ -36,7 +35,6 @@ type ProductFormProps = {
     previousState: ProductFormState,
     formData: FormData,
   ) => Promise<ProductFormState>;
-  brands: ProductOption[];
   buttonLabel: string;
   categories: ProductOption[];
   onSuccess?: () => void;
@@ -60,7 +58,6 @@ function fieldClassName() {
 
 export function ProductForm({
   action,
-  brands,
   buttonLabel,
   categories,
   onSuccess,
@@ -102,40 +99,22 @@ export function ProductForm({
         </label>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="grid gap-1 text-sm font-medium">
-          Categoria
-          <select
-            className={fieldClassName()}
-            defaultValue={product?.categoryId ?? ""}
-            name="categoryId"
-            required
-          >
-            <option value="">Seleccionar categoria</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="grid gap-1 text-sm font-medium">
-          Marca
-          <select
-            className={fieldClassName()}
-            defaultValue={product?.brandId ?? ""}
-            name="brandId"
-          >
-            <option value="">Sin marca</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <label className="grid gap-1 text-sm font-medium">
+        Categoria
+        <select
+          className={fieldClassName()}
+          defaultValue={product?.categoryId ?? ""}
+          name="categoryId"
+          required
+        >
+          <option value="">Seleccionar categoria</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid gap-1 text-sm font-medium">

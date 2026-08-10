@@ -39,7 +39,6 @@ type ProductPayload = {
   name: string;
   slug: string;
   categoryId: string;
-  brandId: string | null;
   modelCode: string | null;
   description: string | null;
   audience: AudienceValue;
@@ -298,7 +297,6 @@ async function uploadProductImageFile(
 function readProductForm(formData: FormData): ProductFormData {
   const name = String(formData.get("name") ?? "").trim();
   const categoryId = String(formData.get("categoryId") ?? "").trim();
-  const brandId = optionalText(formData.get("brandId"));
   const audience = String(formData.get("audience") ?? "");
   const basePrice = String(formData.get("basePrice") ?? "").trim();
   const saleUnit = String(formData.get("saleUnit") ?? "");
@@ -353,7 +351,6 @@ function readProductForm(formData: FormData): ProductFormData {
       name,
       slug,
       categoryId,
-      brandId,
       modelCode,
       description,
       audience: audience as AudienceValue,
@@ -379,22 +376,6 @@ async function validateProductRelations(storeId: string, data: ProductPayload) {
 
   if (!category) {
     return "La categoria seleccionada no es valida.";
-  }
-
-  if (!data.brandId) {
-    return null;
-  }
-
-  const brand = await prisma.brand.findUnique({
-    select: { id: true },
-    where: {
-      id: data.brandId,
-      storeId,
-    },
-  });
-
-  if (!brand) {
-    return "La marca seleccionada no es valida.";
   }
 
   return null;
@@ -500,7 +481,7 @@ function productError(error: unknown): ProductFormState {
     error.code === "P2003"
   ) {
     return {
-      message: "La categoria o marca seleccionada no es valida.",
+      message: "La categoria seleccionada no es valida.",
       status: "error",
     };
   }

@@ -18,12 +18,11 @@ Branch: feature/bootstrap
 ## Phase 2 Catalog
 
 -   [x] Categories CRUD
--   [x] Brands
 -   [x] Products CRUD
 -   [x] Images
 -   [x] Dynamic categories
 
-Branches: feat/categories feat/brands feat/products
+Branches: feat/categories feat/products
 feature/product-images feature/dynamic-categories
 
 ## Phase 3 Variants
@@ -70,10 +69,10 @@ Branches: feat/whatsapp-handoff feat/admin-orders feat/order-confirmation feat/o
 
 ## Phase 6 Admin
 
--   [ ] Admin UI update
--   [ ] Dashboard
--   [ ] Settings
--   [ ] Store configuration
+-   [x] Admin UI update
+-   [x] Dashboard
+-   [x] Settings
+-   [x] Store configuration
 
 Branch: feature/admin
 

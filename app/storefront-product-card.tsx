@@ -63,7 +63,6 @@ export function StorefrontProductCard({
           </Link>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>Talle: {getSizeLabel(product)}</p>
-            <p>Marca: {product.brand?.name ?? "Thoemia"}</p>
           </div>
           {product.description ? (
             <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">

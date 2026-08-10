@@ -104,7 +104,7 @@ Search updates automatically with debounce. Category and sort use deliberate app
 - Image area is square.
 - Hover may tint the border and slightly zoom the image on pointer devices.
 - Show product name in serif.
-- Show `Talle`, `Marca`, optional description, and ARS price.
+- Show `Talle`, optional description, and ARS price.
 - Price displays from `Product.basePrice` so visual price sorting matches the rendered price.
 - Add button is circular and uses `primary`.
 - If active variant stock total is zero, show `Sin stock` overlay and disable the add button.

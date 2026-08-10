@@ -1,5 +1,287 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
-export default function AdminPage() {
-  redirect("/admin/products");
+import {
+  AdminShell,
+  BoxIcon,
+  CategoryIcon,
+  formatAdminOrderStatus,
+  formatAdminPrice,
+  InventoryStats,
+  OrdersIcon,
+  SettingsIcon,
+  WarningIcon,
+} from "@/app/admin/admin-ui";
+import { OrderStatus } from "@/generated/prisma/client";
+import { requireAdminSession } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
+
+function getStockValue(
+  products: {
+    basePrice: { toString(): string };
+    variants: {
+      price: { toString(): string } | null;
+      stock: number;
+    }[];
+  }[],
+) {
+  return products.reduce(
+    (productTotal, product) =>
+      productTotal +
+      product.variants.reduce(
+        (variantTotal, variant) =>
+          variantTotal +
+          variant.stock *
+            Number(variant.price?.toString() ?? product.basePrice.toString()),
+        0,
+      ),
+    0,
+  );
+}
+
+function getOutOfStockCount(
+  products: {
+    variants: {
+      stock: number;
+    }[];
+  }[],
+) {
+  return products.filter(
+    (product) =>
+      product.variants.length === 0 ||
+      product.variants.every((variant) => variant.stock <= 0),
+  ).length;
+}
+
+function DashboardAction({
+  description,
+  href,
+  icon,
+  label,
+  title,
+}: {
+  description: string;
+  href: string;
+  icon: ReactNode;
+  label: string;
+  title: string;
+}) {
+  return (
+    <article className="rounded-[4px] border border-border bg-card p-6">
+      <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
+        {icon}
+      </div>
+      <h2 className="font-serif text-3xl leading-tight text-foreground">
+        {title}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      <Link
+        className="mt-5 inline-flex cursor-pointer rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:border-primary"
+        href={href}
+      >
+        {label}
+      </Link>
+    </article>
+  );
+}
+
+export default async function AdminDashboardPage() {
+  const session = await requireAdminSession();
+  const storeId = session.user.storeId;
+
+  if (!storeId) {
+    return null;
+  }
+
+  const [
+    store,
+    categoryCount,
+    products,
+    reviewingOrdersCount,
+    confirmedOrdersCount,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.store.findUnique({
+      select: {
+        name: true,
+        whatsapp: true,
+      },
+      where: {
+        id: storeId,
+      },
+    }),
+    prisma.category.count({
+      where: {
+        storeId,
+      },
+    }),
+    prisma.product.findMany({
+      select: {
+        basePrice: true,
+        variants: {
+          select: {
+            price: true,
+            stock: true,
+          },
+          where: {
+            isActive: true,
+          },
+        },
+      },
+      where: {
+        storeId,
+      },
+    }),
+    prisma.order.count({
+      where: {
+        status: OrderStatus.REVIEWING,
+        storeId,
+      },
+    }),
+    prisma.order.count({
+      where: {
+        status: OrderStatus.CONFIRMED,
+        storeId,
+      },
+    }),
+    prisma.order.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      select: {
+        createdAt: true,
+        customerName: true,
+        id: true,
+        status: true,
+        total: true,
+      },
+      take: 5,
+      where: {
+        storeId,
+      },
+    }),
+  ]);
+
+  const outOfStockCount = getOutOfStockCount(products);
+  const stockValue = getStockValue(products);
+
+  if (!store) {
+    notFound();
+  }
+
+  return (
+    <AdminShell activeSection="dashboard">
+      <div className="space-y-2">
+        <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+          Dashboard
+        </p>
+        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+          Resumen de {store.name}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Control rapido del catalogo, stock y pedidos pendientes.
+        </p>
+      </div>
+
+      <InventoryStats
+        categoryCount={categoryCount}
+        outOfStockCount={outOfStockCount}
+        productCount={products.length}
+        stockValue={stockValue}
+      />
+
+      <section className="grid gap-5 xl:grid-cols-3">
+        <DashboardAction
+          description="Carga productos, imagenes, talles, colores y ajustes de stock."
+          href="/admin/products"
+          icon={<BoxIcon />}
+          label="Gestionar productos"
+          title="Inventario"
+        />
+        <DashboardAction
+          description={`${reviewingOrdersCount} pedidos pendientes y ${confirmedOrdersCount} confirmados.`}
+          href="/admin/orders"
+          icon={<OrdersIcon />}
+          label="Gestionar pedidos"
+          title="Pedidos"
+        />
+        <DashboardAction
+          description={
+            store.whatsapp
+              ? `WhatsApp activo: ${store.whatsapp}`
+              : "Configura el WhatsApp antes de entregar la tienda."
+          }
+          href="/admin/settings"
+          icon={<SettingsIcon />}
+          label="Configurar tienda"
+          title="Configuracion"
+        />
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+        <div className="rounded-[4px] border border-border bg-card p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <OrdersIcon />
+            <h2 className="font-serif text-3xl text-foreground">
+              Pedidos recientes
+            </h2>
+          </div>
+          {recentOrders.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Todavia no hay pedidos.
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {recentOrders.map((order) => (
+                <Link
+                  className="grid gap-2 rounded-[4px] border border-border bg-background p-4 transition hover:border-primary sm:grid-cols-[minmax(0,1fr)_auto]"
+                  href="/admin/orders"
+                  key={order.id}
+                >
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {order.customerName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {order.createdAt.toLocaleString("es-AR")} -{" "}
+                      {formatAdminOrderStatus(order.status)}
+                    </p>
+                  </div>
+                  <p className="font-serif text-2xl text-foreground">
+                    {formatAdminPrice(Number(order.total))}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[4px] border border-border bg-card p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <WarningIcon />
+            <h2 className="font-serif text-3xl text-foreground">
+              Checklist MVP
+            </h2>
+          </div>
+          <ul className="grid gap-3 text-sm text-muted-foreground">
+            <li className="flex gap-3">
+              <CategoryIcon />
+              Crear categorias principales.
+            </li>
+            <li className="flex gap-3">
+              <BoxIcon />
+              Cargar productos con imagenes y variantes.
+            </li>
+            <li className="flex gap-3">
+              <OrdersIcon />
+              Probar pedido manual y confirmacion de stock.
+            </li>
+            <li className="flex gap-3">
+              <SettingsIcon />
+              Verificar WhatsApp y datos de tienda.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </AdminShell>
+  );
 }

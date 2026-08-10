@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-type AdminSection = "categories" | "products";
+type AdminSection =
+  | "categories"
+  | "dashboard"
+  | "orders"
+  | "products"
+  | "settings";
 
 type AdminShellProps = {
   activeSection: AdminSection;
@@ -29,6 +34,18 @@ export function formatAdminPrice(value: number) {
   })
     .format(value)
     .replace(/\$\s*/, "$ ");
+}
+
+export function formatAdminOrderStatus(status: string) {
+  const labels: Record<string, string> = {
+    CANCELLED: "Cancelado",
+    CONFIRMED: "Completado",
+    DRAFT: "Borrador",
+    REVIEWING: "Pendiente",
+    WHATSAPP_SENT: "WhatsApp enviado",
+  };
+
+  return labels[status] ?? status;
 }
 
 export function BoxIcon() {
@@ -106,6 +123,63 @@ export function StoreIcon() {
       <path d="m5 10 1-6h12l1 6" />
       <path d="M6 10v10h12V10" />
       <path d="M9 20v-6h6v6" />
+    </svg>
+  );
+}
+
+export function DashboardIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 13h7V4H4z" />
+      <path d="M13 20h7V4h-7z" />
+      <path d="M4 20h7v-5H4z" />
+    </svg>
+  );
+}
+
+export function OrdersIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <path d="M7 3h10l2 4v14H5V7z" />
+      <path d="M7 7h10" />
+      <path d="M9 12h6" />
+      <path d="M9 16h4" />
+    </svg>
+  );
+}
+
+export function SettingsIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.36a1.7 1.7 0 0 0-1 .58V20a2 2 0 1 1-4 0v-.06a1.7 1.7 0 0 0-1-.58 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-.58-1H4a2 2 0 1 1 0-4h.06a1.7 1.7 0 0 0 .58-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-.58V4a2 2 0 1 1 4 0v.06a1.7 1.7 0 0 0 1 .58 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.2.37.4.7.58 1H20a2 2 0 1 1 0 4h-.06c-.18.3-.38.63-.54 1Z" />
     </svg>
   );
 }
@@ -245,6 +319,13 @@ export function AdminShell({ activeSection, children }: AdminShellProps) {
           </p>
           <nav className="space-y-2 text-base text-muted-foreground">
             <AdminNavLink
+              active={activeSection === "dashboard"}
+              href="/admin"
+              icon={<DashboardIcon />}
+            >
+              Dashboard
+            </AdminNavLink>
+            <AdminNavLink
               active={activeSection === "products"}
               href="/admin/products"
               icon={<BoxIcon />}
@@ -258,8 +339,63 @@ export function AdminShell({ activeSection, children }: AdminShellProps) {
             >
               Categorias
             </AdminNavLink>
+            <AdminNavLink
+              active={activeSection === "orders"}
+              href="/admin/orders"
+              icon={<OrdersIcon />}
+            >
+              Pedidos
+            </AdminNavLink>
+            <AdminNavLink
+              active={activeSection === "settings"}
+              href="/admin/settings"
+              icon={<SettingsIcon />}
+            >
+              Configuracion
+            </AdminNavLink>
           </nav>
         </aside>
+
+        <nav
+          aria-label="Navegacion admin"
+          className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:hidden"
+        >
+          <AdminNavLink
+            active={activeSection === "dashboard"}
+            href="/admin"
+            icon={<DashboardIcon />}
+          >
+            Dashboard
+          </AdminNavLink>
+          <AdminNavLink
+            active={activeSection === "products"}
+            href="/admin/products"
+            icon={<BoxIcon />}
+          >
+            Productos
+          </AdminNavLink>
+          <AdminNavLink
+            active={activeSection === "categories"}
+            href="/admin/categories"
+            icon={<CategoryIcon />}
+          >
+            Categorias
+          </AdminNavLink>
+          <AdminNavLink
+            active={activeSection === "orders"}
+            href="/admin/orders"
+            icon={<OrdersIcon />}
+          >
+            Pedidos
+          </AdminNavLink>
+          <AdminNavLink
+            active={activeSection === "settings"}
+            href="/admin/settings"
+            icon={<SettingsIcon />}
+          >
+            Configuracion
+          </AdminNavLink>
+        </nav>
 
         <section className="min-w-0 space-y-10">{children}</section>
       </div>
