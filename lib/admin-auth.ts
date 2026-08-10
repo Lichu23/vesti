@@ -19,3 +19,13 @@ export async function requireAdminSession() {
 
   return session;
 }
+
+export async function requireOwnerSession() {
+  const session = await requireAdminSession();
+
+  if (session.user.role !== "OWNER") {
+    redirect("/admin");
+  }
+
+  return session;
+}

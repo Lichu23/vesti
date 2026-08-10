@@ -62,6 +62,7 @@ model Store {
   productVariants    ProductVariant[]
   products           Product[]
   sizeGuides         SizeGuide[]
+  storeInvites       StoreInvite[]
   users              User[]
 }
 
@@ -80,6 +81,21 @@ model User {
   store         Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
+}
+
+model StoreInvite {
+  id         String    @id @default(uuid()) @db.Uuid
+  storeId    String    @db.Uuid
+  email      String
+  role       UserRole  @default(ADMIN)
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  store      Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, email])
+  @@index([email, acceptedAt])
+  @@index([storeId, acceptedAt])
 }
 
 model Account {

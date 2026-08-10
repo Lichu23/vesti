@@ -78,7 +78,7 @@ export function EditOrderModal({
   return (
     <>
       <button
-        className="cursor-pointer rounded-md border px-3 py-2 text-sm font-medium"
+        className="w-full cursor-pointer rounded-md border px-3 py-2 text-sm font-medium sm:w-auto"
         onClick={() => setIsOpen(true)}
         type="button"
       >
@@ -97,11 +97,11 @@ export function EditOrderModal({
       {isOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 text-left"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-0 text-left sm:p-4"
           role="dialog"
         >
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="h-full max-h-screen w-full max-w-5xl overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-semibold">Editar pedido</h3>
                 <p className="text-sm text-zinc-600">

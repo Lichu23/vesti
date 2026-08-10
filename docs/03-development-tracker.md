@@ -73,8 +73,11 @@ Branches: feat/whatsapp-handoff feat/admin-orders feat/order-confirmation feat/o
 -   [x] Dashboard
 -   [x] Settings
 -   [x] Store configuration
+-   [x] Store invite handoff flow
+-   [x] Responsive admin shell with mobile hamburger menu
+-   [x] Responsive admin products, modals, orders, settings, and categories
 
-Branch: feature/admin
+Branches: feature/admin feat/admin-ui-update feat/admin-responsive-views
 
 ## Phase 7 Future
 

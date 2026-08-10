@@ -2,7 +2,6 @@ import {
   AdminEmptyState,
   AdminPagination,
   AdminShell,
-  InventoryStats,
   TrashIcon,
 } from "@/app/admin/admin-ui";
 import { CategoryModal } from "@/app/admin/categories/category-modal";
@@ -48,7 +47,7 @@ export default async function AdminCategoriesPage({
     return null;
   }
 
-  const [store, categoryCount, products] = await Promise.all([
+  const [store, categoryCount] = await Promise.all([
     prisma.store.findUnique({
       select: {
         name: true,
@@ -58,23 +57,6 @@ export default async function AdminCategoriesPage({
       },
     }),
     prisma.category.count({
-      where: {
-        storeId,
-      },
-    }),
-    prisma.product.findMany({
-      select: {
-        basePrice: true,
-        variants: {
-          select: {
-            price: true,
-            stock: true,
-          },
-          where: {
-            isActive: true,
-          },
-        },
-      },
       where: {
         storeId,
       },
@@ -120,27 +102,10 @@ export default async function AdminCategoriesPage({
     take: categoriesPerPage,
   });
 
-  const outOfStockCount = products.filter(
-    (product) =>
-      product.variants.length === 0 ||
-      product.variants.every((variant) => variant.stock <= 0),
-  ).length;
-  const stockValue = products.reduce(
-    (productTotal, product) =>
-      productTotal +
-      product.variants.reduce(
-        (variantTotal, variant) =>
-          variantTotal +
-          variant.stock * Number(variant.price ?? product.basePrice),
-        0,
-      ),
-    0,
-  );
-
   return (
     <AdminShell activeSection="categories">
       <div className="space-y-2">
-        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Panel de inventario
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -149,15 +114,8 @@ export default async function AdminCategoriesPage({
         </p>
       </div>
 
-      <InventoryStats
-        categoryCount={categoryCount}
-        outOfStockCount={outOfStockCount}
-        productCount={products.length}
-        stockValue={stockValue}
-      />
-
       <section className="space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="grid gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
           <p className="text-lg text-muted-foreground">
             {categoryCount} colecciones
           </p>
@@ -191,7 +149,7 @@ export default async function AdminCategoriesPage({
 
               return (
                 <article
-                  className="grid grid-cols-[80px_minmax(0,1fr)_auto] items-center gap-5 rounded-[4px] border border-border bg-card p-5"
+                  className="grid gap-4 rounded-[4px] border border-border bg-card p-4 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:items-center sm:gap-5 sm:p-5"
                   key={category.id}
                 >
                   {image ? (
@@ -216,7 +174,7 @@ export default async function AdminCategoriesPage({
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-4 text-muted-foreground">
+                  <div className="flex items-center justify-end gap-4 border-t border-border pt-3 text-muted-foreground sm:flex-col sm:border-t-0 sm:pt-0">
                     <CategoryModal
                       action={updateCategory}
                       buttonLabel="Actualizar categoria"

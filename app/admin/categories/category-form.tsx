@@ -42,13 +42,13 @@ export function CategoryForm({
   }, [onSuccess, state.status]);
 
   return (
-    <form action={formAction} className="grid gap-3 rounded-xl border p-4">
+    <form action={formAction} className="grid gap-3 rounded-xl border p-3 sm:p-4">
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
 
       <label className="grid gap-1 text-sm font-medium">
         Nombre
         <input
-          className="rounded-md border px-3 py-2 text-sm"
+          className="rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           defaultValue={category?.name}
           name="name"
           required
@@ -58,7 +58,7 @@ export function CategoryForm({
       <label className="grid gap-1 text-sm font-medium">
         Orden
         <input
-          className="rounded-md border px-3 py-2 text-sm"
+          className="rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           defaultValue={category?.sortOrder ?? 0}
           name="sortOrder"
           type="number"
@@ -86,7 +86,7 @@ export function CategoryForm({
       ) : null}
 
       <button
-        className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >

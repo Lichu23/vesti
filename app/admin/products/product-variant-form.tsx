@@ -32,7 +32,7 @@ type ProductVariantFormProps = {
 };
 
 function fieldClassName() {
-  return "rounded-md border px-3 py-2 text-sm";
+  return "rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
 
 export function ProductVariantForm({
@@ -155,7 +155,7 @@ export function ProductVariantForm({
       ) : null}
 
       <button
-        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >
@@ -189,7 +189,7 @@ export function ProductVariantDeleteForm({
       <input name="id" type="hidden" value={variantId} />
       <input name="productId" type="hidden" value={productId} />
       <button
-        className="w-fit cursor-pointer text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer text-left text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >

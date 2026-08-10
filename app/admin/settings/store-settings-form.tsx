@@ -23,7 +23,7 @@ type StoreSettingsFormProps = {
 };
 
 function fieldClassName() {
-  return "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none";
+  return "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
 
 export function StoreSettingsForm({ action, store }: StoreSettingsFormProps) {
@@ -95,7 +95,7 @@ export function StoreSettingsForm({ action, store }: StoreSettingsFormProps) {
       ) : null}
 
       <button
-        className="w-fit cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >

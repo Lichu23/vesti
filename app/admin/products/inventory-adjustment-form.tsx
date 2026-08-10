@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState } from "react";
 
@@ -37,7 +37,7 @@ export function InventoryAdjustmentForm({
         <label className="grid gap-1 text-sm font-medium">
           Ajuste
           <input
-            className="rounded-md border px-3 py-2 text-sm"
+            className="rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             name="quantity"
             placeholder="+5 o -2"
             required
@@ -49,7 +49,7 @@ export function InventoryAdjustmentForm({
         <label className="grid gap-1 text-sm font-medium">
           Motivo
           <input
-            className="rounded-md border px-3 py-2 text-sm"
+            className="rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             maxLength={160}
             name="reason"
             placeholder="Reposicion, correccion, producto danado"
@@ -69,7 +69,7 @@ export function InventoryAdjustmentForm({
       ) : null}
 
       <button
-        className="w-fit cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending}
         type="submit"
       >
