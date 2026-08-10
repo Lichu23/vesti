@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thoemia Intimo
 
-## Getting Started
+Thoemia Intimo is a boutique e-commerce MVP for clothing stores. The first store is **Thoemia Intimo**, but the codebase is structured around store ownership, admin access, products, inventory, orders, and future multi-store growth.
 
-First, run the development server:
+The app is not a generic storefront template. It models the real selling flow for a small clothing business: customers browse products, build a cart, send the order through WhatsApp, and the store owner confirms stock before the order becomes final.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What this repository contains
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This repository contains the full storefront and admin system for the MVP:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Storefront product browsing
+- Dynamic categories and audience filters
+- Product variants with size, color, price override, stock, and SKU
+- Product image management through Supabase Storage
+- Cart flow with WhatsApp order handoff
+- Admin dashboard
+- Product, category, order, and inventory management
+- Owner/admin access control
+- Store invite flow for handing off ownership or inviting admins
+- Production deployment requirements and development tracker docs
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Product flow
 
-## Learn More
+Customers browse active products, add available variants to the cart, and send the order summary to the store through WhatsApp.
 
-To learn more about Next.js, take a look at the following resources:
+Orders are created internally before the WhatsApp redirect. The admin can review and edit pending orders, then confirm them. Stock is deducted only when an order is confirmed, not when the customer first submits the cart.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin model
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The admin area separates store operation from platform ownership:
 
-## Deploy on Vercel
+- `OWNER` can manage store settings and invite or remove admins.
+- `ADMIN` can manage operational areas such as products, orders, and inventory.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Store access is handled through invites. An owner invites a Gmail account, and when that person signs in with Google, the app links the user to the correct store and role.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Technical shape
+
+The app uses:
+
+- Next.js App Router
+- React Server Components and Server Actions
+- Prisma with PostgreSQL
+- Supabase for database and product image storage
+- Auth.js with Google login
+- Vercel-oriented production deployment
+
+The database schema is centered on stores, users, categories, products, variants, inventory movements, orders, and store invites.
+
+## Current MVP boundary
+
+Included in the MVP:
+
+- Product catalog
+- Cart
+- WhatsApp order handoff
+- Admin dashboard
+- Inventory management
+- Order review and confirmation
+- Owner/admin handoff flow
+
+Not included yet:
+
+- Online payments
+- Shipping integrations
+- Coupons
+- Customer accounts
+- Automated multi-store onboarding
+
