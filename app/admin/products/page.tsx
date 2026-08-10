@@ -229,37 +229,39 @@ export default async function AdminProductsPage({
       ) : null}
 
       <section className="space-y-6">
-        <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto_auto]">
-          <label className="flex min-h-14 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground">
-            <SearchIcon />
-            <input
-              className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-              defaultValue={query}
-              name="buscar"
-              placeholder="Buscar por nombre o categoria..."
-              type="search"
-            />
-          </label>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+          <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto]">
+            <label className="flex min-h-14 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground">
+              <SearchIcon />
+              <input
+                className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+                defaultValue={query}
+                name="buscar"
+                placeholder="Buscar por nombre o categoria..."
+                type="search"
+              />
+            </label>
 
-          <select
-            className="min-h-14 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none"
-            defaultValue={categoryId ?? ""}
-            name="categoria"
-          >
-            <option value="">Todas las categorias</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            <select
+              className="min-h-14 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none"
+              defaultValue={categoryId ?? ""}
+              name="categoria"
+            >
+              <option value="">Todas las categorias</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
 
-          <button
-            className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:border-primary"
-            type="submit"
-          >
-            Filtrar
-          </button>
+            <button
+              className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:border-primary"
+              type="submit"
+            >
+              Filtrar
+            </button>
+          </form>
 
           <ProductModal
             action={createProduct}
@@ -269,7 +271,7 @@ export default async function AdminProductsPage({
             title="Nuevo producto"
             trigger={{ label: "Nuevo producto", type: "button" }}
           />
-        </form>
+        </div>
 
         <div className="overflow-x-auto rounded-[4px] border border-border bg-card">
           <div className="grid grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -357,7 +359,7 @@ export default async function AdminProductsPage({
                     <div className="flex justify-end gap-4 text-muted-foreground">
                       <ProductModal
                         action={updateProduct}
-                                    buttonLabel="Actualizar producto"
+                        buttonLabel="Actualizar producto"
                         categories={categories}
                         description="Edita la informacion base del producto."
                         product={{
