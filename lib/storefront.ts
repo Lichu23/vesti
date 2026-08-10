@@ -39,11 +39,6 @@ const productSelect = {
   saleUnit: true,
   packQuantity: true,
   sizeDisplayText: true,
-  brand: {
-    select: {
-      name: true,
-    },
-  },
   category: {
     select: {
       name: true,
@@ -182,11 +177,6 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
                   description: {
                     contains: query,
                     mode: "insensitive" as const,
-                  },
-                },
-                {
-                  brand: {
-                    name: { contains: query, mode: "insensitive" as const },
                   },
                 },
               ],

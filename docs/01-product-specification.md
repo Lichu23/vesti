@@ -41,7 +41,7 @@ Socks - T-Shirts
 
 ### Product
 
-Fields: - Name - Slug - Brand - Model Code (optional) - Description -
+Fields: - Name - Slug - Model Code (optional) - Description -
 Audience - Category - Base Price - Sale Unit (Unit / Pack) - Pack
 Quantity - Color Mode - Size Display Text - Featured - Active
 

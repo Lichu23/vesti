@@ -91,21 +91,13 @@ export default async function AdminProductsPage({
                 },
               },
             },
-            {
-              brand: {
-                name: {
-                  contains: query,
-                  mode: "insensitive" as const,
-                },
-              },
-            },
           ],
         }
       : {}),
     storeId,
   };
 
-  const [store, categories, brands, metricProducts, productCount] =
+  const [store, categories, metricProducts, productCount] =
     await Promise.all([
       prisma.store.findUnique({
         select: {
@@ -117,16 +109,6 @@ export default async function AdminProductsPage({
       }),
       prisma.category.findMany({
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-        select: {
-          id: true,
-          name: true,
-        },
-        where: {
-          storeId,
-        },
-      }),
-      prisma.brand.findMany({
-        orderBy: [{ name: "asc" }],
         select: {
           id: true,
           name: true,
@@ -160,11 +142,6 @@ export default async function AdminProductsPage({
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const products = await prisma.product.findMany({
     include: {
-      brand: {
-        select: {
-          name: true,
-        },
-      },
       category: {
         select: {
           name: true,
@@ -259,7 +236,7 @@ export default async function AdminProductsPage({
               className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
               defaultValue={query}
               name="buscar"
-              placeholder="Buscar por nombre, marca o categoria..."
+              placeholder="Buscar por nombre o categoria..."
               type="search"
             />
           </label>
@@ -286,7 +263,6 @@ export default async function AdminProductsPage({
 
           <ProductModal
             action={createProduct}
-            brands={brands}
             buttonLabel="Crear producto"
             categories={categories}
             description="Crea el producto base desde una ventana dedicada."
@@ -296,10 +272,9 @@ export default async function AdminProductsPage({
         </form>
 
         <div className="overflow-x-auto rounded-[4px] border border-border bg-card">
-          <div className="grid grid-cols-[minmax(320px,1.7fr)_180px_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="grid grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] border-b border-border px-5 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             <span>Producto</span>
             <span>Categoria</span>
-            <span>Marca</span>
             <span>Precio</span>
             <span>Stock</span>
             <span className="text-right">Acciones</span>
@@ -312,7 +287,6 @@ export default async function AdminProductsPage({
                   action={
                     <ProductModal
                       action={createProduct}
-                      brands={brands}
                       buttonLabel="Crear producto"
                       categories={categories}
                       description="Crea el producto base desde una ventana dedicada."
@@ -339,7 +313,7 @@ export default async function AdminProductsPage({
 
                 return (
                   <article
-                    className="grid grid-cols-[minmax(320px,1.7fr)_180px_180px_140px_140px_110px] items-center border-b border-border px-5 py-4 last:border-b-0"
+                    className="grid grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] items-center border-b border-border px-5 py-4 last:border-b-0"
                     key={product.id}
                   >
                     <div className="flex items-center gap-4">
@@ -368,9 +342,6 @@ export default async function AdminProductsPage({
                     <span className="text-muted-foreground">
                       {product.category.name}
                     </span>
-                    <span className="text-muted-foreground">
-                      {product.brand?.name ?? "Thoemia"}
-                    </span>
                     <span className="font-serif text-xl text-foreground">
                       {formatAdminPrice(Number(product.basePrice))}
                     </span>
@@ -386,15 +357,13 @@ export default async function AdminProductsPage({
                     <div className="flex justify-end gap-4 text-muted-foreground">
                       <ProductModal
                         action={updateProduct}
-                        brands={brands}
-                        buttonLabel="Actualizar producto"
+                                    buttonLabel="Actualizar producto"
                         categories={categories}
                         description="Edita la informacion base del producto."
                         product={{
                           id: product.id,
                           name: product.name,
                           categoryId: product.categoryId,
-                          brandId: product.brandId,
                           modelCode: product.modelCode,
                           description: product.description,
                           audience: product.audience,
@@ -639,7 +608,6 @@ export default async function AdminProductsPage({
           totalPages={totalPages}
         />
       </section>
-
     </AdminShell>
   );
 }

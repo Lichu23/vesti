@@ -1,4 +1,11 @@
 import {
+  AdminEmptyState,
+  AdminShell,
+  formatAdminOrderStatus,
+  formatAdminPrice,
+  OrdersIcon,
+} from "@/app/admin/admin-ui";
+import {
   confirmOrder,
   createManualOrder,
   updateManualOrder,
@@ -8,29 +15,6 @@ import { EditOrderModal } from "@/app/admin/orders/edit-order-modal";
 import { OrderForm } from "@/app/admin/orders/order-form";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-
-function formatPrice(value: { toString(): string }) {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-    style: "currency",
-  })
-    .format(Number(value.toString()))
-    .replace(/\$\s*/, "$ ");
-}
-
-function formatStatus(status: string) {
-  const labels: Record<string, string> = {
-    CANCELLED: "Cancelado",
-    CONFIRMED: "Completado",
-    DRAFT: "Borrador",
-    REVIEWING: "Pendiente",
-    WHATSAPP_SENT: "WhatsApp enviado",
-  };
-
-  return labels[status] ?? status;
-}
 
 function getStatusClassName(status: string) {
   if (status === "CONFIRMED") {
@@ -116,24 +100,33 @@ export default async function AdminOrdersPage() {
 
     return {
       id: variant.id,
-      label: `${variant.product.name} (${variantParts.join(" / ")}) - ${formatPrice(price)}`,
+      label: `${variant.product.name} (${variantParts.join(" / ")}) - ${formatAdminPrice(Number(price))}`,
       stock: variant.stock,
     };
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-8">
+    <AdminShell activeSection="orders">
       <header className="space-y-2">
-        <p className="text-sm text-zinc-500">Pedidos</p>
-        <h1 className="text-3xl font-semibold">Pedidos</h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+          Pedidos
+        </p>
+        <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+          Pedidos
+        </h1>
+        <p className="text-lg text-muted-foreground">
           Crea pedidos manuales desde conversaciones de WhatsApp. Confirma el
           pedido para descontar stock.
         </p>
       </header>
 
-      <section className="grid gap-4">
-        <h2 className="text-xl font-semibold">Nuevo pedido manual</h2>
+      <section className="grid gap-4 rounded-[4px] border border-border bg-card p-6">
+        <div className="flex items-center gap-3">
+          <OrdersIcon />
+          <h2 className="font-serif text-3xl text-foreground">
+            Nuevo pedido manual
+          </h2>
+        </div>
         <OrderForm
           action={createManualOrder}
           buttonLabel="Crear pedido"
@@ -142,25 +135,29 @@ export default async function AdminOrdersPage() {
       </section>
 
       <section className="grid gap-4">
-        <h2 className="text-xl font-semibold">Pedidos recientes</h2>
+        <h2 className="font-serif text-3xl text-foreground">
+          Pedidos recientes
+        </h2>
         {orders.length === 0 ? (
-          <p className="rounded-xl border p-4 text-sm text-zinc-600">
-            Todavia no hay pedidos.
-          </p>
+          <AdminEmptyState
+            action={null}
+            description="Cuando crees pedidos desde WhatsApp van a aparecer aca."
+            title="Todavia no hay pedidos"
+          />
         ) : (
           <div className="grid gap-4">
             {orders.map((order) => (
               <article
-                className="grid gap-4 rounded-xl border p-4"
+                className="grid gap-4 rounded-[4px] border border-border bg-card p-5"
                 key={order.id}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <h3 className="font-semibold">{order.customerName}</h3>
-                    <p className="text-sm text-zinc-600">
+                    <p className="text-sm text-muted-foreground">
                       Tel: {order.customerPhone}
                     </p>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-muted-foreground">
                       {order.createdAt.toLocaleString("es-AR")}
                     </p>
                   </div>
@@ -170,10 +167,10 @@ export default async function AdminOrdersPage() {
                         order.status,
                       )}`}
                     >
-                      {formatStatus(order.status)}
+                      {formatAdminOrderStatus(order.status)}
                     </span>
                     <p className="mt-2 font-serif text-2xl">
-                      {formatPrice(order.total)}
+                      {formatAdminPrice(Number(order.total))}
                     </p>
                     {order.status === "REVIEWING" ? (
                       <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -203,26 +200,30 @@ export default async function AdminOrdersPage() {
 
                 <ul className="grid gap-2">
                   {order.items.map((item) => (
-                    <li
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3 text-sm"
+                  <li
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] bg-background p-3 text-sm"
                       key={item.id}
                     >
                       <div>
                         <p className="font-medium">
                           {item.productName} x{item.quantity}
                         </p>
-                        <p className="text-zinc-600">{item.variantLabel}</p>
-                        <p className="text-zinc-500">
-                          Unitario: {formatPrice(item.unitPrice)}
+                        <p className="text-muted-foreground">
+                          {item.variantLabel}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Unitario: {formatAdminPrice(Number(item.unitPrice))}
                         </p>
                       </div>
-                      <p className="font-medium">{formatPrice(item.subtotal)}</p>
+                      <p className="font-medium">
+                        {formatAdminPrice(Number(item.subtotal))}
+                      </p>
                     </li>
                   ))}
                 </ul>
 
                 {order.notes ? (
-                  <p className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-600">
+                  <p className="rounded-[4px] bg-background p-3 text-sm text-muted-foreground">
                     {order.notes}
                   </p>
                 ) : null}
@@ -231,6 +232,6 @@ export default async function AdminOrdersPage() {
           </div>
         )}
       </section>
-    </main>
+    </AdminShell>
   );
 }

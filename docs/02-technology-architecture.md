@@ -23,7 +23,7 @@ Feature-based architecture.
 
 apps/ - web
 
-Modules - auth - catalog - categories - brands - products - variants -
+Modules - auth - catalog - categories - products - variants -
 inventory - cart - orders - admin - media - settings
 
 ## Database
@@ -39,7 +39,6 @@ Every business entity contains storeId from day one.
 
 -   Categories are dynamic.
 -   Audience is independent from category.
--   Brand stored separately.
 -   Model code supported.
 -   Packs supported.
 -   Variants always exist.

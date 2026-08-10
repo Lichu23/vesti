@@ -18,7 +18,6 @@ type ProductAction = (
 
 type ProductModalProps = {
   action: ProductAction;
-  brands: ProductOption[];
   buttonLabel: string;
   categories: ProductOption[];
   children?: ReactNode;
@@ -38,7 +37,6 @@ type ProductModalProps = {
 
 export function ProductModal({
   action,
-  brands,
   buttonLabel,
   categories,
   children,
@@ -97,7 +95,6 @@ export function ProductModal({
 
             <ProductForm
               action={action}
-              brands={brands}
               buttonLabel={buttonLabel}
               categories={categories}
               onSuccess={handleSuccess}

@@ -145,9 +145,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <h1 className="font-serif text-5xl leading-tight text-foreground">
                 {product.name}
               </h1>
-              <p className="mt-3 text-base text-muted-foreground">
-                Marca: {product.brand?.name ?? "Thoemia"}
-              </p>
             </div>
 
             {product.description ? (
