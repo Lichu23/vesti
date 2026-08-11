@@ -16,7 +16,6 @@ type CategoryFormData =
       data: {
         name: string;
         slug: string;
-        sortOrder: number;
         isActive: boolean;
       };
     }
@@ -36,8 +35,6 @@ function slugify(value: string) {
 
 function readCategoryForm(formData: FormData): CategoryFormData {
   const name = String(formData.get("name") ?? "").trim();
-  const sortOrderValue = String(formData.get("sortOrder") ?? "0").trim();
-  const sortOrder = Number.parseInt(sortOrderValue, 10);
 
   if (!name) {
     return { error: "El nombre es obligatorio." };
@@ -49,15 +46,10 @@ function readCategoryForm(formData: FormData): CategoryFormData {
     return { error: "El nombre debe incluir al menos una letra o numero." };
   }
 
-  if (Number.isNaN(sortOrder)) {
-    return { error: "El orden debe ser un numero." };
-  }
-
   return {
     data: {
       name,
       slug,
-      sortOrder,
       isActive: formData.get("isActive") === "on",
     },
   };
@@ -94,9 +86,16 @@ export async function createCategory(
   }
 
   try {
+    const lastCategory = await prisma.category.findFirst({
+      where: { storeId },
+      orderBy: [{ sortOrder: "desc" }, { createdAt: "desc" }],
+      select: { sortOrder: true },
+    });
+
     await prisma.category.create({
       data: {
         ...parsed.data,
+        sortOrder: (lastCategory?.sortOrder ?? -1) + 1,
         storeId,
       },
     });

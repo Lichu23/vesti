@@ -44,7 +44,6 @@ type ProductPayload = {
   audience: AudienceValue;
   basePrice: string;
   saleUnit: SaleUnitValue;
-  packQuantity: number | null;
   colorMode: ColorModeValue;
   sizeDisplayText: string | null;
   isFeatured: boolean;
@@ -300,7 +299,6 @@ function readProductForm(formData: FormData): ProductFormData {
   const audience = String(formData.get("audience") ?? "");
   const basePrice = String(formData.get("basePrice") ?? "").trim();
   const saleUnit = String(formData.get("saleUnit") ?? "");
-  const packQuantityValue = String(formData.get("packQuantity") ?? "").trim();
   const colorMode = String(formData.get("colorMode") ?? "");
   const modelCode = optionalText(formData.get("modelCode"));
   const description = optionalText(formData.get("description"));
@@ -338,14 +336,6 @@ function readProductForm(formData: FormData): ProductFormData {
     };
   }
 
-  if (packQuantityValue && !/^[1-9]\d*$/.test(packQuantityValue)) {
-    return { error: "La cantidad del pack debe ser un numero entero positivo." };
-  }
-
-  const packQuantity = packQuantityValue
-    ? Number.parseInt(packQuantityValue, 10)
-    : null;
-
   return {
     data: {
       name,
@@ -356,7 +346,6 @@ function readProductForm(formData: FormData): ProductFormData {
       audience: audience as AudienceValue,
       basePrice,
       saleUnit: saleUnit as SaleUnitValue,
-      packQuantity,
       colorMode: colorMode as ColorModeValue,
       sizeDisplayText,
       isFeatured: formData.get("isFeatured") === "on",

@@ -18,7 +18,6 @@ type CategoryModalProps = {
     id: string;
     isActive: boolean;
     name: string;
-    sortOrder: number;
   };
   description: string;
   title: string;

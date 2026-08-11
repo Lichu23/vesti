@@ -88,7 +88,6 @@ export default async function AdminCategoriesPage({
         },
       },
       slug: true,
-      sortOrder: true,
       _count: {
         select: {
           products: true,
@@ -179,7 +178,7 @@ export default async function AdminCategoriesPage({
                       action={updateCategory}
                       buttonLabel="Actualizar categoria"
                       category={category}
-                      description="Actualiza nombre, orden y visibilidad."
+                      description="Actualiza nombre y visibilidad."
                       title="Editar categoria"
                       trigger={{
                         label: `Editar ${category.name}`,

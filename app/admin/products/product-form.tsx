@@ -23,7 +23,6 @@ export type ProductFormProduct = {
   audience: string;
   basePrice: string;
   saleUnit: string;
-  packQuantity: number | null;
   colorMode: string;
   sizeDisplayText: string | null;
   isFeatured: boolean;
@@ -41,15 +40,28 @@ type ProductFormProps = {
   product?: ProductFormProduct;
 };
 
-const audiences = ["WOMEN", "MEN", "KIDS", "UNISEX"];
-const saleUnits = ["UNIT", "PACK"];
-const colorModes = ["NONE", "VARIANTS", "ASK", "ASSORTED"];
+const audiences = [
+  { label: "Mujer", value: "WOMEN" },
+  { label: "Hombre", value: "MEN" },
+  { label: "Ninos", value: "KIDS" },
+  { label: "Unisex", value: "UNISEX" },
+];
+const saleUnits = [
+  { label: "Unidad", value: "UNIT" },
+  { label: "Pack", value: "PACK" },
+];
+const colorModes = [
+  { label: "Sin color", value: "NONE" },
+  { label: "Colores por variante", value: "VARIANTS" },
+  { label: "Consultar color", value: "ASK" },
+  { label: "Colores surtidos", value: "ASSORTED" },
+];
 
 const colorModeDescriptions = [
-  "NONE: el producto no tiene seleccion de color.",
-  "VARIANTS: el cliente elige color desde las variantes.",
-  "ASK: el cliente consulta colores disponibles por mensaje.",
-  "ASSORTED: el producto se envia con colores surtidos.",
+  "Sin color: el producto no tiene seleccion de color.",
+  "Colores por variante: el cliente elige color desde las variantes.",
+  "Consultar color: el cliente consulta colores disponibles por mensaje.",
+  "Colores surtidos: el producto se envia con colores surtidos.",
 ];
 
 function fieldClassName() {
@@ -90,7 +102,7 @@ export function ProductForm({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
-          Codigo de modelo
+          Codigo de modelo (opcional)
           <input
             className={fieldClassName()}
             defaultValue={product?.modelCode ?? ""}
@@ -126,8 +138,8 @@ export function ProductForm({
             required
           >
             {audiences.map((audience) => (
-              <option key={audience} value={audience}>
-                {audience}
+              <option key={audience.value} value={audience.value}>
+                {audience.label}
               </option>
             ))}
           </select>
@@ -137,9 +149,10 @@ export function ProductForm({
           Precio base
           <input
             className={fieldClassName()}
-            defaultValue={product?.basePrice ?? "0.00"}
+            defaultValue={product?.basePrice}
             min="0"
             name="basePrice"
+            placeholder="ej: 7000"
             required
             step="0.01"
             type="number"
@@ -155,8 +168,8 @@ export function ProductForm({
             required
           >
             {saleUnits.map((saleUnit) => (
-              <option key={saleUnit} value={saleUnit}>
-                {saleUnit}
+              <option key={saleUnit.value} value={saleUnit.value}>
+                {saleUnit.label}
               </option>
             ))}
           </select>
@@ -164,18 +177,6 @@ export function ProductForm({
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <label className="grid gap-1 text-sm font-medium">
-          Cantidad del pack
-          <input
-            className={fieldClassName()}
-            defaultValue={product?.packQuantity ?? ""}
-            min="1"
-            name="packQuantity"
-            step="1"
-            type="number"
-          />
-        </label>
-
         <label className="grid gap-1 text-sm font-medium">
           Modo de color
           <select
@@ -185,8 +186,8 @@ export function ProductForm({
             required
           >
             {colorModes.map((colorMode) => (
-              <option key={colorMode} value={colorMode}>
-                {colorMode}
+              <option key={colorMode.value} value={colorMode.value}>
+                {colorMode.label}
               </option>
             ))}
           </select>
@@ -195,13 +196,13 @@ export function ProductForm({
           </span>
         </label>
 
-        <label className="grid gap-1 text-sm font-medium">
-          Texto de talle visible
+        <label className="grid gap-1 self-start text-sm font-medium">
+          Talles disponibles
           <input
             className={fieldClassName()}
             defaultValue={product?.sizeDisplayText ?? ""}
             name="sizeDisplayText"
-            placeholder="ej: S al XL o 80/90"
+            placeholder="Ej: S a XL o 80/90"
           />
         </label>
       </div>

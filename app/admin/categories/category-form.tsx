@@ -19,7 +19,6 @@ type CategoryFormProps = {
     id: string;
     name: string;
     isActive: boolean;
-    sortOrder: number;
   };
   onSuccess?: () => void;
 };
@@ -52,16 +51,6 @@ export function CategoryForm({
           defaultValue={category?.name}
           name="name"
           required
-        />
-      </label>
-
-      <label className="grid gap-1 text-sm font-medium">
-        Orden
-        <input
-          className="rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-          defaultValue={category?.sortOrder ?? 0}
-          name="sortOrder"
-          type="number"
         />
       </label>
 

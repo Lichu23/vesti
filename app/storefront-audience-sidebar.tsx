@@ -60,6 +60,7 @@ export function StorefrontAudienceSidebar({
             (category) => category.slug === activeCategory,
           );
           const isActiveAudience = activeAudiencePath === section.href;
+          const isCurrentAllProducts = isActiveAudience && !activeCategory;
           const isOpen = isActiveAudience || hasActiveCategory;
 
           return (
@@ -85,16 +86,21 @@ export function StorefrontAudienceSidebar({
               </summary>
               <ul className="mt-3 space-y-3 pl-3 text-sm">
                 <li>
-                  <Link
-                    className={`cursor-pointer transition hover:text-foreground ${
-                      isActiveAudience && !activeCategory
-                        ? "font-semibold text-foreground"
-                        : ""
-                    }`}
-                    href={section.href}
-                  >
-                    Ver todo
-                  </Link>
+                  {isCurrentAllProducts ? (
+                    <span
+                      aria-current="page"
+                      className="font-semibold text-foreground"
+                    >
+                      Ver todo
+                    </span>
+                  ) : (
+                    <Link
+                      className="cursor-pointer transition hover:text-foreground"
+                      href={section.href}
+                    >
+                      Ver todo
+                    </Link>
+                  )}
                 </li>
                 {categories.map((category) => (
                   <li key={`${section.href}-${category.id}`}>

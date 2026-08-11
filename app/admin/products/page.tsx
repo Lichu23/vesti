@@ -323,7 +323,6 @@ export default async function AdminProductsPage({
                           audience: product.audience,
                           basePrice: product.basePrice.toString(),
                           saleUnit: product.saleUnit,
-                          packQuantity: product.packQuantity,
                           colorMode: product.colorMode,
                           sizeDisplayText: product.sizeDisplayText,
                           isFeatured: product.isFeatured,

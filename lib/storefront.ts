@@ -37,7 +37,6 @@ const productSelect = {
   description: true,
   basePrice: true,
   saleUnit: true,
-  packQuantity: true,
   sizeDisplayText: true,
   category: {
     select: {
