@@ -464,12 +464,25 @@ export default async function AdminProductsPage({
                             </div>
                           )}
 
-                          <ProductVariantForm
-                            action={createProductVariant}
-                            buttonLabel="Crear variante"
-                            colorMode={product.colorMode}
-                            productId={product.id}
-                          />
+                          <details className="rounded-lg border bg-card p-3">
+                            <summary className="flex cursor-pointer list-none items-center gap-2 text-primary">
+                              <span
+                                aria-hidden="true"
+                                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary text-sm leading-none"
+                              >
+                                +
+                              </span>
+                              Crear variantes
+                            </summary>
+                            <div className="mt-3">
+                              <ProductVariantForm
+                                action={createProductVariant}
+                                buttonLabel="Crear variante"
+                                colorMode={product.colorMode}
+                                productId={product.id}
+                              />
+                            </div>
+                          </details>
                         </section>
 
                         <section className="grid gap-3 rounded-[4px] bg-muted p-4">

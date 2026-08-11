@@ -89,11 +89,11 @@ export function ProductVariantForm({
         <label className="grid gap-1 text-sm font-medium">
           Stock
           {stockLocked ? (
-            <input name="stock" type="hidden" value={variant?.stock ?? 0} />
+          <input name="stock" type="hidden" value={variant?.stock ?? 10} />
           ) : null}
           <input
             className={fieldClassName()}
-            defaultValue={variant?.stock ?? 0}
+            defaultValue={variant?.stock ?? 10}
             disabled={stockLocked}
             min="0"
             name="stock"
