@@ -199,19 +199,6 @@ function readInventoryAdjustmentForm(
   };
 }
 
-function isAllowedImageUrl(value: string) {
-  if (value.startsWith("/") && !value.startsWith("//")) {
-    return true;
-  }
-
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 function fileExtension(file: File) {
   const extensionByType = {
     "image/avif": ".avif",
@@ -263,7 +250,7 @@ async function uploadProductImageFile(
   storeId: string,
   productId: string,
   file: File,
-): Promise<{ url: string } | { error: string }> {
+): Promise<{ storagePath: string; url: string } | { error: string }> {
   const supabase = requireSupabaseStorageClient();
 
   if (!supabase) {
@@ -290,7 +277,23 @@ async function uploadProductImageFile(
     .from(productImagesBucket)
     .getPublicUrl(filename);
 
-  return { url: data.publicUrl };
+  return { storagePath: filename, url: data.publicUrl };
+}
+
+async function removeProductImageFile(storagePath: string) {
+  const supabase = requireSupabaseStorageClient();
+
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(productImagesBucket)
+    .remove([storagePath]);
+
+  if (error) {
+    console.error(error.message);
+  }
 }
 
 function readProductForm(formData: FormData): ProductFormData {
@@ -547,6 +550,7 @@ export async function createProduct(
 ): Promise<ProductFormState> {
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
+  const imageValue = formData.get("image");
   const parsed = readProductForm(formData);
 
   if (!storeId) {
@@ -557,14 +561,35 @@ export async function createProduct(
     return { message: parsed.error, status: "error" };
   }
 
+  const imageFile =
+    imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
+
+  if (imageFile) {
+    if (!allowedImageTypes.has(imageFile.type)) {
+      return {
+        message: "La imagen debe ser AVIF, JPG, PNG o WebP.",
+        status: "error",
+      };
+    }
+
+    if (imageFile.size > maxImageSize) {
+      return {
+        message: "La imagen debe pesar 5 MB o menos.",
+        status: "error",
+      };
+    }
+  }
+
   const relationError = await validateProductRelations(storeId, parsed.data);
 
   if (relationError) {
     return { message: relationError, status: "error" };
   }
 
+  let product: { id: string; name: string };
+
   try {
-    await prisma.product.create({
+    product = await prisma.product.create({
       data: {
         ...parsed.data,
         storeId,
@@ -572,6 +597,39 @@ export async function createProduct(
     });
   } catch (error) {
     return productError(error);
+  }
+
+  if (imageFile) {
+    const uploaded = await uploadProductImageFile(
+      storeId,
+      product.id,
+      imageFile,
+    );
+
+    if ("error" in uploaded) {
+      await prisma.product.delete({
+        where: { id: product.id, storeId },
+      });
+      return { message: uploaded.error, status: "error" };
+    }
+
+    try {
+      await prisma.productImage.create({
+        data: {
+          alt: product.name,
+          productId: product.id,
+          sortOrder: 0,
+          storeId,
+          url: uploaded.url,
+        },
+      });
+    } catch (error) {
+      await removeProductImageFile(uploaded.storagePath);
+      await prisma.product.delete({
+        where: { id: product.id, storeId },
+      });
+      return productError(error);
+    }
   }
 
   revalidatePath("/admin/products");
@@ -744,7 +802,6 @@ export async function createProductImage(
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const productId = String(formData.get("productId") ?? "").trim();
-  const urlValue = String(formData.get("url") ?? "").trim();
   const fileValue = formData.get("image");
   const alt = optionalText(formData.get("alt"));
   const sortOrder = readSortOrder(formData.get("sortOrder"));
@@ -757,15 +814,8 @@ export async function createProductImage(
     return { message: "El id del producto es obligatorio.", status: "error" };
   }
 
-  if (!urlValue && !(fileValue instanceof File && fileValue.size > 0)) {
-    return { message: "La imagen o URL es obligatoria.", status: "error" };
-  }
-
-  if (urlValue && !isAllowedImageUrl(urlValue)) {
-    return {
-      message: "La URL de imagen debe comenzar con http://, https:// o /.",
-      status: "error",
-    };
+  if (!(fileValue instanceof File && fileValue.size > 0)) {
+    return { message: "La imagen es obligatoria.", status: "error" };
   }
 
   if (sortOrder === null) {
@@ -784,30 +834,24 @@ export async function createProductImage(
     return { message: "Producto no encontrado.", status: "error" };
   }
 
-  let url = urlValue;
+  if (!allowedImageTypes.has(fileValue.type)) {
+    return {
+      message: "La imagen debe ser AVIF, JPG, PNG o WebP.",
+      status: "error",
+    };
+  }
 
-  if (fileValue instanceof File && fileValue.size > 0) {
-    if (!allowedImageTypes.has(fileValue.type)) {
-      return {
-        message: "La imagen debe ser AVIF, JPG, PNG o WebP.",
-        status: "error",
-      };
-    }
+  if (fileValue.size > maxImageSize) {
+    return {
+      message: "La imagen debe pesar 5 MB o menos.",
+      status: "error",
+    };
+  }
 
-    if (fileValue.size > maxImageSize) {
-      return {
-        message: "La imagen debe pesar 5 MB o menos.",
-        status: "error",
-      };
-    }
+  const uploaded = await uploadProductImageFile(storeId, productId, fileValue);
 
-    const uploaded = await uploadProductImageFile(storeId, productId, fileValue);
-
-    if ("error" in uploaded) {
-      return { message: uploaded.error, status: "error" };
-    }
-
-    url = uploaded.url;
+  if ("error" in uploaded) {
+    return { message: uploaded.error, status: "error" };
   }
 
   await prisma.productImage.create({
@@ -816,7 +860,7 @@ export async function createProductImage(
       productId,
       sortOrder,
       storeId,
-      url,
+      url: uploaded.url,
     },
   });
 

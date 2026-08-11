@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState, type ChangeEvent } from "react";
 
 import { type ProductFormState } from "@/app/admin/products/actions";
+import { compressProductImage } from "@/app/admin/products/compress-product-image";
 
 const initialProductFormState: ProductFormState = {
   message: "",
@@ -75,6 +76,8 @@ export function ProductForm({
   onSuccess,
   product,
 }: ProductFormProps) {
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState("");
   const [state, formAction, pending] = useActionState(
     action,
     initialProductFormState,
@@ -85,6 +88,43 @@ export function ProductForm({
       onSuccess?.();
     }
   }, [onSuccess, state.status]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    setImageError("");
+
+    if (!file) {
+      setImagePreviewUrl(null);
+      return;
+    }
+
+    try {
+      const compressedFile = await compressProductImage(file);
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(compressedFile);
+      event.target.files = dataTransfer.files;
+
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+
+      setImagePreviewUrl(URL.createObjectURL(compressedFile));
+    } catch {
+      event.target.value = "";
+      setImagePreviewUrl(null);
+      setImageError("No se pudo procesar la imagen seleccionada.");
+    }
+  }
 
   return (
     <form action={formAction} className="grid gap-4 rounded-xl border p-3 sm:p-4">
@@ -127,6 +167,35 @@ export function ProductForm({
           ))}
         </select>
       </label>
+
+      {!product ? (
+        <label className="grid gap-1 text-sm font-medium">
+          Imagen del producto (opcional)
+          <input
+            accept="image/avif,image/jpeg,image/png,image/webp"
+            className={fieldClassName()}
+            name="image"
+            onChange={handleImageChange}
+            type="file"
+          />
+          <span className="text-xs font-normal text-zinc-500">
+            Se comprime automaticamente antes de guardarla.
+          </span>
+          {imagePreviewUrl ? (
+            <span
+              aria-label="Vista previa de la imagen del producto"
+              className="h-24 w-24 rounded-md border bg-cover bg-center"
+              role="img"
+              style={{ backgroundImage: `url(${imagePreviewUrl})` }}
+            />
+          ) : null}
+          {imageError ? (
+            <span className="text-xs font-normal text-red-600">
+              {imageError}
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid gap-1 text-sm font-medium">
