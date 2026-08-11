@@ -48,12 +48,16 @@ export function ProductModal({
   const [isOpen, setIsOpen] = useState(false);
   const handleSuccess = useCallback(() => setIsOpen(false), []);
 
+  function handleOpen() {
+    setIsOpen(true);
+  }
+
   return (
     <>
       {trigger.type === "button" ? (
         <button
           className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-          onClick={() => setIsOpen(true)}
+          onClick={handleOpen}
           type="button"
         >
           <span className="text-xl leading-none">+</span>
@@ -63,7 +67,7 @@ export function ProductModal({
         <button
           aria-label={trigger.label}
           className="cursor-pointer transition hover:text-foreground"
-          onClick={() => setIsOpen(true)}
+          onClick={handleOpen}
           type="button"
         >
           <EditIcon />

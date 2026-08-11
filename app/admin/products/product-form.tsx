@@ -37,9 +37,20 @@ type ProductFormProps = {
   ) => Promise<ProductFormState>;
   buttonLabel: string;
   categories: ProductOption[];
-  onSuccess?: () => void;
+  onSuccess?: (state: ProductFormState) => void;
   product?: ProductFormProduct;
 };
+
+type DraftVariant = {
+  color: string;
+  isActive: boolean;
+  price: string;
+  size: string;
+  sku: string;
+  stock: string;
+};
+
+type InventoryMode = "SIMPLE" | "VARIANTS";
 
 const audiences = [
   { label: "Mujer", value: "WOMEN" },
@@ -78,6 +89,13 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState("");
+  const [selectedColorMode, setSelectedColorMode] = useState(
+    product?.colorMode ?? "NONE",
+  );
+  const [inventoryMode, setInventoryMode] = useState<InventoryMode>("SIMPLE");
+  const [isVariantFormOpen, setIsVariantFormOpen] = useState(false);
+  const [simpleStock, setSimpleStock] = useState("10");
+  const [variants, setVariants] = useState<DraftVariant[]>([]);
   const [state, formAction, pending] = useActionState(
     action,
     initialProductFormState,
@@ -85,9 +103,9 @@ export function ProductForm({
 
   useEffect(() => {
     if (state.status === "success") {
-      onSuccess?.();
+      onSuccess?.(state);
     }
-  }, [onSuccess, state.status]);
+  }, [onSuccess, state]);
 
   useEffect(() => {
     return () => {
@@ -124,6 +142,32 @@ export function ProductForm({
       setImagePreviewUrl(null);
       setImageError("No se pudo procesar la imagen seleccionada.");
     }
+  }
+
+  function addVariant() {
+    setVariants((current) => [
+      ...current,
+      {
+        color: "",
+        isActive: true,
+        price: "",
+        size: "",
+        sku: "",
+        stock: "10",
+      },
+    ]);
+  }
+
+  function updateVariant(index: number, changes: Partial<DraftVariant>) {
+    setVariants((current) =>
+      current.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, ...changes } : variant,
+      ),
+    );
+  }
+
+  function removeVariant(index: number) {
+    setVariants((current) => current.filter((_, variantIndex) => variantIndex !== index));
   }
 
   return (
@@ -250,9 +294,20 @@ export function ProductForm({
           Modo de color
           <select
             className={fieldClassName()}
-            defaultValue={product?.colorMode ?? "NONE"}
             name="colorMode"
+            onChange={(event) => {
+              const nextColorMode = event.target.value;
+
+              setSelectedColorMode(nextColorMode);
+
+              if (nextColorMode !== "VARIANTS") {
+                setVariants((current) =>
+                  current.map((variant) => ({ ...variant, color: "" })),
+                );
+              }
+            }}
             required
+            value={selectedColorMode}
           >
             {colorModes.map((colorMode) => (
               <option key={colorMode.value} value={colorMode.value}>
@@ -275,6 +330,206 @@ export function ProductForm({
           />
         </label>
       </div>
+
+      {!product ? (
+        <section className="grid gap-3 rounded-lg border bg-card p-3">
+          <div className="space-y-1">
+            <h4 className="font-semibold">Inventario</h4>
+            <p className="text-sm text-muted-foreground">
+              Elige si el producto tiene un stock general o variantes.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
+              <input
+                checked={inventoryMode === "SIMPLE"}
+                name="inventoryMode"
+                onChange={() => {
+                  setInventoryMode("SIMPLE");
+                  setIsVariantFormOpen(false);
+                }}
+                type="radio"
+                value="SIMPLE"
+              />
+              <span>
+                <span className="block font-medium">Producto simple</span>
+                <span className="block text-xs font-normal text-muted-foreground">
+                  Un solo stock para todo el producto.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
+              <input
+                checked={inventoryMode === "VARIANTS"}
+                name="inventoryMode"
+                onChange={() => {
+                  setInventoryMode("VARIANTS");
+                  setIsVariantFormOpen(true);
+                }}
+                type="radio"
+                value="VARIANTS"
+              />
+              <span>
+                <span className="block font-medium">Producto con variantes</span>
+                <span className="block text-xs font-normal text-muted-foreground">
+                  Stock separado por talle o color.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <input name="variants" type="hidden" value={JSON.stringify(variants)} />
+
+          {inventoryMode === "SIMPLE" ? (
+            <label className="grid max-w-sm gap-1 text-sm font-medium">
+              Stock
+              <input
+                className={fieldClassName()}
+                min="0"
+                name="simpleStock"
+                onChange={(event) => setSimpleStock(event.target.value)}
+                required
+                step="1"
+                type="number"
+                value={simpleStock}
+              />
+              <span className="text-xs font-normal text-zinc-500">
+                Se guardara como una variante general del producto.
+              </span>
+            </label>
+          ) : (
+            <div className="grid gap-3">
+              <div className="space-y-1">
+                <h4 className="font-semibold">Variantes</h4>
+                <p className="text-sm text-muted-foreground">
+                  Combina diferentes propiedades de tu producto. Ejemplo: color + tamaño.
+                </p>
+              </div>
+
+              <details
+                className="grid gap-3 rounded-lg border p-3"
+                onToggle={(event) =>
+                  setIsVariantFormOpen(event.currentTarget.open)
+                }
+                open={isVariantFormOpen}
+              >
+                <summary className="flex cursor-pointer list-none items-center gap-2 text-primary">
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary text-sm leading-none"
+                  >
+                    +
+                  </span>
+                  Crear variantes
+                </summary>
+
+                {variants.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Agrega talles, colores y stock para este producto.
+                  </p>
+                ) : (
+                  <div className="grid gap-3">
+                  {variants.map((variant, index) => (
+                    <div className="grid gap-3 rounded-lg border p-3" key={index}>
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <label className="grid gap-1 text-sm font-medium">
+                      Talle
+                      <input
+                        className={fieldClassName()}
+                        onChange={(event) =>
+                          updateVariant(index, { size: event.target.value })
+                        }
+                        placeholder="S"
+                        required
+                        value={variant.size}
+                      />
+                    </label>
+
+                    <label className="grid gap-1 text-sm font-medium">
+                      Color
+                      <input
+                        className={fieldClassName()}
+                        disabled={selectedColorMode !== "VARIANTS"}
+                        onChange={(event) =>
+                          updateVariant(index, { color: event.target.value })
+                        }
+                        placeholder="Negro"
+                        required={selectedColorMode === "VARIANTS"}
+                        value={variant.color}
+                      />
+                    </label>
+
+                    <label className="grid gap-1 text-sm font-medium">
+                      Stock
+                      <input
+                        className={fieldClassName()}
+                        min="0"
+                        onChange={(event) =>
+                          updateVariant(index, { stock: event.target.value })
+                        }
+                        required
+                        step="1"
+                        type="number"
+                        value={variant.stock}
+                      />
+                    </label>
+
+                    <label className="grid gap-1 text-sm font-medium">
+                      Precio especial (opcional)
+                      <input
+                        className={fieldClassName()}
+                        min="0"
+                        onChange={(event) =>
+                          updateVariant(index, { price: event.target.value })
+                        }
+                        placeholder="Opcional"
+                        step="0.01"
+                        type="number"
+                        value={variant.price}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                    <label className="grid gap-1 text-sm font-medium">
+                      SKU (opcional)
+                      <input
+                        className={fieldClassName()}
+                        onChange={(event) =>
+                          updateVariant(index, { sku: event.target.value })
+                        }
+                        placeholder="SKU unico"
+                        value={variant.sku}
+                      />
+                    </label>
+
+                    <button
+                      className="self-end text-left text-sm font-medium text-red-600"
+                      onClick={() => removeVariant(index)}
+                      type="button"
+                    >
+                      Eliminar variante
+                    </button>
+                  </div>
+                    </div>
+                  ))}
+                  </div>
+                )}
+
+                <button
+                  className="w-full cursor-pointer rounded-md border px-4 py-2 text-sm font-medium text-foreground sm:w-fit"
+                  onClick={addVariant}
+                  type="button"
+                >
+                  Agregar otra variante
+                </button>
+              </details>
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <label className="grid gap-1 text-sm font-medium">
         Descripcion

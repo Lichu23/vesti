@@ -53,13 +53,13 @@ type ProductPayload = {
 type ProductFormData =
   | {
       data: ProductPayload;
+      variants: ProductVariantInput[];
     }
   | {
       error: string;
     };
 
-type ProductVariantPayload = {
-  productId: string;
+type ProductVariantInput = {
   size: string;
   color: string | null;
   stock: number;
@@ -67,6 +67,18 @@ type ProductVariantPayload = {
   sku: string | null;
   price: string | null;
 };
+
+type ProductVariantPayload = ProductVariantInput & {
+  productId: string;
+};
+
+type ProductVariantsFormData =
+  | {
+      data: ProductVariantInput[];
+    }
+  | {
+      error: string;
+    };
 
 type ProductVariantFormData =
   | {
@@ -280,6 +292,67 @@ async function uploadProductImageFile(
   return { storagePath: filename, url: data.publicUrl };
 }
 
+function readProductVariants(formData: FormData): ProductVariantsFormData {
+  const rawValue = String(formData.get("variants") ?? "[]");
+  let rawVariants: unknown;
+
+  try {
+    rawVariants = JSON.parse(rawValue);
+  } catch {
+    return { error: "Las variantes no tienen un formato valido." };
+  }
+
+  if (!Array.isArray(rawVariants)) {
+    return { error: "Las variantes no tienen un formato valido." };
+  }
+
+  const variants: ProductVariantInput[] = [];
+
+  for (const rawVariant of rawVariants) {
+    if (!rawVariant || typeof rawVariant !== "object") {
+      return { error: "Las variantes no tienen un formato valido." };
+    }
+
+    const variant = rawVariant as Record<string, unknown>;
+    const size = String(variant.size ?? "").trim().toUpperCase();
+    const color = optionalText(String(variant.color ?? ""));
+    const stockValue = String(variant.stock ?? "").trim();
+    const priceValue = String(variant.price ?? "").trim();
+    const sku = optionalText(String(variant.sku ?? ""));
+
+    if (!size) {
+      return { error: "El talle es obligatorio en cada variante." };
+    }
+
+    if (/[,+/;|]/.test(size) || /\b(AND|Y)\b/.test(size)) {
+      return {
+        error: "Crea una variante por talle. No combines talles en una variante.",
+      };
+    }
+
+    if (!/^\d+$/.test(stockValue)) {
+      return { error: "El stock debe ser cero o mayor." };
+    }
+
+    if (priceValue && !/^\d+(\.\d{1,2})?$/.test(priceValue)) {
+      return {
+        error: "El precio de la variante debe ser cero o mayor y hasta 2 decimales.",
+      };
+    }
+
+    variants.push({
+      color,
+      isActive: variant.isActive !== false,
+      price: priceValue || null,
+      size,
+      sku,
+      stock: Number.parseInt(stockValue, 10),
+    });
+  }
+
+  return { data: variants };
+}
+
 async function removeProductImageFile(storagePath: string) {
   const supabase = requireSupabaseStorageClient();
 
@@ -306,6 +379,40 @@ function readProductForm(formData: FormData): ProductFormData {
   const modelCode = optionalText(formData.get("modelCode"));
   const description = optionalText(formData.get("description"));
   const sizeDisplayText = optionalText(formData.get("sizeDisplayText"));
+  const variants = readProductVariants(formData);
+  const inventoryMode = String(formData.get("inventoryMode") ?? "");
+  const simpleStockValue = String(formData.get("simpleStock") ?? "").trim();
+
+  if ("error" in variants) {
+    return variants;
+  }
+
+  if (inventoryMode === "SIMPLE") {
+    if (colorMode === ColorMode.VARIANTS) {
+      return {
+        error: "Los productos con colores por variante necesitan variantes manuales.",
+      };
+    }
+
+    if (!/^\d+$/.test(simpleStockValue)) {
+      return { error: "El stock debe ser cero o mayor." };
+    }
+
+    variants.data = [
+      {
+        color: null,
+        isActive: true,
+        price: null,
+        size: "UNICO",
+        sku: null,
+        stock: Number.parseInt(simpleStockValue, 10),
+      },
+    ];
+  } else if (inventoryMode === "VARIANTS" && variants.data.length === 0) {
+    return { error: "Agrega al menos una variante o selecciona producto simple." };
+  } else if (inventoryMode && !["SIMPLE", "VARIANTS"].includes(inventoryMode)) {
+    return { error: "El modo de inventario no es valido." };
+  }
 
   if (!name) {
     return { error: "El nombre es obligatorio." };
@@ -354,6 +461,7 @@ function readProductForm(formData: FormData): ProductFormData {
       isFeatured: formData.get("isFeatured") === "on",
       isActive: formData.get("isActive") === "on",
     },
+    variants: variants.data,
   };
 }
 
@@ -425,6 +533,31 @@ function validateVariantColorMode(
 
   if (colorMode !== ColorMode.VARIANTS && color) {
     return "El color de variante solo se permite cuando el modo de color del producto es VARIANTS.";
+  }
+
+  return null;
+}
+
+function validateNewProductVariants(
+  colorMode: ColorModeValue,
+  variants: ProductVariantInput[],
+) {
+  const seenVariants = new Set<string>();
+
+  for (const variant of variants) {
+    const colorModeError = validateVariantColorMode(colorMode, variant.color);
+
+    if (colorModeError) {
+      return colorModeError;
+    }
+
+    const key = `${variant.size}::${variant.color ?? ""}`;
+
+    if (seenVariants.has(key)) {
+      return "Ya existe una variante con este talle y color.";
+    }
+
+    seenVariants.add(key);
   }
 
   return null;
@@ -561,8 +694,19 @@ export async function createProduct(
     return { message: parsed.error, status: "error" };
   }
 
+  const variantError = validateNewProductVariants(
+    parsed.data.colorMode,
+    parsed.variants,
+  );
+
+  if (variantError) {
+    return { message: variantError, status: "error" };
+  }
+
   const imageFile =
     imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
+
+  let uploadedImageStoragePath: string | null = null;
 
   if (imageFile) {
     if (!allowedImageTypes.has(imageFile.type)) {
@@ -613,6 +757,8 @@ export async function createProduct(
       return { message: uploaded.error, status: "error" };
     }
 
+    uploadedImageStoragePath = uploaded.storagePath;
+
     try {
       await prisma.productImage.create({
         data: {
@@ -629,6 +775,43 @@ export async function createProduct(
         where: { id: product.id, storeId },
       });
       return productError(error);
+    }
+  }
+
+  if (parsed.variants.length > 0) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        for (const variant of parsed.variants) {
+          const createdVariant = await tx.productVariant.create({
+            data: {
+              ...variant,
+              productId: product.id,
+              storeId,
+            },
+          });
+
+          if (variant.stock > 0) {
+            await tx.inventoryMovement.create({
+              data: {
+                quantity: variant.stock,
+                reason: "Stock inicial",
+                storeId,
+                type: InventoryMovementType.MANUAL_ADJUSTMENT,
+                variantId: createdVariant.id,
+              },
+            });
+          }
+        }
+      });
+    } catch (error) {
+      if (uploadedImageStoragePath) {
+        await removeProductImageFile(uploadedImageStoragePath);
+      }
+
+      await prisma.product.delete({
+        where: { id: product.id, storeId },
+      });
+      return productVariantError(error);
     }
   }
 
