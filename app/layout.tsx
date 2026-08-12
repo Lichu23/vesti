@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import { getPrimaryStore } from "@/lib/storefront";
 import { CartProvider } from "./cart-context";
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <CartProvider storeName={store?.name} storeWhatsapp={store?.whatsapp}>
           {children}
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );
