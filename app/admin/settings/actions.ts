@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { UserRole } from "@/generated/prisma/enums";
 import { requireOwnerSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type StoreSettingsFormState = {
   message: string;
@@ -120,8 +121,11 @@ export async function updateStoreSettings(
     return storeSettingsError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/");
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/admin");
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/admin/settings");
 
   return { message: "Configuracion actualizada.", status: "success" };
@@ -183,6 +187,7 @@ export async function createStoreInvite(
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 
   return { message: "Invitacion guardada.", status: "success" };
@@ -205,6 +210,7 @@ export async function removeStoreInvite(formData: FormData) {
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 }
 
@@ -233,5 +239,6 @@ export async function removeStoreAdmin(formData: FormData) {
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 }

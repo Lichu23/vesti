@@ -9,6 +9,7 @@ import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
 import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
 import { StorefrontProductCard } from "./storefront-product-card";
+import { StorefrontPagination } from "./storefront-pagination";
 import { StorefrontSearch } from "./storefront-search";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
 
@@ -16,6 +17,7 @@ type AudienceSearchParams = {
   buscar?: string | string[];
   categoria?: string | string[];
   ordenar?: string | string[];
+  pagina?: string | string[];
 };
 
 type AudienceConfig = {
@@ -48,6 +50,7 @@ function normalizeSearchParams(params: AudienceSearchParams) {
     buscar: getSingleParam(params.buscar),
     categoria: getSingleParam(params.categoria),
     ordenar: ordenar && SORT_VALUES.includes(ordenar) ? ordenar : undefined,
+    pagina: getSingleParam(params.pagina),
   };
 }
 
@@ -77,12 +80,13 @@ export async function AudiencePage({
   searchParams: Promise<AudienceSearchParams>;
 }) {
   const params = normalizeSearchParams(await searchParams);
-  const { activeCategory, audienceCategories, products, store } =
+  const { activeCategory, audienceCategories, products, store, totalProducts } =
     await getStorefrontHome({
       audience: config.audience,
       categorySlug: params.categoria,
       query: params.buscar,
       sort: params.ordenar,
+      page: Math.max(1, Number(params.pagina) || 1),
     });
 
   if (!store) {
@@ -173,6 +177,7 @@ export async function AudiencePage({
               ))}
             </div>
           )}
+          <StorefrontPagination basePath={basePath} currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
         </section>
 
         <aside className="storefront-desktop-only hidden xl:block">

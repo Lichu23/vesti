@@ -8,6 +8,7 @@ import { StorefrontAudienceSidebar } from "../../storefront-audience-sidebar";
 import { StorefrontMobileFilterDrawer } from "../../storefront-mobile-filter-drawer";
 import { StorefrontMobileSortForm } from "../../storefront-mobile-sort-form";
 import { StorefrontProductCard } from "../../storefront-product-card";
+import { StorefrontPagination } from "../../storefront-pagination";
 import { StorefrontSearch } from "../../storefront-search";
 import { StorefrontViewportMode } from "../../storefront-viewport-mode";
 
@@ -18,12 +19,14 @@ type CategoryPageProps = {
   searchParams: Promise<{
     buscar?: string | string[];
     ordenar?: string | string[];
+    pagina?: string | string[];
   }>;
 };
 
 type NormalizedCategorySearchParams = {
   buscar?: string;
   ordenar?: string;
+  pagina?: string;
 };
 
 const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
@@ -51,6 +54,7 @@ function normalizeSearchParams(
   return {
     buscar: getSingleParam(params.buscar),
     ordenar: ordenar && SORT_VALUES.includes(ordenar) ? ordenar : undefined,
+    pagina: getSingleParam(params.pagina),
   };
 }
 
@@ -75,11 +79,12 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const [{ slug }, rawSearchParams] = await Promise.all([params, searchParams]);
   const currentParams = normalizeSearchParams(rawSearchParams);
-  const { activeCategory, audienceCategories, products, store } =
+  const { activeCategory, audienceCategories, products, store, totalProducts } =
     await getStorefrontHome({
       categorySlug: slug,
       query: currentParams.buscar,
       sort: currentParams.ordenar,
+      page: Math.max(1, Number(currentParams.pagina) || 1),
     });
 
   if (!store || !activeCategory) {
@@ -163,6 +168,7 @@ export default async function CategoryPage({
               ))}
             </div>
           )}
+          <StorefrontPagination basePath={`/categories/${slug}`} currentPage={Math.max(1, Number(currentParams.pagina) || 1)} params={{ buscar: currentParams.buscar, ordenar: currentParams.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
         </section>
 
         <aside className="storefront-desktop-only hidden xl:block">

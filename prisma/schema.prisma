@@ -196,6 +196,9 @@ model Product {
   @@index([storeId, isActive])
   @@index([storeId, isFeatured])
   @@index([storeId, audience])
+  @@index([storeId, isActive, audience, updatedAt])
+  @@index([storeId, isActive, basePrice])
+  @@index([storeId, categoryId, isActive])
   @@index([categoryId])
   @@index([brandId])
   @@index([sizeGuideId])
@@ -236,6 +239,7 @@ model ProductImage {
 
   @@index([storeId])
   @@index([productId])
+  @@index([productId, sortOrder, createdAt])
 }
 
 model Order {
