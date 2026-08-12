@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { getStorefrontHome } from "@/lib/storefront";
@@ -33,11 +34,12 @@ export function StorefrontProductCard({
         href={`/products/${product.slug}`}
       >
         {image ? (
-          <div
-            aria-label={image.alt ?? product.name}
-            className="h-full w-full bg-cover bg-center transition duration-500 group-hover:scale-105"
-            role="img"
-            style={{ backgroundImage: `url(${image.url})` }}
+          <Image
+            alt={image.alt ?? product.name}
+            className="object-cover transition duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            src={image.url}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-sm uppercase tracking-[0.24em] text-muted-foreground">

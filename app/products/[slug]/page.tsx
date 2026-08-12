@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { getStorefrontProduct } from "@/lib/storefront";
@@ -96,11 +97,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-[4px] border border-border bg-muted">
             {mainImage ? (
-              <div
-                aria-label={mainImage.alt ?? product.name}
-                className="h-full w-full bg-cover bg-center"
-                role="img"
-                style={{ backgroundImage: `url(${mainImage.url})` }}
+              <Image
+                alt={mainImage.alt ?? product.name}
+                className="object-cover"
+                fill
+                preload
+                sizes="(max-width: 1024px) 100vw, 60vw"
+                src={mainImage.url}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm uppercase tracking-[0.24em] text-muted-foreground">
@@ -121,12 +124,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="grid grid-cols-4 gap-3">
               {images.slice(1).map((image) => (
                 <div
-                  aria-label={image.alt ?? product.name}
-                  className="aspect-square rounded-[4px] border border-border bg-cover bg-center"
+                  className="relative aspect-square overflow-hidden rounded-[4px] border border-border bg-muted"
                   key={image.url}
-                  role="img"
-                  style={{ backgroundImage: `url(${image.url})` }}
-                />
+                >
+                  <Image
+                    alt={image.alt ?? product.name}
+                    className="object-cover"
+                    fill
+                    loading="lazy"
+                    sizes="(max-width: 640px) 25vw, 160px"
+                    src={image.url}
+                  />
+                </div>
               ))}
             </div>
           ) : null}
