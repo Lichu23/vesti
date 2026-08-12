@@ -11,14 +11,12 @@ import {
   createProduct,
   createProductVariant,
   deleteProduct,
-  deleteProductImage,
   deleteProductVariant,
   updateProduct,
   updateProductVariant,
   adjustInventory,
 } from "@/app/admin/products/actions";
 import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
-import { ProductImageForm } from "@/app/admin/products/product-image-form";
 import {
   ProductVariantDeleteForm,
   ProductVariantForm,
@@ -252,10 +250,10 @@ export default async function AdminProductsPage({
 
                 return (
                   <article
-                    className="grid gap-4 border-b border-border p-4 last:border-b-0 md:grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] md:items-center md:px-5 md:py-4"
+                    className="grid min-w-0 gap-4 border-b border-border p-4 last:border-b-0 md:grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] md:items-center md:px-5 md:py-4"
                     key={product.id}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
                       {image ? (
                         <div
                           aria-label={image.alt ?? product.name}
@@ -278,7 +276,7 @@ export default async function AdminProductsPage({
                       </div>
                     </div>
 
-                    <div className="grid gap-3 text-sm md:contents">
+                    <div className="grid min-w-0 gap-3 text-sm md:contents">
                       <p className="flex items-center justify-between gap-3 text-muted-foreground md:block">
                         <span className="font-medium text-foreground md:hidden">
                           Categoria
@@ -328,6 +326,12 @@ export default async function AdminProductsPage({
                           sizeDisplayText: product.sizeDisplayText,
                           isFeatured: product.isFeatured,
                           isActive: product.isActive,
+                          image: product.images[0]
+                            ? {
+                                alt: product.images[0].alt,
+                                url: product.images[0].url,
+                              }
+                            : null,
                         }}
                         title="Editar producto"
                         trigger={{
@@ -486,64 +490,6 @@ export default async function AdminProductsPage({
                           </details>
                         </section>
 
-                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
-                          <div className="space-y-1">
-                            <h4 className="font-semibold">Imagenes</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Carga imagenes del producto.
-                            </p>
-                          </div>
-
-                          {product.images.length === 0 ? (
-                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
-                              Todavia no hay imagenes.
-                            </p>
-                          ) : (
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {product.images.map((image) => (
-                                <article
-                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
-                                  key={image.id}
-                                >
-                                  <div
-                                    aria-label={image.alt ?? product.name}
-                                    className="relative aspect-square overflow-hidden rounded-[4px] bg-muted"
-                                  >
-                                    <Image alt={image.alt ?? product.name} className="object-cover" fill sizes="96px" src={image.url} />
-                                  </div>
-                                  <div className="space-y-1 text-sm">
-                                    <p className="break-all text-muted-foreground">
-                                      {image.url}
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                      Orden: {image.sortOrder}
-                                    </p>
-                                    {image.alt ? (
-                                      <p className="text-muted-foreground">
-                                        Alt: {image.alt}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                  <form action={deleteProductImage}>
-                                    <input
-                                      name="id"
-                                      type="hidden"
-                                      value={image.id}
-                                    />
-                                    <button
-                                      className="cursor-pointer text-sm font-medium text-destructive"
-                                      type="submit"
-                                    >
-                                      Eliminar imagen
-                                    </button>
-                                  </form>
-                                </article>
-                              ))}
-                            </div>
-                          )}
-
-                          <ProductImageForm productId={product.id} />
-                        </section>
                       </ProductModal>
                       <form action={deleteProduct}>
                         <input name="id" type="hidden" value={product.id} />

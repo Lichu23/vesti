@@ -829,6 +829,8 @@ export async function updateProduct(
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const id = String(formData.get("id") ?? "").trim();
+  const imageValue = formData.get("image");
+  const removeExistingImage = formData.get("removeExistingImage") === "true";
   const parsed = readProductForm(formData);
 
   if (!storeId) {
@@ -859,6 +861,54 @@ export async function updateProduct(
     return { message: colorModeError, status: "error" };
   }
 
+  const imageFile =
+    imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
+
+  if (imageFile) {
+    if (!allowedImageTypes.has(imageFile.type)) {
+      return {
+        message: "La imagen debe ser AVIF, JPG, PNG o WebP.",
+        status: "error",
+      };
+    }
+
+    if (imageFile.size > maxImageSize) {
+      return {
+        message: "La imagen debe pesar 5 MB o menos.",
+        status: "error",
+      };
+    }
+  }
+
+  const existingImages = await prisma.productImage.findMany({
+    select: {
+      url: true,
+    },
+    where: {
+      productId: id,
+      storeId,
+    },
+  });
+
+  if (imageFile && existingImages.length > 0 && !removeExistingImage) {
+    return {
+      message: "Elimina la imagen actual antes de seleccionar otra.",
+      status: "error",
+    };
+  }
+
+  let uploadedImage: { storagePath: string; url: string } | null = null;
+
+  if (imageFile) {
+    const uploaded = await uploadProductImageFile(storeId, id, imageFile);
+
+    if ("error" in uploaded) {
+      return { message: uploaded.error, status: "error" };
+    }
+
+    uploadedImage = uploaded;
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       if (parsed.data.colorMode !== ColorMode.VARIANTS) {
@@ -880,9 +930,44 @@ export async function updateProduct(
           storeId,
         },
       });
+
+      if (removeExistingImage || imageFile) {
+        await tx.productImage.deleteMany({
+          where: {
+            productId: id,
+            storeId,
+          },
+        });
+
+        if (uploadedImage) {
+          await tx.productImage.create({
+            data: {
+              alt: parsed.data.name,
+              productId: id,
+              sortOrder: 0,
+              storeId,
+              url: uploadedImage.url,
+            },
+          });
+        }
+      }
     });
   } catch (error) {
+    if (uploadedImage) {
+      await removeProductImageFile(uploadedImage.storagePath);
+    }
+
     return productError(error);
+  }
+
+  if (removeExistingImage || imageFile) {
+    const storagePaths = existingImages
+      .map((image) => productImageStoragePath(image.url, storeId, id))
+      .filter((storagePath): storagePath is string => Boolean(storagePath));
+
+    for (const storagePath of storagePaths) {
+      await removeProductImageFile(storagePath);
+    }
   }
 
   revalidateTag(STOREFRONT_CACHE_TAG, 'max');
