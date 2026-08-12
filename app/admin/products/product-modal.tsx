@@ -56,7 +56,7 @@ export function ProductModal({
     <>
       {trigger.type === "button" ? (
         <button
-          className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+          className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 xl:w-auto"
           onClick={handleOpen}
           type="button"
         >
@@ -77,10 +77,10 @@ export function ProductModal({
       {isOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-0 text-left sm:p-4"
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/40 p-2 text-left sm:p-4"
           role="dialog"
         >
-          <div className="h-full max-h-screen w-full max-w-5xl overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:p-5">
+          <div className="my-auto min-h-0 w-full max-w-5xl min-w-0 overflow-y-auto rounded-xl bg-white p-3 shadow-xl sm:max-h-[90vh] sm:p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h3 className="font-serif text-2xl text-foreground sm:text-3xl">

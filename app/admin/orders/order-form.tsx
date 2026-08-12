@@ -116,7 +116,7 @@ export function OrderForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-xl border p-3 sm:p-4">
+    <form action={formAction} className="grid min-w-0 gap-4 overflow-hidden rounded-xl border p-3 sm:p-4">
       {order ? <input name="orderId" type="hidden" value={order.id} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm">

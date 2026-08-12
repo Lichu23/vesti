@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, type ChangeEvent } from "react";
+import Image from "next/image";
 
 import { type ProductFormState } from "@/app/admin/products/actions";
 import { compressProductImage } from "@/app/admin/products/compress-product-image";
@@ -28,6 +29,10 @@ export type ProductFormProduct = {
   sizeDisplayText: string | null;
   isFeatured: boolean;
   isActive: boolean;
+  image?: {
+    alt: string | null;
+    url: string;
+  } | null;
 };
 
 type ProductFormProps = {
@@ -89,6 +94,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState("");
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
   const [selectedColorMode, setSelectedColorMode] = useState(
     product?.colorMode ?? "NONE",
   );
@@ -119,6 +125,12 @@ export function ProductForm({
     const file = event.target.files?.[0];
 
     setImageError("");
+
+    if (file && product?.image && !removeCurrentImage) {
+      event.target.value = "";
+      setImageError("Elimina la imagen actual antes de seleccionar otra.");
+      return;
+    }
 
     if (!file) {
       setImagePreviewUrl(null);
@@ -171,8 +183,15 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-xl border p-3 sm:p-4">
+    <form action={formAction} className="grid min-w-0 gap-4 overflow-hidden rounded-xl border p-3 sm:p-4">
       {product ? <input name="id" type="hidden" value={product.id} /> : null}
+      {product ? (
+        <input
+          name="removeExistingImage"
+          type="hidden"
+          value={removeCurrentImage ? "true" : "false"}
+        />
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-medium">
@@ -212,9 +231,40 @@ export function ProductForm({
         </select>
       </label>
 
-      {!product ? (
-        <label className="grid gap-1 text-sm font-medium">
-          Imagen del producto (opcional)
+      <section className="grid min-w-0 gap-3 rounded-lg border bg-card p-3">
+        <div className="space-y-1">
+          <h4 className="font-semibold">Imagen del producto</h4>
+          <p className="text-xs font-normal text-muted-foreground">
+            Solo se guarda una imagen por producto. Para cambiarla, elimina la
+            actual y selecciona una nueva.
+          </p>
+        </div>
+
+        {product?.image && !removeCurrentImage ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-md border p-2">
+            <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
+              <Image
+                alt={product.image.alt ?? product.name}
+                className="object-cover"
+                fill
+                sizes="80px"
+                src={product.image.url}
+              />
+            </div>
+            <button
+              className="cursor-pointer rounded-md border border-destructive px-3 py-2 text-sm font-medium text-destructive"
+              onClick={() => setRemoveCurrentImage(true)}
+              type="button"
+            >
+              Eliminar imagen
+            </button>
+          </div>
+        ) : null}
+
+        <label className="grid min-w-0 gap-1 text-sm font-medium">
+          {product?.image && !removeCurrentImage
+            ? "Nueva imagen (primero elimina la actual)"
+            : "Seleccionar imagen (opcional)"}
           <input
             accept="image/avif,image/jpeg,image/png,image/webp"
             className={fieldClassName()}
@@ -239,7 +289,7 @@ export function ProductForm({
             </span>
           ) : null}
         </label>
-      ) : null}
+      </section>
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid gap-1 text-sm font-medium">
@@ -572,7 +622,7 @@ export function ProductForm({
       ) : null}
 
       <button
-        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         disabled={pending || categories.length === 0}
         type="submit"
       >
