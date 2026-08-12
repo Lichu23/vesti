@@ -5,13 +5,11 @@ import type { ReactNode } from "react";
 import {
   AdminShell,
   BoxIcon,
-  CategoryIcon,
   formatAdminOrderStatus,
   formatAdminPrice,
   InventoryStats,
   OrdersIcon,
   SettingsIcon,
-  WarningIcon,
 } from "@/app/admin/admin-ui";
 import { OrderStatus } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
@@ -193,13 +191,6 @@ export default async function AdminDashboardPage() {
           title="Inventario"
         />
         <DashboardAction
-          description={`${reviewingOrdersCount} pedidos pendientes y ${confirmedOrdersCount} confirmados.`}
-          href="/admin/orders"
-          icon={<OrdersIcon />}
-          label="Gestionar pedidos"
-          title="Pedidos"
-        />
-        <DashboardAction
           description={
             store.whatsapp
               ? `WhatsApp activo: ${store.whatsapp}`
@@ -212,13 +203,26 @@ export default async function AdminDashboardPage() {
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <section>
         <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <OrdersIcon />
-            <h2 className="font-serif text-3xl text-foreground">
-              Pedidos recientes
-            </h2>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <OrdersIcon />
+              <div>
+                <h2 className="font-serif text-3xl text-foreground">
+                  Pedidos recientes
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {reviewingOrdersCount} pendientes · {confirmedOrdersCount} confirmados
+                </p>
+              </div>
+            </div>
+            <Link
+              className="inline-flex cursor-pointer rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:border-primary"
+              href="/admin/orders"
+            >
+              Gestionar pedidos
+            </Link>
           </div>
           {recentOrders.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -250,32 +254,6 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <WarningIcon />
-            <h2 className="font-serif text-3xl text-foreground">
-              Checklist MVP
-            </h2>
-          </div>
-          <ul className="grid gap-3 text-sm text-muted-foreground">
-            <li className="flex gap-3">
-              <CategoryIcon />
-              Crear categorias principales.
-            </li>
-            <li className="flex gap-3">
-              <BoxIcon />
-              Cargar productos con imagenes y variantes.
-            </li>
-            <li className="flex gap-3">
-              <OrdersIcon />
-              Probar pedido manual y confirmacion de stock.
-            </li>
-            <li className="flex gap-3">
-              <SettingsIcon />
-              Verificar WhatsApp y datos de tienda.
-            </li>
-          </ul>
-        </div>
       </section>
     </AdminShell>
   );
