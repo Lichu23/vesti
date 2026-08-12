@@ -85,3 +85,21 @@ Branches: feature/admin feat/admin-ui-update feat/admin-responsive-views
 -   Payments
 -   Shipping
 -   Multi-tenancy onboarding
+
+## Phase 8 Production Readiness
+
+-   [x] Vercel production deployment
+-   [x] Production environment variables configured
+-   [x] Google OAuth production callback configured
+-   [x] Auth.js production secret configured
+-   [x] Production app smoke-tested and operational
+-   [x] ESLint validation passes
+-   [x] Prisma schema validation passes
+-   [ ] Production migration status documented
+-   [ ] Production build verification documented
+-   [ ] Post-deploy smoke test checklist completed
+
+Notes:
+
+- The first production deployment exposed a missing `AUTH_SECRET`; adding the variable to Vercel Production and redeploying resolved the `/admin` authentication error.
+- Keep development and production credentials separate. Do not commit secrets or environment files.
