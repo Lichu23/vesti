@@ -18,40 +18,19 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 function getStockValue(
-  products: {
-    basePrice: { toString(): string };
-    variants: {
-      price: { toString(): string } | null;
-      stock: number;
-    }[];
+  variants: {
+    price: { toString(): string } | null;
+    product: { basePrice: { toString(): string } };
+    stock: number;
   }[],
 ) {
-  return products.reduce(
-    (productTotal, product) =>
-      productTotal +
-      product.variants.reduce(
-        (variantTotal, variant) =>
-          variantTotal +
-          variant.stock *
-            Number(variant.price?.toString() ?? product.basePrice.toString()),
-        0,
-      ),
+  return variants.reduce(
+    (total, variant) =>
+      total +
+      variant.stock *
+        Number(variant.price?.toString() ?? variant.product.basePrice.toString()),
     0,
   );
-}
-
-function getOutOfStockCount(
-  products: {
-    variants: {
-      stock: number;
-    }[];
-  }[],
-) {
-  return products.filter(
-    (product) =>
-      product.variants.length === 0 ||
-      product.variants.every((variant) => variant.stock <= 0),
-  ).length;
 }
 
 function DashboardAction({
@@ -97,7 +76,9 @@ export default async function AdminDashboardPage() {
   const [
     store,
     categoryCount,
-    products,
+    variants,
+    productCount,
+    outOfStockCount,
     reviewingOrdersCount,
     confirmedOrdersCount,
     recentOrders,
@@ -116,21 +97,37 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
-    prisma.product.findMany({
+    prisma.productVariant.findMany({
       select: {
-        basePrice: true,
-        variants: {
+        price: true,
+        stock: true,
+        product: {
           select: {
-            price: true,
-            stock: true,
-          },
-          where: {
-            isActive: true,
+            basePrice: true,
           },
         },
       },
       where: {
+        isActive: true,
+        product: {
+          isActive: true,
+        },
         storeId,
+      },
+    }),
+    prisma.product.count({
+      where: { storeId, isActive: true },
+    }),
+    prisma.product.count({
+      where: {
+        isActive: true,
+        storeId,
+        variants: {
+          none: {
+            isActive: true,
+            stock: { gt: 0 },
+          },
+        },
       },
     }),
     prisma.order.count({
@@ -160,8 +157,7 @@ export default async function AdminDashboardPage() {
       },
     }),
   ]);
-  const outOfStockCount = getOutOfStockCount(products);
-  const stockValue = getStockValue(products);
+  const stockValue = getStockValue(variants);
 
   if (!store) {
     notFound();
@@ -184,7 +180,7 @@ export default async function AdminDashboardPage() {
       <InventoryStats
         categoryCount={categoryCount}
         outOfStockCount={outOfStockCount}
-        productCount={products.length}
+        productCount={productCount}
         stockValue={stockValue}
       />
 

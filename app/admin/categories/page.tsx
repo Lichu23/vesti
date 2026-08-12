@@ -12,6 +12,7 @@ import {
 } from "@/app/admin/categories/actions";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import Image from "next/image";
 
 type AdminCategoriesPageProps = {
   searchParams: Promise<{
@@ -152,12 +153,9 @@ export default async function AdminCategoriesPage({
                   key={category.id}
                 >
                   {image ? (
-                    <div
-                      aria-label={image.alt ?? category.name}
-                      className="aspect-square rounded-[4px] bg-muted bg-cover bg-center"
-                      role="img"
-                      style={{ backgroundImage: `url(${image.url})` }}
-                    />
+                        <div className="relative aspect-square overflow-hidden rounded-[4px] bg-muted">
+                          <Image alt={image.alt ?? category.name} className="object-cover" fill sizes="(max-width: 640px) 50vw, 180px" src={image.url} />
+                        </div>
                   ) : (
                     <div className="flex aspect-square items-center justify-center rounded-[4px] bg-muted text-xs uppercase tracking-[0.18em] text-muted-foreground">
                       Sin imagen

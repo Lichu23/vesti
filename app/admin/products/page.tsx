@@ -23,6 +23,7 @@ import {
   ProductVariantDeleteForm,
   ProductVariantForm,
 } from "@/app/admin/products/product-variant-form";
+import Image from "next/image";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -258,10 +259,10 @@ export default async function AdminProductsPage({
                       {image ? (
                         <div
                           aria-label={image.alt ?? product.name}
-                          className="size-16 rounded-[4px] bg-muted bg-cover bg-center"
-                          role="img"
-                          style={{ backgroundImage: `url(${image.url})` }}
-                        />
+                            className="relative size-16 overflow-hidden rounded-[4px] bg-muted"
+                          >
+                            <Image alt={image.alt ?? product.name} className="object-cover" fill sizes="64px" src={image.url} />
+                          </div>
                       ) : (
                         <div className="flex size-16 items-center justify-center rounded-[4px] bg-muted text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                           Sin imagen
@@ -506,12 +507,10 @@ export default async function AdminProductsPage({
                                 >
                                   <div
                                     aria-label={image.alt ?? product.name}
-                                    className="aspect-square w-full rounded-[4px] bg-muted bg-cover bg-center"
-                                    role="img"
-                                    style={{
-                                      backgroundImage: `url(${image.url})`,
-                                    }}
-                                  />
+                                    className="relative aspect-square overflow-hidden rounded-[4px] bg-muted"
+                                  >
+                                    <Image alt={image.alt ?? product.name} className="object-cover" fill sizes="96px" src={image.url} />
+                                  </div>
                                   <div className="space-y-1 text-sm">
                                     <p className="break-all text-muted-foreground">
                                       {image.url}
