@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import {
   InventoryMovementType,
@@ -10,6 +10,7 @@ import {
 } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type OrderFormState = {
   message: string;
@@ -264,6 +265,7 @@ export async function createManualOrder(
     return orderError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/orders");
 
   return {
@@ -432,7 +434,9 @@ export async function updateManualOrder(
     return orderError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/admin/orders");
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath(`/admin/orders/${orderId}`);
 
   return { message: "Pedido actualizado.", status: "success" };
@@ -572,6 +576,7 @@ export async function confirmOrder(
     throw error;
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/orders");
 
   return { message: "Pedido confirmado y stock descontado.", status: "success" };

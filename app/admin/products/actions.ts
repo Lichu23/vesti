@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import {
   Audience,
@@ -15,6 +15,7 @@ import {
 } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type ProductFormState = {
   message: string;
@@ -815,6 +816,7 @@ export async function createProduct(
     }
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Producto creado.", status: "success" };
@@ -883,6 +885,7 @@ export async function updateProduct(
     return productError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Producto actualizado.", status: "success" };
@@ -975,6 +978,7 @@ export async function deleteProduct(formData: FormData) {
     throw error;
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 }
 
@@ -1047,6 +1051,7 @@ export async function createProductImage(
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Imagen agregada.", status: "success" };
@@ -1100,6 +1105,7 @@ export async function deleteProductImage(formData: FormData) {
     throw error;
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 }
 
@@ -1177,6 +1183,7 @@ export async function createProductVariant(
     return productVariantError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Variante creada.", status: "success" };
@@ -1256,6 +1263,7 @@ export async function updateProductVariant(
     return productVariantError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Variante actualizada.", status: "success" };
@@ -1352,6 +1360,7 @@ export async function adjustInventory(
     throw error;
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Stock ajustado.", status: "success" };
@@ -1412,6 +1421,7 @@ export async function deleteProductVariant(
     throw error;
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
 
   return { message: "Variante eliminada.", status: "success" };

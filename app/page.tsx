@@ -6,6 +6,7 @@ import { CartToggleButton } from "./cart-buttons";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
 import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
 import { StorefrontProductCard } from "./storefront-product-card";
+import { StorefrontPagination } from "./storefront-pagination";
 import { StorefrontSearch } from "./storefront-search";
 import { StorefrontViewportMode } from "./storefront-viewport-mode";
 
@@ -13,6 +14,7 @@ type HomeSearchParams = {
   categoria?: string | string[];
   buscar?: string | string[];
   ordenar?: string | string[];
+  pagina?: string | string[];
 };
 
 type HomeProps = {
@@ -23,6 +25,7 @@ type NormalizedHomeSearchParams = {
   categoria?: string;
   buscar?: string;
   ordenar?: string;
+  pagina?: string;
 };
 
 const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
@@ -57,6 +60,7 @@ function normalizeSearchParams(
     buscar: getSingleParam(params.buscar),
     categoria: getSingleParam(params.categoria),
     ordenar: ordenar && SORT_VALUES.includes(ordenar) ? ordenar : undefined,
+    pagina: getSingleParam(params.pagina),
   };
 }
 
@@ -107,11 +111,12 @@ function SortSidebar({
 
 export default async function Home({ searchParams }: HomeProps) {
   const params = normalizeSearchParams(await searchParams);
-  const { activeCategory, audienceCategories, products, store } =
+  const { activeCategory, audienceCategories, products, store, totalProducts } =
     await getStorefrontHome({
       categorySlug: params.categoria,
       query: params.buscar,
       sort: params.ordenar,
+      page: Math.max(1, Number(params.pagina) || 1),
     });
   const storeName = store?.name ?? "Thoemia Intimo";
   const title = activeCategory?.name ?? "Todos los productos";
@@ -186,11 +191,12 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
+                {products.map((product) => (
                 <StorefrontProductCard key={product.id} product={product} />
               ))}
-            </div>
+              </div>
           )}
+          <StorefrontPagination basePath="/" currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
         </section>
 
         <SortSidebar searchParams={params} />

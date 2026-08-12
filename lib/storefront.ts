@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
@@ -7,9 +8,13 @@ import { prisma } from "@/lib/prisma";
 type StorefrontHomeFilters = {
   audience?: Audience;
   categorySlug?: string;
+  page?: number;
   query?: string;
   sort?: string;
 };
+
+export const STOREFRONT_PAGE_SIZE = 24;
+export const STOREFRONT_CACHE_TAG = "storefront-catalog";
 
 const storefrontAudiences = [Audience.WOMEN, Audience.MEN, Audience.KIDS] as const;
 
@@ -98,9 +103,10 @@ function getProductOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInpu
   return [{ isFeatured: "desc" as const }, { updatedAt: "desc" as const }];
 }
 
-export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
+async function getStorefrontHomeUncached(filters: StorefrontHomeFilters = {}) {
   const store = await getPrimaryStore();
   const query = filters.query?.trim();
+  const page = Math.max(1, filters.page ?? 1);
 
   if (!store) {
     return {
@@ -112,11 +118,12 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
       },
       categories: [],
       products: [],
+      totalProducts: 0,
       store: null,
     };
   }
 
-  const [categories, products, activeCategory, ...audienceCategoryLists] =
+  const [categories, products, totalProducts, activeCategory, ...audienceCategoryLists] =
     await Promise.all([
     prisma.category.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -153,7 +160,8 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
     prisma.product.findMany({
       orderBy: getProductOrderBy(filters.sort),
       select: productSelect,
-      take: 24,
+      skip: (page - 1) * STOREFRONT_PAGE_SIZE,
+      take: STOREFRONT_PAGE_SIZE,
       where: {
         ...(filters.categorySlug
           ? {
@@ -178,6 +186,24 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
                     mode: "insensitive" as const,
                   },
                 },
+              ],
+            }
+          : {}),
+        isActive: true,
+        storeId: store.id,
+      },
+    }),
+    prisma.product.count({
+      where: {
+        ...(filters.categorySlug
+          ? { category: { isActive: true, slug: filters.categorySlug } }
+          : { category: { isActive: true } }),
+        ...(filters.audience ? { audience: filters.audience } : {}),
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: "insensitive" as const } },
+                { description: { contains: query, mode: "insensitive" as const } },
               ],
             }
           : {}),
@@ -225,8 +251,19 @@ export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
     },
     categories,
     products,
+    totalProducts,
     store,
   };
+}
+
+const getCachedStorefrontHome = unstable_cache(
+  async (filters: StorefrontHomeFilters) => getStorefrontHomeUncached(filters),
+  ["storefront-home"],
+  { revalidate: 300, tags: [STOREFRONT_CACHE_TAG] },
+);
+
+export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
+  return getCachedStorefrontHome(filters);
 }
 
 export async function getCategoryPage(slug: string) {

@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type CategoryFormState = {
   message: string;
@@ -103,6 +104,7 @@ export async function createCategory(
     return categoryError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 
   return { message: "Categoria creada.", status: "success" };
@@ -141,6 +143,7 @@ export async function updateCategory(
     return categoryError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 
   return { message: "Categoria actualizada.", status: "success" };
@@ -162,5 +165,6 @@ export async function deleteCategory(formData: FormData) {
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 }
