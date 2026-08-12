@@ -13,7 +13,7 @@ type StorefrontHomeFilters = {
 
 const storefrontAudiences = [Audience.WOMEN, Audience.MEN, Audience.KIDS] as const;
 
-export async function getPrimaryStore() {
+export const getPrimaryStore = cache(async () => {
   return prisma.store.findFirst({
     orderBy: {
       createdAt: "asc",
@@ -28,7 +28,7 @@ export async function getPrimaryStore() {
       isActive: true,
     },
   });
-}
+});
 
 const productSelect = {
   id: true,
