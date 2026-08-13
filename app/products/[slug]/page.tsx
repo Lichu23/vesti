@@ -6,7 +6,6 @@ import { getStorefrontProduct } from "@/lib/storefront";
 
 import { CartToggleButton } from "../../cart-buttons";
 import { StorefrontVariantSelector } from "../../storefront-variant-selector";
-import { StorefrontViewportMode } from "../../storefront-viewport-mode";
 
 type ProductPageProps = {
   params: Promise<{
@@ -65,7 +64,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <StorefrontViewportMode />
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
           <Link

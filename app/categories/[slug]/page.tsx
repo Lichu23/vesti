@@ -10,7 +10,6 @@ import { StorefrontMobileSortForm } from "../../storefront-mobile-sort-form";
 import { StorefrontProductCard } from "../../storefront-product-card";
 import { StorefrontPagination } from "../../storefront-pagination";
 import { StorefrontSearch } from "../../storefront-search";
-import { StorefrontViewportMode } from "../../storefront-viewport-mode";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -93,7 +92,6 @@ export default async function CategoryPage({
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <StorefrontViewportMode />
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
           <StorefrontMobileFilterDrawer
@@ -163,8 +161,12 @@ export default async function CategoryPage({
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <StorefrontProductCard key={product.id} product={product} />
+              {products.map((product, index) => (
+                <StorefrontProductCard
+                  key={product.id}
+                  priority={index === 0}
+                  product={product}
+                />
               ))}
             </div>
           )}
