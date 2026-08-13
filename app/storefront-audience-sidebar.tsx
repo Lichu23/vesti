@@ -23,16 +23,21 @@ const AUDIENCE_SECTIONS = [
   { href: "/ninos", key: "KIDS" as const, label: "Ninos" },
 ];
 
-function buildCategoryHref(slug: string, params: StorefrontSidebarParams) {
+function buildCategoryHref(
+  audiencePath: string,
+  slug: string,
+  params: StorefrontSidebarParams,
+) {
   const searchParams = new URLSearchParams();
 
+  searchParams.set("categoria", slug);
   if (params.buscar) searchParams.set("buscar", params.buscar);
   if (params.ordenar && params.ordenar !== "relevance") {
     searchParams.set("ordenar", params.ordenar);
   }
 
   const query = searchParams.toString();
-  return query ? `/categories/${slug}?${query}` : `/categories/${slug}`;
+  return `${audiencePath}?${query}`;
 }
 
 export function StorefrontAudienceSidebar({
@@ -110,7 +115,11 @@ export function StorefrontAudienceSidebar({
                           ? "font-semibold text-foreground"
                           : ""
                       }`}
-                      href={buildCategoryHref(category.slug, searchParams)}
+                      href={buildCategoryHref(
+                        section.href,
+                        category.slug,
+                        searchParams,
+                      )}
                     >
                       {category.name}
                     </Link>

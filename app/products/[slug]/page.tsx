@@ -34,6 +34,19 @@ function getTotalStock(
   return variants.reduce((total, variant) => total + variant.stock, 0);
 }
 
+function getAudiencePath(
+  audience: Awaited<ReturnType<typeof getStorefrontProduct>>["product"]["audience"],
+) {
+  const paths = {
+    KIDS: "/ninos",
+    MEN: "/hombre",
+    UNISEX: "/unisex",
+    WOMEN: "/mujer",
+  } as const;
+
+  return paths[audience];
+}
+
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
@@ -143,7 +156,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="space-y-4">
             <Link
               className="inline-flex cursor-pointer text-sm text-muted-foreground transition hover:text-foreground"
-              href={`/categories/${product.category.slug}`}
+              href={`${getAudiencePath(product.audience)}?categoria=${product.category.slug}`}
             >
               {product.category.name}
             </Link>

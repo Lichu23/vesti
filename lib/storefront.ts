@@ -36,6 +36,7 @@ export const getPrimaryStore = cache(async () => {
 });
 
 const productSelect = {
+  audience: true,
   id: true,
   name: true,
   slug: true,
