@@ -66,6 +66,13 @@ export default async function AdminSettingsPage() {
     notFound();
   }
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin settings]", {
+      loadedInvites: invites.length,
+      loadedUsers: users.length,
+    });
+  }
+
   return (
     <AdminShell activeSection="settings">
       <header className="space-y-2">

@@ -105,6 +105,14 @@ export default async function AdminOrdersPage() {
     };
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin orders]", {
+      loadedVariantOptions: variants.length,
+      loadedOrders: orders.length,
+      orderLimit: 20,
+    });
+  }
+
   return (
     <AdminShell activeSection="orders">
       <header className="space-y-2">

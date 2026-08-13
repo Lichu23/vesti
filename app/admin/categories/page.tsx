@@ -102,6 +102,15 @@ export default async function AdminCategoriesPage({
     take: categoriesPerPage,
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin categories]", {
+      page: safeCurrentPage,
+      pageSize: categoriesPerPage,
+      returnedCategories: categories.length,
+      totalCategories: categoryCount,
+    });
+  }
+
   return (
     <AdminShell activeSection="categories">
       <div className="space-y-2">

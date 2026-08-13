@@ -1,6 +1,9 @@
 import Link from "next/link";
 
-import { getStorefrontHome } from "@/lib/storefront";
+import {
+  getStorefrontHome,
+  STOREFRONT_PAGE_SIZE,
+} from "@/lib/storefront";
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 import { CartToggleButton } from "./cart-buttons";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
@@ -189,12 +192,16 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                {products.map((product) => (
-                <StorefrontProductCard key={product.id} product={product} />
+                {products.map((product, index) => (
+                <StorefrontProductCard
+                  key={product.id}
+                  priority={index === 0}
+                  product={product}
+                />
               ))}
               </div>
           )}
-          <StorefrontPagination basePath="/" currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
+          <StorefrontPagination basePath="/" currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
         </section>
 
         <SortSidebar searchParams={params} />

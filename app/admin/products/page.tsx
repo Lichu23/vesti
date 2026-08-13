@@ -172,6 +172,15 @@ export default async function AdminProductsPage({
     where: productWhere,
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin products]", {
+      page: safeCurrentPage,
+      pageSize: productsPerPage,
+      returnedProducts: products.length,
+      totalProducts: productCount,
+    });
+  }
+
   return (
     <AdminShell activeSection="products">
       <div className="space-y-2">
