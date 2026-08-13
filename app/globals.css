@@ -54,19 +54,3 @@ select,
 textarea {
   font: inherit;
 }
-
-html[data-storefront-viewport="mobile"] .storefront-shell {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-
-html[data-storefront-viewport="mobile"] .storefront-desktop-only {
-  display: none !important;
-}
-
-html[data-storefront-viewport="mobile"] .storefront-mobile-only {
-  display: grid !important;
-}
-
-html[data-storefront-viewport="desktop"] .storefront-mobile-only {
-  display: none !important;
-}
