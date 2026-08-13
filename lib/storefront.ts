@@ -13,7 +13,7 @@ type StorefrontHomeFilters = {
   sort?: string;
 };
 
-export const STOREFRONT_PAGE_SIZE = 24;
+export const STOREFRONT_PAGE_SIZE = 15;
 export const STOREFRONT_CACHE_TAG = "storefront-catalog";
 
 const storefrontAudiences = [Audience.WOMEN, Audience.MEN, Audience.KIDS] as const;
@@ -104,6 +104,7 @@ function getProductOrderBy(sort?: string): Prisma.ProductOrderByWithRelationInpu
 }
 
 async function getStorefrontHomeUncached(filters: StorefrontHomeFilters = {}) {
+  const startedAt = performance.now();
   const store = await getPrimaryStore();
   const query = filters.query?.trim();
   const page = Math.max(1, filters.page ?? 1);
@@ -242,6 +243,14 @@ async function getStorefrontHomeUncached(filters: StorefrontHomeFilters = {}) {
     ),
   ]);
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[storefront database]", {
+      durationMs: Math.round(performance.now() - startedAt),
+      productsReturned: products.length,
+      totalProducts,
+    });
+  }
+
   return {
     activeCategory,
     audienceCategories: {
@@ -263,7 +272,30 @@ const getCachedStorefrontHome = unstable_cache(
 );
 
 export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
-  return getCachedStorefrontHome(filters);
+  const startedAt = performance.now();
+  const result = await getCachedStorefrontHome(filters);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[storefront pagination]", {
+      page: Math.max(1, filters.page ?? 1),
+      pageSize: STOREFRONT_PAGE_SIZE,
+      returnedProducts: result.products.length,
+      totalProducts: result.totalProducts,
+      offset: (Math.max(1, filters.page ?? 1) - 1) * STOREFRONT_PAGE_SIZE,
+    });
+    console.info("[storefront timing]", {
+      cacheAndLoadMs: Math.round(performance.now() - startedAt),
+      filters: {
+        audience: filters.audience,
+        categorySlug: filters.categorySlug,
+        page: filters.page ?? 1,
+        query: filters.query,
+        sort: filters.sort,
+      },
+    });
+  }
+
+  return result;
 }
 
 export async function getCategoryPage(slug: string) {
@@ -333,6 +365,14 @@ export const getStorefrontProduct = cache(async (slug: string) => {
 
   if (!product) {
     notFound();
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[storefront product]", {
+      imageCount: product.images.length,
+      slug,
+      variantCount: product.variants.length,
+    });
   }
 
   return {

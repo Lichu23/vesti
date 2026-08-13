@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Audience } from "@/generated/prisma/client";
-import { getStorefrontHome } from "@/lib/storefront";
+import {
+  getStorefrontHome,
+  STOREFRONT_PAGE_SIZE,
+} from "@/lib/storefront";
 
 import { CartToggleButton } from "./cart-buttons";
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
@@ -170,12 +173,16 @@ export async function AudiencePage({
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <StorefrontProductCard key={product.id} product={product} />
+              {products.map((product, index) => (
+                <StorefrontProductCard
+                  key={product.id}
+                  priority={index === 0}
+                  product={product}
+                />
               ))}
             </div>
           )}
-          <StorefrontPagination basePath={basePath} currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
+          <StorefrontPagination basePath={basePath} currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
         </section>
 
         <aside className="storefront-desktop-only hidden xl:block">

@@ -11,25 +11,9 @@ import {
   OrdersIcon,
   SettingsIcon,
 } from "@/app/admin/admin-ui";
-import { OrderStatus } from "@/generated/prisma/client";
+import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-
-function getStockValue(
-  variants: {
-    price: { toString(): string } | null;
-    product: { basePrice: { toString(): string } };
-    stock: number;
-  }[],
-) {
-  return variants.reduce(
-    (total, variant) =>
-      total +
-      variant.stock *
-        Number(variant.price?.toString() ?? variant.product.basePrice.toString()),
-    0,
-  );
-}
 
 function DashboardAction({
   description,
@@ -74,7 +58,7 @@ export default async function AdminDashboardPage() {
   const [
     store,
     categoryCount,
-    variants,
+    stockValueRows,
     productCount,
     outOfStockCount,
     reviewingOrdersCount,
@@ -95,24 +79,21 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
-    prisma.productVariant.findMany({
-      select: {
-        price: true,
-        stock: true,
-        product: {
-          select: {
-            basePrice: true,
-          },
-        },
-      },
-      where: {
-        isActive: true,
-        product: {
-          isActive: true,
-        },
-        storeId,
-      },
-    }),
+    prisma.$queryRaw<{ stockValue: Prisma.Decimal | number | string | null }[]>(
+      Prisma.sql`
+        SELECT COALESCE(
+          SUM(
+            pv."stock" * COALESCE(pv."price", p."basePrice")
+          ),
+          0
+        ) AS "stockValue"
+        FROM "ProductVariant" pv
+        INNER JOIN "Product" p ON p."id" = pv."productId"
+        WHERE pv."storeId" = ${storeId}
+          AND pv."isActive" = true
+          AND p."isActive" = true
+      `,
+    ),
     prisma.product.count({
       where: { storeId, isActive: true },
     }),
@@ -155,7 +136,16 @@ export default async function AdminDashboardPage() {
       },
     }),
   ]);
-  const stockValue = getStockValue(variants);
+  const stockValue = Number(stockValueRows[0]?.stockValue ?? 0);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin dashboard]", {
+      loadedActiveVariants: 0,
+      loadedRecentOrders: recentOrders.length,
+      recentOrderLimit: 5,
+      stockValue,
+    });
+  }
 
   if (!store) {
     notFound();

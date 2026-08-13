@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getStorefrontHome } from "@/lib/storefront";
+import {
+  getStorefrontHome,
+  STOREFRONT_PAGE_SIZE,
+} from "@/lib/storefront";
 
 import { CartToggleButton } from "../../cart-buttons";
 import { StorefrontAudienceSidebar } from "../../storefront-audience-sidebar";
@@ -170,7 +173,7 @@ export default async function CategoryPage({
               ))}
             </div>
           )}
-          <StorefrontPagination basePath={`/categories/${slug}`} currentPage={Math.max(1, Number(currentParams.pagina) || 1)} params={{ buscar: currentParams.buscar, ordenar: currentParams.ordenar }} totalPages={Math.ceil(totalProducts / 24)} />
+          <StorefrontPagination basePath={`/categories/${slug}`} currentPage={Math.max(1, Number(currentParams.pagina) || 1)} params={{ buscar: currentParams.buscar, ordenar: currentParams.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
         </section>
 
         <aside className="storefront-desktop-only hidden xl:block">

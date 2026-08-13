@@ -40,7 +40,8 @@ export function StorefrontProductCard({
             alt={image.alt ?? product.name}
             className="object-cover transition duration-500 group-hover:scale-105"
             fill
-            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            preload={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
             src={image.url}
           />
