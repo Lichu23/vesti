@@ -182,7 +182,7 @@ export default async function AdminProductsPage({
   }
 
   return (
-    <AdminShell activeSection="products">
+    <AdminShell>
       <div className="space-y-2">
         <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Panel de inventario

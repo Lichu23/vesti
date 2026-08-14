@@ -114,7 +114,7 @@ export default async function AdminOrdersPage() {
   }
 
   return (
-    <AdminShell activeSection="orders">
+    <AdminShell>
       <header className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Pedidos

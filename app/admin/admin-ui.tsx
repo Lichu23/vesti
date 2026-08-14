@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { AdminMobileMenu } from "@/app/admin/admin-mobile-menu";
 
 export type AdminSection =
   | "categories"
@@ -11,7 +10,6 @@ export type AdminSection =
   | "settings";
 
 type AdminShellProps = {
-  activeSection: AdminSection;
   children: ReactNode;
 };
 
@@ -259,92 +257,9 @@ export function StatCard({ icon, label, value }: StatCardProps) {
   );
 }
 
-function AdminNavLink({
-  active,
-  children,
-  href,
-  icon,
-}: {
-  active: boolean;
-  children: ReactNode;
-  href: string;
-  icon: ReactNode;
-}) {
+export function AdminShell({ children }: AdminShellProps) {
   return (
-    <Link
-      className={`flex cursor-pointer items-center gap-3 rounded-[4px] px-4 py-3 transition hover:bg-secondary hover:text-foreground ${
-        active ? "bg-secondary font-semibold text-foreground" : ""
-      }`}
-      href={href}
-    >
-      {icon}
-      {children}
-    </Link>
-  );
-}
-
-export function AdminShell({ activeSection, children }: AdminShellProps) {
-  return (
-    <main className="min-h-screen min-w-0 overflow-x-hidden bg-background text-foreground">
-      <div className="mx-auto grid max-w-[1720px] gap-6 px-4 py-6 sm:px-10 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
-        <aside className="hidden lg:block">
-          <Link aria-label="Ir al admin" className="block cursor-pointer" href="/admin">
-            <span className="block font-serif text-3xl leading-none text-foreground">Thoemia</span>
-            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">Intimo</span>
-            <span className="mt-3 inline-flex rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Admin</span>
-          </Link>
-          <Link className="mt-8 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition hover:border-primary" href="/">
-            <StoreIcon />
-            Ver tienda
-          </Link>
-          <p className="mb-6 mt-12 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-            Gestion
-          </p>
-          <nav className="space-y-2 text-base text-muted-foreground">
-            <AdminNavLink
-              active={activeSection === "dashboard"}
-              href="/admin"
-              icon={<DashboardIcon />}
-            >
-              Dashboard
-            </AdminNavLink>
-            <AdminNavLink
-              active={activeSection === "products"}
-              href="/admin/products"
-              icon={<BoxIcon />}
-            >
-              Productos
-            </AdminNavLink>
-            <AdminNavLink
-              active={activeSection === "categories"}
-              href="/admin/categories"
-              icon={<CategoryIcon />}
-            >
-              Categorias
-            </AdminNavLink>
-            <AdminNavLink
-              active={activeSection === "orders"}
-              href="/admin/orders"
-              icon={<OrdersIcon />}
-            >
-              Pedidos
-            </AdminNavLink>
-            <AdminNavLink
-              active={activeSection === "settings"}
-              href="/admin/settings"
-              icon={<SettingsIcon />}
-            >
-              Configuracion
-            </AdminNavLink>
-          </nav>
-        </aside>
-
-        <section className="relative min-w-0 space-y-10 overflow-x-hidden">
-          <AdminMobileMenu activeSection={activeSection} />
-          {children}
-        </section>
-      </div>
-    </main>
+    <section className="relative min-w-0 space-y-10 overflow-x-hidden">{children}</section>
   );
 }
 
