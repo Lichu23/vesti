@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
-import { getPrimaryStore } from "@/lib/storefront";
+import { getPrimaryStore, getStorefrontNavigation } from "@/lib/storefront";
 import { CartProvider } from "./cart-context";
+import { StorefrontNavigation } from "./storefront-navigation";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -23,7 +25,10 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const store = await getPrimaryStore();
+  const [store, storefrontNavigation] = await Promise.all([
+    getPrimaryStore(),
+    getStorefrontNavigation(),
+  ]);
 
   return (
     <html
@@ -32,7 +37,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <CartProvider storeName={store?.name} storeWhatsapp={store?.whatsapp}>
-          {children}
+          <Suspense fallback={children}>
+            <StorefrontNavigation
+              categoryGroups={storefrontNavigation.audienceCategories}
+            >
+              {children}
+            </StorefrontNavigation>
+          </Suspense>
         </CartProvider>
         <Analytics />
       </body>

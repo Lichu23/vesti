@@ -13,6 +13,7 @@ type StorefrontMobileSortFormProps = {
   query?: string;
   sort?: string;
   sortOptions: SortOption[];
+  onNavigate?: () => void;
 };
 
 export function StorefrontMobileSortForm({
@@ -21,13 +22,18 @@ export function StorefrontMobileSortForm({
   query,
   sort,
   sortOptions,
+  onNavigate,
 }: StorefrontMobileSortFormProps) {
   const initialSort = sort ?? "relevance";
   const [selectedSort, setSelectedSort] = useState(initialSort);
   const hasChanges = selectedSort !== initialSort;
 
   return (
-    <form action={action} className="storefront-mobile-only grid gap-3 xl:hidden">
+    <form
+      action={action}
+      className="storefront-mobile-only grid gap-3 xl:hidden"
+      onSubmit={() => onNavigate?.()}
+    >
       {query ? <input name="buscar" type="hidden" value={query} /> : null}
       {category ? <input name="categoria" type="hidden" value={category} /> : null}
       <select

@@ -5,12 +5,8 @@ import {
   STOREFRONT_PAGE_SIZE,
 } from "@/lib/storefront";
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
-import { CartToggleButton } from "./cart-buttons";
-import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
-import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
 import { StorefrontProductCard } from "./storefront-product-card";
 import { StorefrontPagination } from "./storefront-pagination";
-import { StorefrontSearch } from "./storefront-search";
 
 type HomeSearchParams = {
   categoria?: string | string[];
@@ -125,35 +121,6 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
-        <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
-          <StorefrontMobileFilterDrawer
-            activeCategory={params.categoria}
-            categoryGroups={audienceCategories}
-            searchParams={params}
-          />
-
-          <Link
-            aria-label="Ir al inicio"
-            className="cursor-pointer justify-self-center md:justify-self-auto"
-            href="/"
-          >
-            <span className="block font-serif text-3xl leading-none text-foreground">
-              Thoemia
-            </span>
-            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
-              Intimo
-            </span>
-          </Link>
-
-          <StorefrontSearch
-            initialValue={params.buscar}
-            key={params.buscar ?? "empty-search"}
-          />
-
-          <CartToggleButton className="ml-0 justify-self-end" />
-        </div>
-      </header>
 
       <div className="storefront-shell grid gap-8 px-5 py-10 sm:px-8 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
         <StorefrontAudienceSidebar
@@ -164,18 +131,6 @@ export default async function Home({ searchParams }: HomeProps) {
 
         <section className="min-w-0 space-y-8">
           <div className="space-y-4">
-            <StorefrontSearch
-              className="flex w-full md:hidden"
-              initialValue={params.buscar}
-              key={`mobile-${params.buscar ?? "empty-search"}`}
-            />
-            <StorefrontMobileSortForm
-              action="/"
-              category={params.categoria}
-              query={params.buscar}
-              sort={params.ordenar}
-              sortOptions={SORT_OPTIONS}
-            />
             <div>
               <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {title}

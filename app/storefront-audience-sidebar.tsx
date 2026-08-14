@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 type StorefrontSidebarCategory = {
@@ -45,12 +47,16 @@ export function StorefrontAudienceSidebar({
   activeCategory,
   categoryGroups,
   className = "storefront-desktop-only hidden xl:block",
+  isDisabled = false,
+  onNavigate,
   searchParams,
 }: {
   activeAudiencePath?: string;
   activeCategory?: string;
   className?: string;
   categoryGroups: StorefrontSidebarCategoryGroups;
+  isDisabled?: boolean;
+  onNavigate?: () => void;
   searchParams: StorefrontSidebarParams;
 }) {
   return (
@@ -102,6 +108,15 @@ export function StorefrontAudienceSidebar({
                     <Link
                       className="cursor-pointer transition hover:text-foreground"
                       href={section.href}
+                      aria-disabled={isDisabled}
+                      onClick={(event) => {
+                        if (isDisabled) {
+                          event.preventDefault();
+                          return;
+                        }
+                        onNavigate?.();
+                      }}
+                      tabIndex={isDisabled ? -1 : undefined}
                     >
                       Ver todo
                     </Link>
@@ -120,6 +135,15 @@ export function StorefrontAudienceSidebar({
                         category.slug,
                         searchParams,
                       )}
+                      aria-disabled={isDisabled}
+                      onClick={(event) => {
+                        if (isDisabled) {
+                          event.preventDefault();
+                          return;
+                        }
+                        onNavigate?.();
+                      }}
+                      tabIndex={isDisabled ? -1 : undefined}
                     >
                       {category.name}
                     </Link>

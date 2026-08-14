@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { getStorefrontProduct } from "@/lib/storefront";
 
-import { CartToggleButton } from "../../cart-buttons";
 import { StorefrontVariantSelector } from "../../storefront-variant-selector";
 
 type ProductPageProps = {
@@ -77,32 +76,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
-        <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
-          <Link
-            aria-label="Volver a productos"
-            className="flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary"
-            href="/"
-          >
-            ←
-          </Link>
-
-          <Link
-            aria-label="Ir al inicio"
-            className="cursor-pointer justify-self-center md:justify-self-auto"
-            href="/"
-          >
-            <span className="block font-serif text-3xl leading-none text-foreground">
-              Thoemia
-            </span>
-            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
-              Intimo
-            </span>
-          </Link>
-
-          <CartToggleButton className="ml-0 justify-self-end md:ml-auto" />
-        </div>
-      </header>
 
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14">
         <section className="space-y-4">

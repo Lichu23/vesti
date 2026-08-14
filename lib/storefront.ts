@@ -272,6 +272,54 @@ const getCachedStorefrontHome = unstable_cache(
   { revalidate: 300, tags: [STOREFRONT_CACHE_TAG] },
 );
 
+const getCachedStorefrontNavigation = unstable_cache(
+  async () => {
+    const store = await getPrimaryStore();
+    const emptyCategories = {
+      [Audience.WOMEN]: [],
+      [Audience.MEN]: [],
+      [Audience.KIDS]: [],
+    };
+
+    if (!store) {
+      return { audienceCategories: emptyCategories };
+    }
+
+    const audienceCategoryLists = await Promise.all(
+      storefrontAudiences.map((audience) =>
+        prisma.category.findMany({
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          select: categorySelect,
+          where: {
+            isActive: true,
+            products: {
+              some: {
+                audience,
+                isActive: true,
+              },
+            },
+            storeId: store.id,
+          },
+        }),
+      ),
+    );
+
+    return {
+      audienceCategories: {
+        [Audience.WOMEN]: audienceCategoryLists[0],
+        [Audience.MEN]: audienceCategoryLists[1],
+        [Audience.KIDS]: audienceCategoryLists[2],
+      },
+    };
+  },
+  ["storefront-navigation"],
+  { revalidate: 300, tags: [STOREFRONT_CACHE_TAG] },
+);
+
+export async function getStorefrontNavigation() {
+  return getCachedStorefrontNavigation();
+}
+
 export async function getStorefrontHome(filters: StorefrontHomeFilters = {}) {
   const startedAt = performance.now();
   const result = await getCachedStorefrontHome(filters);

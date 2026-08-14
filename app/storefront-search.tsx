@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 type StorefrontSearchProps = {
   className?: string;
   initialValue?: string;
+  onNavigate?: () => void;
 };
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -13,6 +14,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 export function StorefrontSearch({
   className = "ml-auto hidden w-full max-w-[720px] md:flex",
   initialValue = "",
+  onNavigate,
 }: StorefrontSearchProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -39,12 +41,13 @@ export function StorefrontSearch({
       const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
 
       startTransition(() => {
+        onNavigate?.();
         router.replace(nextUrl, { scroll: false });
       });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [pathname, query, router, searchParams]);
+  }, [onNavigate, pathname, query, router, searchParams]);
 
   return (
     <div
