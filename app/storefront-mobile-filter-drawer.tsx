@@ -26,21 +26,32 @@ export function StorefrontMobileFilterDrawer({
   activeAudiencePath,
   activeCategory,
   categoryGroups,
+  isDisabled = false,
+  onNavigate,
   searchParams,
 }: {
   activeAudiencePath?: string;
   activeCategory?: string;
   categoryGroups: StorefrontSidebarCategoryGroups;
+  isDisabled?: boolean;
+  onNavigate?: () => void;
   searchParams: StorefrontSidebarParams;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  function handleNavigate() {
+    setIsOpen(false);
+    onNavigate?.();
+  }
 
   return (
     <>
       <button
         aria-expanded={isOpen}
+        aria-disabled={isDisabled}
         aria-label="Abrir filtros"
         className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary xl:hidden"
+        disabled={isDisabled}
         onClick={() => setIsOpen(true)}
         type="button"
       >
@@ -92,6 +103,8 @@ export function StorefrontMobileFilterDrawer({
               activeCategory={activeCategory}
               categoryGroups={categoryGroups}
               className="min-h-0 overflow-y-auto"
+              isDisabled={isDisabled}
+              onNavigate={handleNavigate}
               searchParams={searchParams}
             />
           </aside>
