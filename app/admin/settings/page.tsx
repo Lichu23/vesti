@@ -74,7 +74,7 @@ export default async function AdminSettingsPage() {
   }
 
   return (
-    <AdminShell activeSection="settings">
+    <AdminShell>
       <header className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Configuracion

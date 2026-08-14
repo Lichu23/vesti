@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <AdminShell activeSection="dashboard">
+    <AdminShell>
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Dashboard
