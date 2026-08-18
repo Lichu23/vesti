@@ -26,6 +26,8 @@ export type ProductImageFormState = ProductFormState;
 export type InventoryAdjustmentFormState = ProductFormState;
 export type ProductVariantFormState = ProductFormState;
 
+export type ProductDeleteState = ProductFormState;
+
 const allowedImageTypes = new Set([
   "image/avif",
   "image/jpeg",
@@ -976,18 +978,26 @@ export async function updateProduct(
   return { message: "Producto actualizado.", status: "success" };
 }
 
-export async function deleteProduct(formData: FormData) {
+export async function deleteProduct(
+  _previousState: ProductDeleteState,
+  formData: FormData,
+): Promise<ProductDeleteState> {
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const id = String(formData.get("id") ?? "").trim();
 
   if (!id || !storeId) {
-    return;
+    return { message: "No se pudo identificar el producto.", status: "error" };
   }
 
   try {
     const product = await prisma.product.findUnique({
       select: {
+        _count: {
+          select: {
+            orderItems: true,
+          },
+        },
         images: {
           select: {
             url: true,
@@ -1006,7 +1016,37 @@ export async function deleteProduct(formData: FormData) {
     });
 
     if (!product) {
-      return;
+      return { message: "Producto no encontrado.", status: "error" };
+    }
+
+    if (product._count.orderItems > 0) {
+      await prisma.$transaction([
+        prisma.product.update({
+          data: {
+            isActive: false,
+          },
+          where: {
+            id,
+            storeId,
+          },
+        }),
+        prisma.productVariant.updateMany({
+          data: {
+            isActive: false,
+          },
+          where: {
+            productId: id,
+            storeId,
+          },
+        }),
+      ]);
+
+      revalidateTag(STOREFRONT_CACHE_TAG, 'max');
+      revalidatePath("/admin/products");
+      return {
+        message: "Producto ocultado. El historial de pedidos se conservo.",
+        status: "success",
+      };
     }
 
     await prisma.$transaction(async (tx) => {
@@ -1050,21 +1090,30 @@ export async function deleteProduct(formData: FormData) {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
-      return;
+      return { message: "Producto no encontrado.", status: "error" };
     }
 
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2003"
     ) {
-      return;
+      return {
+        message: "El producto esta en uso y no se pudo eliminar.",
+        status: "error",
+      };
     }
 
-    throw error;
+    console.error("Product deletion failed", error);
+    return {
+      message: "No se pudo eliminar el producto. Intenta nuevamente.",
+      status: "error",
+    };
   }
 
   revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/products");
+
+  return { message: "Producto eliminado.", status: "success" };
 }
 
 export async function createProductImage(

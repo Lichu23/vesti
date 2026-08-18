@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AdminShell, SettingsIcon } from "@/app/admin/admin-ui";
+import { ConfirmActionForm } from "@/app/admin/confirm-action-form";
 import {
   createStoreInvite,
   removeStoreAdmin,
@@ -141,15 +142,13 @@ export default async function AdminSettingsPage() {
                 {isOwner &&
                 user.role === "ADMIN" &&
                 user.id !== session.user.id ? (
-                  <form action={removeStoreAdmin}>
-                    <input name="userId" type="hidden" value={user.id} />
-                    <button
-                      className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
-                      type="submit"
-                    >
-                      Quitar acceso
-                    </button>
-                  </form>
+                  <ConfirmActionForm
+                    action={removeStoreAdmin}
+                    buttonClassName="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
+                    buttonContent="Quitar acceso"
+                    confirmMessage={`¿Quitar el acceso de ${user.name || user.email || "este usuario"}? Debera recibir una nueva invitacion para volver a entrar.`}
+                    fields={{ userId: user.id }}
+                  />
                 ) : null}
               </div>
             ))}
