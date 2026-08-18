@@ -5,6 +5,7 @@ import {
   TrashIcon,
 } from "@/app/admin/admin-ui";
 import { CategoryModal } from "@/app/admin/categories/category-modal";
+import { ConfirmActionForm } from "@/app/admin/confirm-action-form";
 import {
   createCategory,
   deleteCategory,
@@ -175,6 +176,11 @@ export default async function AdminCategoriesPage({
                     <h2 className="truncate font-serif text-2xl leading-tight text-foreground">
                       {category.name}
                     </h2>
+                    {!category.isActive ? (
+                      <span className="mt-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                        Oculta
+                      </span>
+                    ) : null}
                     <p className="mt-1 text-sm text-muted-foreground">
                       {category._count.products} productos
                     </p>
@@ -192,16 +198,14 @@ export default async function AdminCategoriesPage({
                         type: "icon",
                       }}
                     />
-                    <form action={deleteCategory}>
-                      <input name="id" type="hidden" value={category.id} />
-                      <button
-                        aria-label={`Eliminar ${category.name}`}
-                        className="cursor-pointer transition hover:text-destructive"
-                        type="submit"
-                      >
-                        <TrashIcon />
-                      </button>
-                    </form>
+                    <ConfirmActionForm
+                      action={deleteCategory}
+                      ariaLabel={`Eliminar ${category.name}`}
+                      buttonClassName="cursor-pointer transition hover:text-destructive"
+                      buttonContent={<TrashIcon />}
+                      confirmMessage={`¿Eliminar ${category.name}? Si contiene productos, se ocultara en lugar de borrar sus relaciones.`}
+                      fields={{ id: category.id }}
+                    />
                   </div>
                 </article>
               );

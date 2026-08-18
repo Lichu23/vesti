@@ -3,10 +3,13 @@ import {
   AdminPagination,
   AdminShell,
   formatAdminPrice,
-  TrashIcon,
 } from "@/app/admin/admin-ui";
 import { AdminProductsFilterForm } from "@/app/admin/products/admin-products-filter-form";
 import { ProductModal } from "@/app/admin/products/product-modal";
+import {
+  ProductDeleteForm,
+  ProductDeleteProvider,
+} from "@/app/admin/products/product-delete-form";
 import {
   createProduct,
   createProductVariant,
@@ -199,7 +202,8 @@ export default async function AdminProductsPage({
         </p>
       ) : null}
 
-      <section className="space-y-6">
+      <ProductDeleteProvider action={deleteProduct}>
+        <section className="space-y-6">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
           <AdminProductsFilterForm
             categories={categories}
@@ -279,6 +283,11 @@ export default async function AdminProductsPage({
                         <h2 className="truncate text-base font-semibold text-foreground">
                           {product.name}
                         </h2>
+                        {!product.isActive ? (
+                          <span className="mt-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                            Oculto
+                          </span>
+                        ) : null}
                         <p className="text-sm text-muted-foreground">
                           Talle: {product.sizeDisplayText ?? "Unico"}
                         </p>
@@ -500,16 +509,10 @@ export default async function AdminProductsPage({
                         </section>
 
                       </ProductModal>
-                      <form action={deleteProduct}>
-                        <input name="id" type="hidden" value={product.id} />
-                        <button
-                          aria-label={`Eliminar ${product.name}`}
-                          className="cursor-pointer transition hover:text-destructive"
-                          type="submit"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </form>
+                      <ProductDeleteForm
+                        productId={product.id}
+                        productName={product.name}
+                      />
                     </div>
                   </article>
                 );
@@ -527,7 +530,8 @@ export default async function AdminProductsPage({
           }}
           totalPages={totalPages}
         />
-      </section>
+        </section>
+      </ProductDeleteProvider>
     </AdminShell>
   );
 }

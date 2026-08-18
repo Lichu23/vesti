@@ -103,3 +103,35 @@ Notes:
 
 - The first production deployment exposed a missing `AUTH_SECRET`; adding the variable to Vercel Production and redeploying resolved the `/admin` authentication error.
 - Keep development and production credentials separate. Do not commit secrets or environment files.
+
+## Phase 9 Admin Operations Improvements
+
+### Orders
+
+-   [ ] Add order search
+-   [ ] Add status and date filters
+-   [ ] Add order pagination
+-   [ ] Add dedicated `/admin/orders/[id]` view
+-   [ ] Add order cancellation with transactional stock restoration
+-   [ ] Add order status and inventory movement timeline
+
+### Inventory
+
+-   [ ] Show exact stock quantities in product rows
+-   [ ] Add configurable low-stock thresholds
+-   [ ] Add low-stock alerts to the dashboard
+-   [ ] Add a global inventory movement view with filters
+
+### Destructive Action Safety
+
+-   [x] Add confirmation dialogs for product and category deletion
+-   [x] Add confirmation dialogs for user removal
+-   [x] Prefer deactivation or soft deletion for records referenced by order history
+
+### Admin Reliability
+
+-   [ ] Add `app/admin/error.tsx` with retry handling
+-   [ ] Use the Spanish locale for admin dates
+-   [ ] Fix the visible mojibake character in the dashboard
+
+Branch: feat/admin-operations-improvements

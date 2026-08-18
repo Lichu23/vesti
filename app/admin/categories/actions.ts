@@ -158,12 +158,42 @@ export async function deleteCategory(formData: FormData) {
     return;
   }
 
-  await prisma.category.delete({
+  const category = await prisma.category.findUnique({
+    select: {
+      _count: {
+        select: {
+          products: true,
+        },
+      },
+    },
     where: {
       id,
       storeId,
     },
   });
+
+  if (!category) {
+    return;
+  }
+
+  if (category._count.products > 0) {
+    await prisma.category.update({
+      data: {
+        isActive: false,
+      },
+      where: {
+        id,
+        storeId,
+      },
+    });
+  } else {
+    await prisma.category.delete({
+      where: {
+        id,
+        storeId,
+      },
+    });
+  }
 
   revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
