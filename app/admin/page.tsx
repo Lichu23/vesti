@@ -14,6 +14,7 @@ import {
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { TrafficPanel } from "@/app/admin/traffic-panel";
 
 function DashboardAction({
   description,
@@ -171,6 +172,8 @@ export default async function AdminDashboardPage() {
         productCount={productCount}
         stockValue={stockValue}
       />
+
+      <TrafficPanel />
 
       <section className="grid gap-5 xl:grid-cols-3">
         <DashboardAction

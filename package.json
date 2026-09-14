@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "storage:setup": "node scripts/setup-product-images-bucket.mjs",
     "db:validate": "prisma validate",
-    "validate": "pnpm lint && pnpm db:validate && pnpm build"
+    "test:analytics": "node --experimental-strip-types --test scripts/admin-analytics.test.mjs",
+    "validate": "pnpm lint && pnpm test:analytics && pnpm db:validate && pnpm build"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
