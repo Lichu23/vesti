@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { UserRole } from "@/generated/prisma/enums";
-import { requireAdminSession, requireOwnerSession } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
@@ -135,7 +135,7 @@ export async function createStoreInvite(
   _previousState: StoreInviteFormState,
   formData: FormData,
 ): Promise<StoreInviteFormState> {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const email = normalizeEmail(formData.get("email"));
   // Invitations are intentionally limited to operational admins. OWNER is an
@@ -195,7 +195,7 @@ export async function createStoreInvite(
 }
 
 export async function removeStoreInvite(formData: FormData) {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const inviteId = String(formData.get("inviteId") ?? "");
 
@@ -216,7 +216,7 @@ export async function removeStoreInvite(formData: FormData) {
 }
 
 export async function removeStoreAdmin(formData: FormData) {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const userId = String(formData.get("userId") ?? "");
 
