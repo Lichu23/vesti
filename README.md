@@ -16,7 +16,7 @@ This repository contains the full storefront and admin system for the MVP:
 - Admin dashboard
 - Product, category, order, and inventory management
 - Owner/admin access control
-- Store invite flow for handing off ownership or inviting admins
+- Store invite flow for inviting admins
 - Production deployment requirements and development tracker docs
 
 ## Product flow
@@ -29,10 +29,10 @@ Orders are created internally before the WhatsApp redirect. The admin can review
 
 The admin area separates store operation from platform ownership:
 
-- `OWNER` can manage store settings and invite or remove admins.
+- `OWNER` is an internal control role that can manage store settings and invite or remove admins.
 - `ADMIN` can manage operational areas such as products, orders, and inventory.
 
-Store access is handled through invites. An owner invites a Gmail account, and when that person signs in with Google, the app links the user to the correct store and role.
+Store access is handled through invites. An owner invites a Gmail account as an `ADMIN`, and when that person signs in with Google, the app links the user to the correct store.
 
 ## Technical shape
 
