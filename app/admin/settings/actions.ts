@@ -138,8 +138,9 @@ export async function createStoreInvite(
   const session = await requireOwnerSession();
   const storeId = session.user.storeId;
   const email = normalizeEmail(formData.get("email"));
-  const roleInput = String(formData.get("role") ?? UserRole.ADMIN);
-  const role = roleInput === UserRole.OWNER ? UserRole.OWNER : UserRole.ADMIN;
+  // Invitations are intentionally limited to operational admins. OWNER is an
+  // internal control role and must never be assignable through this form.
+  const role = UserRole.ADMIN;
 
   if (!storeId) {
     return { message: "Se requiere acceso a la tienda.", status: "error" };

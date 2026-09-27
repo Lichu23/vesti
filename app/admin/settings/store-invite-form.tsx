@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 
 import { type StoreInviteFormState } from "@/app/admin/settings/actions";
-import { UserRole } from "@/generated/prisma/enums";
 
 const initialInviteFormState: StoreInviteFormState = {
   message: "",
@@ -47,17 +46,9 @@ export function StoreInviteForm({ action }: StoreInviteFormProps) {
         />
       </label>
 
-      <label className="grid gap-1 text-sm font-medium">
-        Rol
-        <select
-          className={fieldClassName()}
-          defaultValue={UserRole.ADMIN}
-          name="role"
-        >
-          <option value={UserRole.ADMIN}>Admin</option>
-          <option value={UserRole.OWNER}>Owner</option>
-        </select>
-      </label>
+      <p className="text-sm text-muted-foreground">
+        El acceso se asignara como Admin.
+      </p>
 
       {state.message ? (
         <p

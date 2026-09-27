@@ -91,6 +91,6 @@ Then deploy the verified branch to Vercel.
 - [ ] Google login works.
 - [ ] Admin redirects to `/admin` after login.
 - [ ] Owner can access Settings.
-- [ ] Owner can invite an admin or owner.
+- [ ] Owner can invite an admin.
 - [ ] Product image upload works.
 
