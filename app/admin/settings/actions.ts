@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { UserRole } from "@/generated/prisma/enums";
-import { requireOwnerSession } from "@/lib/admin-auth";
+import { requireAdminSession, requireOwnerSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
@@ -98,7 +98,7 @@ export async function updateStoreSettings(
   _previousState: StoreSettingsFormState,
   formData: FormData,
 ): Promise<StoreSettingsFormState> {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const parsed = readStoreSettingsForm(formData);
 

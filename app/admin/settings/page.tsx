@@ -96,20 +96,7 @@ export default async function AdminSettingsPage() {
               Datos principales
             </h2>
           </div>
-          {isOwner ? (
-            <StoreSettingsForm action={updateStoreSettings} store={store} />
-          ) : (
-            <div className="grid gap-3 text-sm text-muted-foreground">
-              <p>
-                Solo el owner puede editar la configuracion principal de la
-                tienda.
-              </p>
-              <p>Nombre: {store.name}</p>
-              <p>Slug: {store.slug}</p>
-              <p>WhatsApp: {store.whatsapp ?? "Sin configurar"}</p>
-              <p>Estado: {store.isActive ? "Activa" : "Inactiva"}</p>
-            </div>
-          )}
+          <StoreSettingsForm action={updateStoreSettings} store={store} />
         </div>
 
       </section>
