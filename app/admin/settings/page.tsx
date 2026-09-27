@@ -16,7 +16,6 @@ import { prisma } from "@/lib/prisma";
 export default async function AdminSettingsPage() {
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
-  const isOwner = session.user.role === "OWNER";
 
   if (!storeId) {
     return null;
@@ -126,8 +125,7 @@ export default async function AdminSettingsPage() {
                     {user.email} - {user.role === "OWNER" ? "Owner" : "Admin"}
                   </p>
                 </div>
-                {isOwner &&
-                user.role === "ADMIN" &&
+                {user.role === "ADMIN" &&
                 user.id !== session.user.id ? (
                   <ConfirmActionForm
                     action={removeStoreAdmin}
@@ -143,7 +141,7 @@ export default async function AdminSettingsPage() {
         </div>
 
         <div className="grid h-fit gap-5">
-          {isOwner ? <StoreInviteForm action={createStoreInvite} /> : null}
+          <StoreInviteForm action={createStoreInvite} />
 
           <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
             <div className="mb-5 space-y-1">
@@ -171,17 +169,15 @@ export default async function AdminSettingsPage() {
                         {invite.createdAt.toLocaleDateString("es-AR")}
                       </p>
                     </div>
-                    {isOwner ? (
-                      <form action={removeStoreInvite}>
-                        <input name="inviteId" type="hidden" value={invite.id} />
-                        <button
-                          className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
-                          type="submit"
-                        >
-                          Cancelar invitacion
-                        </button>
-                      </form>
-                    ) : null}
+                    <form action={removeStoreInvite}>
+                      <input name="inviteId" type="hidden" value={invite.id} />
+                      <button
+                        className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
+                        type="submit"
+                      >
+                        Cancelar invitacion
+                      </button>
+                    </form>
                   </div>
                 ))}
               </div>
