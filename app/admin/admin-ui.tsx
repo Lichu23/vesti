@@ -275,7 +275,7 @@ export function InventoryStats({
   stockValue: number;
 }) {
   return (
-    <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-4">
       <StatCard icon={<BoxIcon />} label="Productos" value={String(productCount)} />
       <StatCard
         icon={<CategoryIcon />}
