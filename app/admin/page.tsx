@@ -117,8 +117,6 @@ export default async function AdminDashboardPage() {
   if (process.env.NODE_ENV !== "production") {
     console.info("[admin dashboard]", {
       loadedActiveVariants: 0,
-      loadedRecentOrders: recentOrders.length,
-      recentOrderLimit: 5,
       stockValue,
     });
   }
