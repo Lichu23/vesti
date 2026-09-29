@@ -126,7 +126,7 @@ export async function AudiencePage({
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 min-[360px]:grid-cols-2 sm:gap-5 xl:grid-cols-4">
               {products.map((product, index) => (
                 <StorefrontProductCard
                   key={product.id}
