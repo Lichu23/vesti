@@ -5,10 +5,7 @@ import type { ReactNode } from "react";
 import {
   AdminShell,
   BoxIcon,
-  formatAdminOrderStatus,
-  formatAdminPrice,
   InventoryStats,
-  OrdersIcon,
   SettingsIcon,
 } from "@/app/admin/admin-ui";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
@@ -63,8 +60,6 @@ export default async function AdminDashboardPage() {
     productCount,
     outOfStockCount,
     reviewingOrdersCount,
-    confirmedOrdersCount,
-    recentOrders,
   ] = await Promise.all([
     prisma.store.findUnique({
       select: {
@@ -116,26 +111,6 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
-    prisma.order.count({
-      where: {
-        status: OrderStatus.CONFIRMED,
-        storeId,
-      },
-    }),
-    prisma.order.findMany({
-      orderBy: [{ createdAt: "desc" }],
-      select: {
-        createdAt: true,
-        customerName: true,
-        id: true,
-        status: true,
-        total: true,
-      },
-      take: 5,
-      where: {
-        storeId,
-      },
-    }),
   ]);
   const stockValue = Number(stockValueRows[0]?.stockValue ?? 0);
 
@@ -165,6 +140,16 @@ export default async function AdminDashboardPage() {
           Control rapido del catalogo, stock y pedidos pendientes.
         </p>
       </div>
+
+      <Link
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+        href="/admin/orders"
+      >
+        Gestionar pedidos
+        <span className="rounded-full bg-background/20 px-2 py-0.5 text-xs">
+          {reviewingOrdersCount} pendientes
+        </span>
+      </Link>
 
       <InventoryStats
         categoryCount={categoryCount}
@@ -196,58 +181,6 @@ export default async function AdminDashboardPage() {
         />
       </section>
 
-      <section>
-        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <OrdersIcon />
-              <div>
-                <h2 className="font-serif text-3xl text-foreground">
-                  Pedidos recientes
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {reviewingOrdersCount} pendientes · {confirmedOrdersCount} confirmados
-                </p>
-              </div>
-            </div>
-            <Link
-              className="inline-flex cursor-pointer rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:border-primary"
-              href="/admin/orders"
-            >
-              Gestionar pedidos
-            </Link>
-          </div>
-          {recentOrders.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Todavia no hay pedidos.
-            </p>
-          ) : (
-            <div className="grid gap-3">
-              {recentOrders.map((order) => (
-                <Link
-                  className="grid gap-2 rounded-[4px] border border-border bg-background p-4 transition hover:border-primary sm:grid-cols-[minmax(0,1fr)_auto]"
-                  href="/admin/orders"
-                  key={order.id}
-                >
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {order.customerName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.createdAt.toLocaleString("es-AR")} -{" "}
-                      {formatAdminOrderStatus(order.status)}
-                    </p>
-                  </div>
-                  <p className="font-serif text-2xl text-foreground">
-                    {formatAdminPrice(Number(order.total))}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-      </section>
     </AdminShell>
   );
 }
