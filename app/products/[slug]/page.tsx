@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </Link>
 
             <div>
-              <h1 className="font-serif text-5xl leading-tight text-foreground">
+              <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {product.name}
               </h1>
             </div>
