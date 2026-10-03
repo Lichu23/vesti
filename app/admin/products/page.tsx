@@ -158,7 +158,7 @@ export default async function AdminProductsPage({
 
   return (
     <AdminShell>
-      <h1 className="font-serif text-3xl leading-tight text-foreground max-sm:mb-6 sm:text-5xl">
+      <h1 className="font-serif text-3xl leading-tight text-foreground max-sm:mb-4 sm:text-5xl">
         Panel de inventario
       </h1>
       {categories.length === 0 ? (
