@@ -54,7 +54,7 @@ export function ProductDeleteProvider({
 
   return (
     <ProductDeletePendingContext value={pending}>
-      <form action={formAction} id={productDeleteFormId} />
+      <form action={formAction} className="hidden" id={productDeleteFormId} />
       {children}
 
       {showToast ? (
