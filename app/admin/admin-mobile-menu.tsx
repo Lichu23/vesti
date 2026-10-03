@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { type AdminSection } from "@/app/admin/admin-ui";
 
@@ -89,7 +89,8 @@ export function AdminMobileMenu({
         </svg>
       </button>
 
-      {isOpen ? (
+      {isOpen
+        ? createPortal(
         <div className="fixed inset-0 z-[1000] lg:hidden">
           <button
             aria-label="Cerrar menu admin"
@@ -149,8 +150,10 @@ export function AdminMobileMenu({
               Ver tienda
             </Link>
           </aside>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+        : null}
     </div>
   );
 }

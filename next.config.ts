@@ -20,6 +20,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Standalone output is only for the Docker image; Vercel needs the default.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   images: {
     remotePatterns: supabaseHostname
       ? [
