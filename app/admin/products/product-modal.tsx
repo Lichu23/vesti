@@ -52,7 +52,7 @@ export function ProductModal({
     <>
       {trigger.type === "button" ? (
         <button
-          className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
           onClick={() => setIsOpen(true)}
           type="button"
         >
