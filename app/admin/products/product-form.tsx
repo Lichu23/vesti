@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useState, type ChangeEvent } from "react";
+import {
+  useActionState,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import Image from "next/image";
 
 import { type ProductFormState } from "@/app/admin/products/actions";
@@ -74,15 +80,26 @@ const colorModes = [
   { label: "Colores surtidos", value: "ASSORTED" },
 ];
 
-const colorModeDescriptions = [
-  "Sin color: el producto no tiene seleccion de color.",
-  "Colores por variante: el cliente elige color desde las variantes.",
-  "Consultar color: el cliente consulta colores disponibles por mensaje.",
-  "Colores surtidos: el producto se envia con colores surtidos.",
-];
+const colorModeDescriptions: Record<string, string> = {
+  NONE: "El producto no tiene seleccion de color.",
+  VARIANTS: "El cliente elige el color desde las variantes.",
+  ASK: "El cliente consulta los colores disponibles por mensaje.",
+  ASSORTED: "El producto se envia con colores surtidos.",
+};
+
+function createEmptyVariant(): DraftVariant {
+  return {
+    color: "",
+    isActive: true,
+    price: "",
+    size: "",
+    sku: "",
+    stock: "10",
+  };
+}
 
 function fieldClassName() {
-  return "rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
+  return "block w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
 
 export function ProductForm({
@@ -99,7 +116,6 @@ export function ProductForm({
     product?.colorMode ?? "NONE",
   );
   const [inventoryMode, setInventoryMode] = useState<InventoryMode>("SIMPLE");
-  const [isVariantFormOpen, setIsVariantFormOpen] = useState(false);
   const [simpleStock, setSimpleStock] = useState("10");
   const [variants, setVariants] = useState<DraftVariant[]>([]);
   const [state, formAction, pending] = useActionState(
@@ -157,17 +173,7 @@ export function ProductForm({
   }
 
   function addVariant() {
-    setVariants((current) => [
-      ...current,
-      {
-        color: "",
-        isActive: true,
-        price: "",
-        size: "",
-        sku: "",
-        stock: "10",
-      },
-    ]);
+    setVariants((current) => [...current, createEmptyVariant()]);
   }
 
   function updateVariant(index: number, changes: Partial<DraftVariant>) {
@@ -182,8 +188,32 @@ export function ProductForm({
     setVariants((current) => current.filter((_, variantIndex) => variantIndex !== index));
   }
 
+  const isCreate = !product;
+  const isVariantsMode = isCreate && inventoryMode === "VARIANTS";
+  const availableColorModes =
+    isCreate && inventoryMode === "SIMPLE"
+      ? colorModes.filter((colorMode) => colorMode.value !== "VARIANTS")
+      : colorModes;
+  const selectedColorModeDescription = colorModeDescriptions[selectedColorMode];
+
+  function handleInventoryModeChange(nextMode: InventoryMode) {
+    setInventoryMode(nextMode);
+
+    if (nextMode === "VARIANTS") {
+      setSelectedColorMode("VARIANTS");
+      setVariants((current) =>
+        current.length > 0 ? current : [createEmptyVariant()],
+      );
+      return;
+    }
+
+    if (selectedColorMode === "VARIANTS") {
+      setSelectedColorMode("NONE");
+    }
+  }
+
   return (
-    <form action={formAction} className="grid min-w-0 gap-4 overflow-hidden rounded-xl border p-3 sm:p-4">
+    <form action={formAction} className="grid min-w-0 gap-8">
       {product ? <input name="id" type="hidden" value={product.id} /> : null}
       {product ? (
         <input
@@ -193,55 +223,331 @@ export function ProductForm({
         />
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="grid gap-1 text-sm font-medium">
-          Nombre
-          <input
-            className={fieldClassName()}
-            defaultValue={product?.name}
-            name="name"
-            required
-          />
-        </label>
+      <FormSection title="Informacion basica">
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Nombre
+            <input
+              className={fieldClassName()}
+              defaultValue={product?.name}
+              name="name"
+              required
+            />
+          </label>
 
-        <label className="grid gap-1 text-sm font-medium">
-          Codigo de modelo (opcional)
-          <input
-            className={fieldClassName()}
-            defaultValue={product?.modelCode ?? ""}
-            name="modelCode"
-          />
-        </label>
-      </div>
-
-      <label className="grid gap-1 text-sm font-medium">
-        Categoria
-        <select
-          className={fieldClassName()}
-          defaultValue={product?.categoryId ?? ""}
-          name="categoryId"
-          required
-        >
-          <option value="">Seleccionar categoria</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <section className="grid min-w-0 gap-3 rounded-lg border bg-card p-3">
-        <div className="space-y-1">
-          <h4 className="font-semibold">Imagen del producto</h4>
-          <p className="text-xs font-normal text-muted-foreground">
-            Solo se guarda una imagen por producto. Para cambiarla, elimina la
-            actual y selecciona una nueva.
-          </p>
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Codigo de modelo (opcional)
+            <input
+              className={fieldClassName()}
+              defaultValue={product?.modelCode ?? ""}
+              name="modelCode"
+            />
+          </label>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Categoria
+            <select
+              className={fieldClassName()}
+              defaultValue={product?.categoryId ?? ""}
+              name="categoryId"
+              required
+            >
+              <option value="">Seleccionar categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Audiencia
+            <select
+              className={fieldClassName()}
+              defaultValue={product?.audience ?? "WOMEN"}
+              name="audience"
+              required
+            >
+              {audiences.map((audience) => (
+                <option key={audience.value} value={audience.value}>
+                  {audience.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <label className="grid min-w-0 gap-1 text-sm font-medium">
+          Descripcion (opcional)
+          <textarea
+            className={`${fieldClassName()} min-h-24`}
+            defaultValue={product?.description ?? ""}
+            name="description"
+          />
+        </label>
+      </FormSection>
+
+      <FormSection
+        description={
+          isCreate
+            ? "Elige como se maneja el stock. El modo de color se ajusta segun esta eleccion."
+            : undefined
+        }
+        title="Inventario y color"
+      >
+        {isCreate ? (
+          <div
+            aria-label="Tipo de producto"
+            className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-1"
+            role="radiogroup"
+          >
+            {(
+              [
+                { hint: "Un solo stock", label: "Simple", value: "SIMPLE" },
+                {
+                  hint: "Stock por talle o color",
+                  label: "Con variantes",
+                  value: "VARIANTS",
+                },
+              ] as const
+            ).map((option) => (
+              <label
+                className="flex min-h-12 cursor-pointer flex-col justify-center rounded-md px-3 py-2 text-center text-sm has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40"
+                key={option.value}
+              >
+                <input
+                  checked={inventoryMode === option.value}
+                  className="sr-only"
+                  name="inventoryMode"
+                  onChange={() => handleInventoryModeChange(option.value)}
+                  type="radio"
+                  value={option.value}
+                />
+                <span className="font-medium">{option.label}</span>
+                <span className="text-xs opacity-80">{option.hint}</span>
+              </label>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Precio base
+            <input
+              className={fieldClassName()}
+              defaultValue={product?.basePrice}
+              inputMode="decimal"
+              min="0"
+              name="basePrice"
+              placeholder="ej: 7000"
+              required
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Unidad de venta
+            <select
+              className={fieldClassName()}
+              defaultValue={product?.saleUnit ?? "UNIT"}
+              name="saleUnit"
+              required
+            >
+              {saleUnits.map((saleUnit) => (
+                <option key={saleUnit.value} value={saleUnit.value}>
+                  {saleUnit.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {isCreate && !isVariantsMode ? (
+            <label className="grid min-w-0 gap-1 text-sm font-medium">
+              Stock
+              <input
+                className={fieldClassName()}
+                inputMode="numeric"
+                min="0"
+                name="simpleStock"
+                onChange={(event) => setSimpleStock(event.target.value)}
+                required
+                step="1"
+                type="number"
+                value={simpleStock}
+              />
+            </label>
+          ) : null}
+
+          <label className="grid min-w-0 gap-1 text-sm font-medium">
+            Modo de color
+            <select
+              className={fieldClassName()}
+              aria-describedby="color-mode-description"
+              name="colorMode"
+              onChange={(event) => {
+                const nextColorMode = event.target.value;
+
+                setSelectedColorMode(nextColorMode);
+
+                if (nextColorMode !== "VARIANTS") {
+                  setVariants((current) =>
+                    current.map((variant) => ({ ...variant, color: "" })),
+                  );
+                }
+              }}
+              required
+              value={selectedColorMode}
+            >
+              {availableColorModes.map((colorMode) => (
+                <option key={colorMode.value} value={colorMode.value}>
+                  {colorMode.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {selectedColorModeDescription ? (
+            <p
+              className="col-span-2 -mt-1 text-xs text-muted-foreground"
+              id="color-mode-description"
+            >
+              {selectedColorModeDescription}
+            </p>
+          ) : null}
+
+          <label className="col-span-2 grid min-w-0 gap-1 text-sm font-medium">
+            Talles disponibles (opcional)
+            <input
+              className={fieldClassName()}
+              defaultValue={product?.sizeDisplayText ?? ""}
+              name="sizeDisplayText"
+              placeholder="Ej: S a XL o 80/90"
+            />
+          </label>
+        </div>
+
+        {isCreate ? (
+          <input name="variants" type="hidden" value={JSON.stringify(variants)} />
+        ) : null}
+
+        {isVariantsMode ? (
+          <div className="grid gap-3">
+            {variants.map((variant, index) => (
+              <fieldset
+                className="grid gap-3 rounded-lg border p-3"
+                key={index}
+              >
+                <legend className="px-1 text-xs font-medium text-muted-foreground">
+                  Variante {index + 1}
+                </legend>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <label className="grid min-w-0 gap-1 text-sm font-medium">
+                    Talle
+                    <input
+                      className={fieldClassName()}
+                      onChange={(event) =>
+                        updateVariant(index, { size: event.target.value })
+                      }
+                      placeholder="S"
+                      required
+                      value={variant.size}
+                    />
+                  </label>
+
+                  <label className="grid min-w-0 gap-1 text-sm font-medium">
+                    Color
+                    <input
+                      className={`${fieldClassName()} disabled:opacity-50`}
+                      disabled={selectedColorMode !== "VARIANTS"}
+                      onChange={(event) =>
+                        updateVariant(index, { color: event.target.value })
+                      }
+                      placeholder="Negro"
+                      required={selectedColorMode === "VARIANTS"}
+                      value={variant.color}
+                    />
+                  </label>
+
+                  <label className="grid min-w-0 gap-1 text-sm font-medium">
+                    Stock
+                    <input
+                      className={fieldClassName()}
+                      inputMode="numeric"
+                      min="0"
+                      onChange={(event) =>
+                        updateVariant(index, { stock: event.target.value })
+                      }
+                      required
+                      step="1"
+                      type="number"
+                      value={variant.stock}
+                    />
+                  </label>
+
+                  <label className="grid min-w-0 gap-1 text-sm font-medium">
+                    Precio especial
+                    <input
+                      className={fieldClassName()}
+                      inputMode="decimal"
+                      min="0"
+                      onChange={(event) =>
+                        updateVariant(index, { price: event.target.value })
+                      }
+                      placeholder="Opcional"
+                      step="0.01"
+                      type="number"
+                      value={variant.price}
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-2">
+                  <label className="grid min-w-0 gap-1 text-sm font-medium">
+                    SKU (opcional)
+                    <input
+                      className={fieldClassName()}
+                      onChange={(event) =>
+                        updateVariant(index, { sku: event.target.value })
+                      }
+                      placeholder="SKU unico"
+                      value={variant.sku}
+                    />
+                  </label>
+
+                  {variants.length > 1 ? (
+                    <button
+                      className="cursor-pointer justify-self-end rounded-md px-2 py-1.5 text-sm font-medium text-destructive hover:underline"
+                      onClick={() => removeVariant(index)}
+                      type="button"
+                    >
+                      Eliminar variante
+                    </button>
+                  ) : null}
+                </div>
+              </fieldset>
+            ))}
+
+            <button
+              className="w-full cursor-pointer rounded-md border border-dashed px-4 py-2.5 text-sm font-medium text-primary hover:bg-muted/40 sm:w-fit"
+              onClick={addVariant}
+              type="button"
+            >
+              + Agregar variante
+            </button>
+          </div>
+        ) : null}
+      </FormSection>
+
+      <FormSection
+        description="Solo se guarda una imagen por producto. Se comprime automaticamente."
+        title="Imagen"
+      >
         {product?.image && !removeCurrentImage ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-md border p-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
             <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
               <Image
                 alt={product.image.alt ?? product.name}
@@ -272,362 +578,88 @@ export function ProductForm({
             onChange={handleImageChange}
             type="file"
           />
-          <span className="text-xs font-normal text-zinc-500">
-            Se comprime automaticamente antes de guardarla.
-          </span>
           {imagePreviewUrl ? (
             <span
               aria-label="Vista previa de la imagen del producto"
-              className="h-24 w-24 rounded-md border bg-cover bg-center"
+              className="mt-2 h-24 w-24 rounded-md border bg-cover bg-center"
               role="img"
               style={{ backgroundImage: `url(${imagePreviewUrl})` }}
             />
           ) : null}
           {imageError ? (
-            <span className="text-xs font-normal text-red-600">
+            <span className="text-xs font-normal text-destructive">
               {imageError}
             </span>
           ) : null}
         </label>
-      </section>
+      </FormSection>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className="grid gap-1 text-sm font-medium">
-          Audiencia
-          <select
-            className={fieldClassName()}
-            defaultValue={product?.audience ?? "WOMEN"}
-            name="audience"
-            required
+      <FormSection title="Visibilidad">
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              defaultChecked={product?.isActive ?? true}
+              name="isActive"
+              type="checkbox"
+            />
+            Activo
+          </label>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              defaultChecked={product?.isFeatured ?? false}
+              name="isFeatured"
+              type="checkbox"
+            />
+            Destacado
+          </label>
+        </div>
+      </FormSection>
+
+      <div className="sticky bottom-0 -mx-3 -mb-3 grid gap-2 border-t bg-white px-3 py-3 sm:-mx-5 sm:-mb-5 sm:px-5">
+        {state.message ? (
+          <p
+            aria-live="polite"
+            className={
+              state.status === "error"
+                ? "text-sm text-destructive"
+                : "text-sm"
+            }
           >
-            {audiences.map((audience) => (
-              <option key={audience.value} value={audience.value}>
-                {audience.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            {state.message}
+          </p>
+        ) : null}
 
-        <label className="grid gap-1 text-sm font-medium">
-          Precio base
-          <input
-            className={fieldClassName()}
-            defaultValue={product?.basePrice}
-            min="0"
-            name="basePrice"
-            placeholder="ej: 7000"
-            required
-            step="0.01"
-            type="number"
-          />
-        </label>
-
-        <label className="grid gap-1 text-sm font-medium">
-          Unidad de venta
-          <select
-            className={fieldClassName()}
-            defaultValue={product?.saleUnit ?? "UNIT"}
-            name="saleUnit"
-            required
-          >
-            {saleUnits.map((saleUnit) => (
-              <option key={saleUnit.value} value={saleUnit.value}>
-                {saleUnit.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className="grid gap-1 text-sm font-medium">
-          Modo de color
-          <select
-            className={fieldClassName()}
-            name="colorMode"
-            onChange={(event) => {
-              const nextColorMode = event.target.value;
-
-              setSelectedColorMode(nextColorMode);
-
-              if (nextColorMode !== "VARIANTS") {
-                setVariants((current) =>
-                  current.map((variant) => ({ ...variant, color: "" })),
-                );
-              }
-            }}
-            required
-            value={selectedColorMode}
-          >
-            {colorModes.map((colorMode) => (
-              <option key={colorMode.value} value={colorMode.value}>
-                {colorMode.label}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs font-normal text-zinc-500">
-            {colorModeDescriptions.join(" ")}
-          </span>
-        </label>
-
-        <label className="grid gap-1 self-start text-sm font-medium">
-          Talles disponibles
-          <input
-            className={fieldClassName()}
-            defaultValue={product?.sizeDisplayText ?? ""}
-            name="sizeDisplayText"
-            placeholder="Ej: S a XL o 80/90"
-          />
-        </label>
-      </div>
-
-      {!product ? (
-        <section className="grid gap-3 rounded-lg border bg-card p-3">
-          <div className="space-y-1">
-            <h4 className="font-semibold">Inventario</h4>
-            <p className="text-sm text-muted-foreground">
-              Elige si el producto tiene un stock general o variantes.
-            </p>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
-              <input
-                checked={inventoryMode === "SIMPLE"}
-                name="inventoryMode"
-                onChange={() => {
-                  setInventoryMode("SIMPLE");
-                  setIsVariantFormOpen(false);
-                }}
-                type="radio"
-                value="SIMPLE"
-              />
-              <span>
-                <span className="block font-medium">Producto simple</span>
-                <span className="block text-xs font-normal text-muted-foreground">
-                  Un solo stock para todo el producto.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
-              <input
-                checked={inventoryMode === "VARIANTS"}
-                name="inventoryMode"
-                onChange={() => {
-                  setInventoryMode("VARIANTS");
-                  setIsVariantFormOpen(true);
-                }}
-                type="radio"
-                value="VARIANTS"
-              />
-              <span>
-                <span className="block font-medium">Producto con variantes</span>
-                <span className="block text-xs font-normal text-muted-foreground">
-                  Stock separado por talle o color.
-                </span>
-              </span>
-            </label>
-          </div>
-
-          <input name="variants" type="hidden" value={JSON.stringify(variants)} />
-
-          {inventoryMode === "SIMPLE" ? (
-            <label className="grid max-w-sm gap-1 text-sm font-medium">
-              Stock
-              <input
-                className={fieldClassName()}
-                min="0"
-                name="simpleStock"
-                onChange={(event) => setSimpleStock(event.target.value)}
-                required
-                step="1"
-                type="number"
-                value={simpleStock}
-              />
-              <span className="text-xs font-normal text-zinc-500">
-                Se guardara como una variante general del producto.
-              </span>
-            </label>
-          ) : (
-            <div className="grid gap-3">
-              <div className="space-y-1">
-                <h4 className="font-semibold">Variantes</h4>
-                <p className="text-sm text-muted-foreground">
-                  Combina diferentes propiedades de tu producto. Ejemplo: color + tamaño.
-                </p>
-              </div>
-
-              <details
-                className="grid gap-3 rounded-lg border p-3"
-                onToggle={(event) =>
-                  setIsVariantFormOpen(event.currentTarget.open)
-                }
-                open={isVariantFormOpen}
-              >
-                <summary className="flex cursor-pointer list-none items-center gap-2 text-primary">
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary text-sm leading-none"
-                  >
-                    +
-                  </span>
-                  Crear variantes
-                </summary>
-
-                {variants.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Agrega talles, colores y stock para este producto.
-                  </p>
-                ) : (
-                  <div className="grid gap-3">
-                  {variants.map((variant, index) => (
-                    <div className="grid gap-3 rounded-lg border p-3" key={index}>
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <label className="grid gap-1 text-sm font-medium">
-                      Talle
-                      <input
-                        className={fieldClassName()}
-                        onChange={(event) =>
-                          updateVariant(index, { size: event.target.value })
-                        }
-                        placeholder="S"
-                        required
-                        value={variant.size}
-                      />
-                    </label>
-
-                    <label className="grid gap-1 text-sm font-medium">
-                      Color
-                      <input
-                        className={fieldClassName()}
-                        disabled={selectedColorMode !== "VARIANTS"}
-                        onChange={(event) =>
-                          updateVariant(index, { color: event.target.value })
-                        }
-                        placeholder="Negro"
-                        required={selectedColorMode === "VARIANTS"}
-                        value={variant.color}
-                      />
-                    </label>
-
-                    <label className="grid gap-1 text-sm font-medium">
-                      Stock
-                      <input
-                        className={fieldClassName()}
-                        min="0"
-                        onChange={(event) =>
-                          updateVariant(index, { stock: event.target.value })
-                        }
-                        required
-                        step="1"
-                        type="number"
-                        value={variant.stock}
-                      />
-                    </label>
-
-                    <label className="grid gap-1 text-sm font-medium">
-                      Precio especial (opcional)
-                      <input
-                        className={fieldClassName()}
-                        min="0"
-                        onChange={(event) =>
-                          updateVariant(index, { price: event.target.value })
-                        }
-                        placeholder="Opcional"
-                        step="0.01"
-                        type="number"
-                        value={variant.price}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                    <label className="grid gap-1 text-sm font-medium">
-                      SKU (opcional)
-                      <input
-                        className={fieldClassName()}
-                        onChange={(event) =>
-                          updateVariant(index, { sku: event.target.value })
-                        }
-                        placeholder="SKU unico"
-                        value={variant.sku}
-                      />
-                    </label>
-
-                    <button
-                      className="self-end text-left text-sm font-medium text-red-600"
-                      onClick={() => removeVariant(index)}
-                      type="button"
-                    >
-                      Eliminar variante
-                    </button>
-                  </div>
-                    </div>
-                  ))}
-                  </div>
-                )}
-
-                <button
-                  className="w-full cursor-pointer rounded-md border px-4 py-2 text-sm font-medium text-foreground sm:w-fit"
-                  onClick={addVariant}
-                  type="button"
-                >
-                  Agregar otra variante
-                </button>
-              </details>
-            </div>
-          )}
-        </section>
-      ) : null}
-
-      <label className="grid gap-1 text-sm font-medium">
-        Descripcion
-        <textarea
-          className="min-h-24 rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-          defaultValue={product?.description ?? ""}
-          name="description"
-        />
-      </label>
-
-      <div className="flex flex-wrap gap-4">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            defaultChecked={product?.isActive ?? true}
-            name="isActive"
-            type="checkbox"
-          />
-          Activo
-        </label>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            defaultChecked={product?.isFeatured ?? false}
-            name="isFeatured"
-            type="checkbox"
-          />
-          Destacado
-        </label>
-      </div>
-
-      {state.message ? (
-        <p
-          aria-live="polite"
-          className={
-            state.status === "error" ? "text-sm text-red-600" : "text-sm"
-          }
+        <button
+          className="w-full cursor-pointer rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit sm:justify-self-end"
+          disabled={pending || categories.length === 0}
+          type="submit"
         >
-          {state.message}
-        </p>
-      ) : null}
-
-      <button
-        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
-        disabled={pending || categories.length === 0}
-        type="submit"
-      >
-        {pending ? "Guardando..." : buttonLabel}
-      </button>
+          {pending ? "Guardando..." : buttonLabel}
+        </button>
+      </div>
     </form>
+  );
+}
+
+function FormSection({
+  children,
+  description,
+  title,
+}: {
+  children: ReactNode;
+  description?: string;
+  title: string;
+}) {
+  return (
+    <section className="grid min-w-0 gap-3">
+      <div className="border-b pb-2">
+        <h4 className="text-base font-semibold">{title}</h4>
+        {description ? (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {children}
+    </section>
   );
 }
