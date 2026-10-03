@@ -28,7 +28,7 @@ type OrderFormProps = {
     formData: FormData,
   ) => Promise<OrderFormState>;
   buttonLabel?: string;
-  onSuccess?: () => void;
+  onSuccess?: (message: string) => void;
   order?: OrderFormOrder;
   variants: OrderVariantOption[];
 };
@@ -81,9 +81,9 @@ export function OrderForm({
 
   useEffect(() => {
     if (state.status === "success") {
-      onSuccess?.();
+      onSuccess?.(state.message);
     }
-  }, [onSuccess, state.status]);
+  }, [onSuccess, state.message, state.status]);
 
   function addItemRow() {
     setItemRows((currentRows) => [
@@ -116,7 +116,7 @@ export function OrderForm({
   }
 
   return (
-    <form action={formAction} className="grid min-w-0 gap-4 overflow-hidden rounded-xl border p-3 sm:p-4">
+    <form action={formAction} className="grid min-w-0 gap-4">
       {order ? <input name="orderId" type="hidden" value={order.id} /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm">
@@ -270,13 +270,15 @@ export function OrderForm({
         </p>
       ) : null}
 
-      <button
-        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
-        disabled={disabled}
-        type="submit"
-      >
-        {pending ? "Guardando..." : buttonLabel}
-      </button>
+      <div className="sticky bottom-0 -mx-4 -mb-4 border-t bg-white p-4 sm:-mx-5 sm:-mb-5 sm:p-5">
+        <button
+          className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
+          disabled={disabled}
+          type="submit"
+        >
+          {pending ? "Guardando..." : buttonLabel}
+        </button>
+      </div>
     </form>
   );
 }

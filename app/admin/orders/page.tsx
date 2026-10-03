@@ -3,7 +3,6 @@ import {
   AdminShell,
   formatAdminOrderStatus,
   formatAdminPrice,
-  OrdersIcon,
 } from "@/app/admin/admin-ui";
 import {
   confirmOrder,
@@ -11,8 +10,7 @@ import {
   updateManualOrder,
 } from "@/app/admin/orders/actions";
 import { ConfirmOrderForm } from "@/app/admin/orders/confirm-order-form";
-import { EditOrderModal } from "@/app/admin/orders/edit-order-modal";
-import { OrderForm } from "@/app/admin/orders/order-form";
+import { OrderModal } from "@/app/admin/orders/order-modal";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -115,42 +113,24 @@ export default async function AdminOrdersPage() {
 
   return (
     <AdminShell>
-      <header className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-          Pedidos
-        </p>
+      <section className="grid gap-4">
         <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
-          Pedidos
+          Pedidos recientes
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Crea pedidos manuales desde conversaciones de WhatsApp. Confirma el
-          pedido para descontar stock.
-        </p>
-      </header>
-
-      <section className="grid gap-4 rounded-[4px] border border-border bg-card p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <OrdersIcon />
-          <h2 className="font-serif text-3xl text-foreground">
-            Nuevo pedido manual
-          </h2>
-        </div>
-        <OrderForm
+        <OrderModal
           action={createManualOrder}
           buttonLabel="Crear pedido"
+          description="Carga un pedido de WhatsApp. El stock se descuenta al confirmarlo."
+          title="Nuevo pedido"
+          trigger="create"
+          triggerLabel="Nuevo pedido"
           variants={variantOptions}
         />
-      </section>
-
-      <section className="grid gap-4">
-        <h2 className="font-serif text-3xl text-foreground">
-          Pedidos recientes
-        </h2>
         {orders.length === 0 ? (
           <AdminEmptyState
             action={null}
-            description="Cuando crees pedidos desde WhatsApp van a aparecer aca."
-            title="Todavia no hay pedidos"
+            description="Los pedidos que cargues van a aparecer aca."
+            title="Sin pedidos"
           />
         ) : (
           <div className="grid gap-4">
@@ -182,8 +162,10 @@ export default async function AdminOrdersPage() {
                     </p>
                     {order.status === "REVIEWING" ? (
                       <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
-                        <EditOrderModal
+                        <OrderModal
                           action={updateManualOrder}
+                          buttonLabel="Guardar cambios"
+                          description="Solo podes editar pedidos pendientes antes de confirmar el stock."
                           order={{
                             customerName: order.customerName,
                             customerPhone: order.customerPhone,
@@ -195,6 +177,9 @@ export default async function AdminOrdersPage() {
                             })),
                             notes: order.notes,
                           }}
+                          title="Editar pedido"
+                          trigger="edit"
+                          triggerLabel="Editar"
                           variants={variantOptions}
                         />
                         <ConfirmOrderForm
