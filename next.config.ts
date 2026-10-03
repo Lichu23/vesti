@@ -20,6 +20,7 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: supabaseHostname
       ? [
