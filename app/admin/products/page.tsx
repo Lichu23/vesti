@@ -12,18 +12,9 @@ import {
 } from "@/app/admin/products/product-delete-form";
 import {
   createProduct,
-  createProductVariant,
   deleteProduct,
-  deleteProductVariant,
   updateProduct,
-  updateProductVariant,
-  adjustInventory,
 } from "@/app/admin/products/actions";
-import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
-import {
-  ProductVariantDeleteForm,
-  ProductVariantForm,
-} from "@/app/admin/products/product-variant-form";
 import Image from "next/image";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -150,17 +141,6 @@ export default async function AdminProductsPage({
         select: {
           id: true,
           color: true,
-          inventoryMovements: {
-            orderBy: [{ createdAt: "desc" }],
-            select: {
-              id: true,
-              createdAt: true,
-              quantity: true,
-              reason: true,
-              type: true,
-            },
-            take: 5,
-          },
           isActive: true,
           price: true,
           size: true,
@@ -330,7 +310,7 @@ export default async function AdminProductsPage({
                         action={updateProduct}
                         buttonLabel="Actualizar producto"
                         categories={categories}
-                        description="Edita la informacion base del producto."
+                        description="Edita el producto, sus variantes y el stock."
                         product={{
                           id: product.id,
                           name: product.name,
@@ -344,6 +324,15 @@ export default async function AdminProductsPage({
                           sizeDisplayText: product.sizeDisplayText,
                           isFeatured: product.isFeatured,
                           isActive: product.isActive,
+                          variants: product.variants.map((variant) => ({
+                            id: variant.id,
+                            color: variant.color,
+                            isActive: variant.isActive,
+                            price: variant.price?.toString() ?? null,
+                            size: variant.size,
+                            sku: variant.sku,
+                            stock: variant.stock,
+                          })),
                           image: product.images[0]
                             ? {
                                 alt: product.images[0].alt,
@@ -356,159 +345,7 @@ export default async function AdminProductsPage({
                           label: `Editar ${product.name}`,
                           type: "icon",
                         }}
-                      >
-                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
-                          <div className="space-y-1">
-                            <h4 className="font-semibold">Variantes</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Carga talles, colores, precios y stock por
-                              variante.
-                            </p>
-                          </div>
-
-                          {product.variants.length === 0 ? (
-                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
-                              Todavia no hay variantes.
-                            </p>
-                          ) : (
-                            <div className="grid gap-3">
-                              {product.variants.map((variant) => (
-                                <article
-                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
-                                  key={variant.id}
-                                >
-                                  <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div className="space-y-1 text-sm">
-                                      <p className="font-medium">
-                                        {variant.size}
-                                        {variant.color
-                                          ? ` - ${variant.color}`
-                                          : ""}
-                                      </p>
-                                      <p className="text-muted-foreground">
-                                        Stock: {variant.stock}
-                                        {variant.price
-                                          ? ` - ${formatAdminPrice(Number(variant.price))}`
-                                          : " - Usa precio base"}
-                                      </p>
-                                      {variant.sku ? (
-                                        <p className="text-muted-foreground">
-                                          SKU: {variant.sku}
-                                        </p>
-                                      ) : null}
-                                    </div>
-                                    <span className="rounded-full bg-secondary px-3 py-1 text-xs">
-                                      {variant.isActive ? "Activo" : "Oculto"}
-                                    </span>
-                                  </div>
-
-                                  <ProductVariantForm
-                                    action={updateProductVariant}
-                                    buttonLabel="Actualizar variante"
-                                    colorMode={product.colorMode}
-                                    productId={product.id}
-                                    stockLocked
-                                    variant={{
-                                      id: variant.id,
-                                      size: variant.size,
-                                      color: variant.color,
-                                      stock: variant.stock,
-                                      isActive: variant.isActive,
-                                      sku: variant.sku,
-                                      price: variant.price?.toString() ?? null,
-                                    }}
-                                  />
-
-                                  <ProductVariantDeleteForm
-                                    action={deleteProductVariant}
-                                    productId={product.id}
-                                    variantId={variant.id}
-                                  />
-
-                                  <section className="grid gap-3 rounded-[4px] bg-background p-3">
-                                    <div className="space-y-1">
-                                      <h5 className="text-sm font-semibold">
-                                        Inventario
-                                      </h5>
-                                      <p className="text-xs text-muted-foreground">
-                                        Agrega ajustes manuales positivos o
-                                        negativos.
-                                      </p>
-                                    </div>
-
-                                    <InventoryAdjustmentForm
-                                      action={adjustInventory}
-                                      productId={product.id}
-                                      variantId={variant.id}
-                                    />
-
-                                    {variant.inventoryMovements.length ===
-                                    0 ? (
-                                      <p className="text-sm text-muted-foreground">
-                                        Sin movimientos recientes.
-                                      </p>
-                                    ) : (
-                                      <div className="grid gap-2">
-                                        {variant.inventoryMovements.map(
-                                          (movement) => (
-                                            <div
-                                              className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border bg-card p-2 text-sm"
-                                              key={movement.id}
-                                            >
-                                              <div>
-                                                <p className="font-medium">
-                                                  {movement.quantity > 0
-                                                    ? "+"
-                                                    : ""}
-                                                  {movement.quantity}{" "}
-                                                  <span className="text-muted-foreground">
-                                                    Ajuste manual
-                                                  </span>
-                                                </p>
-                                                {movement.reason ? (
-                                                  <p className="text-muted-foreground">
-                                                    {movement.reason}
-                                                  </p>
-                                                ) : null}
-                                              </div>
-                                              <time className="text-xs text-muted-foreground">
-                                                {movement.createdAt.toLocaleString(
-                                                  "en-US",
-                                                )}
-                                              </time>
-                                            </div>
-                                          ),
-                                        )}
-                                      </div>
-                                    )}
-                                  </section>
-                                </article>
-                              ))}
-                            </div>
-                          )}
-
-                          <details className="rounded-lg border bg-card p-3">
-                            <summary className="flex cursor-pointer list-none items-center gap-2 text-primary">
-                              <span
-                                aria-hidden="true"
-                                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary text-sm leading-none"
-                              >
-                                +
-                              </span>
-                              Crear variantes
-                            </summary>
-                            <div className="mt-3">
-                              <ProductVariantForm
-                                action={createProductVariant}
-                                buttonLabel="Crear variante"
-                                colorMode={product.colorMode}
-                                productId={product.id}
-                              />
-                            </div>
-                          </details>
-                        </section>
-
-                      </ProductModal>
+                      />
                       <ProductDeleteForm
                         productId={product.id}
                         productName={product.name}

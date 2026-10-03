@@ -22,6 +22,16 @@ export type ProductOption = {
   name: string;
 };
 
+export type ProductFormVariant = {
+  id: string;
+  color: string | null;
+  isActive: boolean;
+  price: string | null;
+  size: string;
+  sku: string | null;
+  stock: number;
+};
+
 export type ProductFormProduct = {
   id: string;
   name: string;
@@ -35,6 +45,7 @@ export type ProductFormProduct = {
   sizeDisplayText: string | null;
   isFeatured: boolean;
   isActive: boolean;
+  variants: ProductFormVariant[];
   image?: {
     alt: string | null;
     url: string;
@@ -53,6 +64,7 @@ type ProductFormProps = {
 };
 
 type DraftVariant = {
+  id?: string;
   color: string;
   isActive: boolean;
   price: string;
@@ -98,6 +110,30 @@ function createEmptyVariant(): DraftVariant {
   };
 }
 
+function toDraftVariant(variant: ProductFormVariant): DraftVariant {
+  return {
+    color: variant.color ?? "",
+    id: variant.id,
+    isActive: variant.isActive,
+    price: variant.price ?? "",
+    size: variant.size,
+    sku: variant.sku ?? "",
+    stock: String(variant.stock),
+  };
+}
+
+// Simple products are stored as a single uncolored "UNICO" variant.
+function isSimpleProduct(product: ProductFormProduct) {
+  const [only] = product.variants;
+
+  return (
+    product.variants.length === 1 &&
+    only.size === "UNICO" &&
+    !only.color &&
+    product.colorMode !== "VARIANTS"
+  );
+}
+
 function fieldClassName() {
   return "block w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20";
 }
@@ -115,9 +151,15 @@ export function ProductForm({
   const [selectedColorMode, setSelectedColorMode] = useState(
     product?.colorMode ?? "NONE",
   );
-  const [inventoryMode, setInventoryMode] = useState<InventoryMode>("SIMPLE");
-  const [simpleStock, setSimpleStock] = useState("10");
-  const [variants, setVariants] = useState<DraftVariant[]>([]);
+  const [inventoryMode, setInventoryMode] = useState<InventoryMode>(
+    product && !isSimpleProduct(product) ? "VARIANTS" : "SIMPLE",
+  );
+  const [simpleStock, setSimpleStock] = useState(() =>
+    String(product?.variants[0]?.stock ?? 10),
+  );
+  const [variants, setVariants] = useState<DraftVariant[]>(() =>
+    product ? product.variants.map(toDraftVariant) : [],
+  );
   const [state, formAction, pending] = useActionState(
     action,
     initialProductFormState,
@@ -189,11 +231,10 @@ export function ProductForm({
   }
 
   const isCreate = !product;
-  const isVariantsMode = isCreate && inventoryMode === "VARIANTS";
-  const availableColorModes =
-    isCreate && inventoryMode === "SIMPLE"
-      ? colorModes.filter((colorMode) => colorMode.value !== "VARIANTS")
-      : colorModes;
+  const isVariantsMode = inventoryMode === "VARIANTS";
+  const availableColorModes = isVariantsMode
+    ? colorModes
+    : colorModes.filter((colorMode) => colorMode.value !== "VARIANTS");
   const selectedColorModeDescription = colorModeDescriptions[selectedColorMode];
 
   function handleInventoryModeChange(nextMode: InventoryMode) {
@@ -215,6 +256,9 @@ export function ProductForm({
   return (
     <form action={formAction} className="grid min-w-0 gap-8">
       {product ? <input name="id" type="hidden" value={product.id} /> : null}
+      {product ? (
+        <input name="inventoryMode" type="hidden" value={inventoryMode} />
+      ) : null}
       {product ? (
         <input
           name="removeExistingImage"
@@ -365,7 +409,7 @@ export function ProductForm({
             </select>
           </label>
 
-          {isCreate && !isVariantsMode ? (
+          {!isVariantsMode ? (
             <label className="grid min-w-0 gap-1 text-sm font-medium">
               Stock
               <input
@@ -430,16 +474,27 @@ export function ProductForm({
           </label>
         </div>
 
-        {isCreate ? (
+        {isCreate || isVariantsMode ? (
           <input name="variants" type="hidden" value={JSON.stringify(variants)} />
+        ) : null}
+
+        {!isCreate && !isVariantsMode ? (
+          <button
+            className="w-full cursor-pointer rounded-md border border-dashed px-4 py-2.5 text-sm font-medium text-primary hover:bg-muted/40 sm:w-fit"
+            onClick={() => setInventoryMode("VARIANTS")}
+            type="button"
+          >
+            Agregar talles o colores
+          </button>
         ) : null}
 
         {isVariantsMode ? (
           <div className="grid gap-3">
-            {variants.map((variant, index) => (
+            {variants.map((variant, index) => {
+              return (
               <fieldset
                 className="grid gap-3 rounded-lg border p-3"
-                key={index}
+                key={variant.id ?? `new-${index}`}
               >
                 <legend className="px-1 text-xs font-medium text-muted-foreground">
                   Variante {index + 1}
@@ -518,18 +573,38 @@ export function ProductForm({
                     />
                   </label>
 
-                  {variants.length > 1 ? (
-                    <button
-                      className="cursor-pointer justify-self-end rounded-md px-2 py-1.5 text-sm font-medium text-destructive hover:underline"
-                      onClick={() => removeVariant(index)}
-                      type="button"
-                    >
-                      Eliminar variante
-                    </button>
-                  ) : null}
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    {!isCreate ? (
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          checked={variant.isActive}
+                          onChange={(event) =>
+                            updateVariant(index, {
+                              isActive: event.target.checked,
+                            })
+                          }
+                          type="checkbox"
+                        />
+                        Activa
+                      </label>
+                    ) : (
+                      <span />
+                    )}
+
+                    {variants.length > 1 || !isCreate ? (
+                      <button
+                        className="cursor-pointer rounded-md px-2 py-1.5 text-sm font-medium text-destructive hover:underline"
+                        onClick={() => removeVariant(index)}
+                        type="button"
+                      >
+                        Eliminar variante
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </fieldset>
-            ))}
+              );
+            })}
 
             <button
               className="w-full cursor-pointer rounded-md border border-dashed px-4 py-2.5 text-sm font-medium text-primary hover:bg-muted/40 sm:w-fit"

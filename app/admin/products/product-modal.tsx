@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useId, useState } from "react";
 
 import { EditIcon } from "@/app/admin/admin-ui";
@@ -20,7 +19,6 @@ type ProductModalProps = {
   action: ProductAction;
   buttonLabel: string;
   categories: ProductOption[];
-  children?: ReactNode;
   description: string;
   product?: ProductFormProduct;
   title: string;
@@ -39,7 +37,6 @@ export function ProductModal({
   action,
   buttonLabel,
   categories,
-  children,
   description,
   product,
   title,
@@ -138,7 +135,6 @@ export function ProductModal({
               onSuccess={handleSuccess}
               product={product}
             />
-            {children ? <div className="mt-5 grid gap-5">{children}</div> : null}
           </div>
         </div>
       ) : null}
