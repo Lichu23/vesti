@@ -14,6 +14,7 @@ type StorefrontVariant = {
 
 type StorefrontVariantSelectorProps = {
   basePrice: number;
+  display?: "card" | "detail";
   imageAlt?: string | null;
   imageUrl?: string | null;
   productId: string;
@@ -49,6 +50,7 @@ function getSizeLabel(variant: StorefrontVariant) {
 
 export function StorefrontVariantSelector({
   basePrice,
+  display = "detail",
   imageAlt,
   imageUrl,
   productId,
@@ -76,6 +78,9 @@ export function StorefrontVariantSelector({
   const needsVariantSelection = variants.length > 1;
   const unitLabel = saleUnit === "PACK" ? "pack" : "c/u";
   const displayedPrice = selectedVariant?.price ?? basePrice;
+  const addButtonLabel = selectedVariant
+    ? `Agregar ${productName} ${getVariantLabel(selectedVariant)} al carrito`
+    : `Elegir talle para ${productName}`;
 
   function addSelectedVariant() {
     if (!selectedVariant) return;
@@ -131,30 +136,45 @@ export function StorefrontVariantSelector({
         </fieldset>
       ) : null}
 
-      <div className="flex items-center justify-between gap-4">
-        <p className="font-serif text-2xl text-foreground">
-          {formatPrice(displayedPrice)}
-          <span className="ml-1 font-sans text-xs text-muted-foreground">
-            {unitLabel}
-          </span>
-        </p>
-        <button
-          aria-label={
-            selectedVariant
-              ? `Agregar ${productName} ${getVariantLabel(
-                  selectedVariant,
-                )} al carrito`
-              : `Elegir talle para ${productName}`
-          }
-          className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-primary text-2xl leading-none text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
-          disabled={!hasStock || !selectedVariant}
-          onClick={addSelectedVariant}
-          title={selectedVariant ? undefined : `Elegir talle para ${productName}`}
-          type="button"
-        >
-          +
-        </button>
-      </div>
+      {display === "card" ? (
+        <div className="grid gap-3">
+          <div>
+            <p className="whitespace-nowrap font-serif text-xl text-foreground">
+              {formatPrice(displayedPrice)}
+            </p>
+            <p className="text-xs text-muted-foreground">{unitLabel}</p>
+          </div>
+          <button
+            aria-label={addButtonLabel}
+            className="min-h-11 w-full cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            disabled={!hasStock || !selectedVariant}
+            onClick={addSelectedVariant}
+            title={selectedVariant ? undefined : `Elegir talle para ${productName}`}
+            type="button"
+          >
+            Agregar
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-4">
+          <p className="font-serif text-2xl text-foreground">
+            {formatPrice(displayedPrice)}
+            <span className="ml-1 font-sans text-xs text-muted-foreground">
+              {unitLabel}
+            </span>
+          </p>
+          <button
+            aria-label={addButtonLabel}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-primary text-2xl leading-none text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            disabled={!hasStock || !selectedVariant}
+            onClick={addSelectedVariant}
+            title={selectedVariant ? undefined : `Elegir talle para ${productName}`}
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,18 +1,18 @@
 import Link from "next/link";
 
-import { getStorefrontHome } from "@/lib/storefront";
+import {
+  getStorefrontHome,
+  STOREFRONT_PAGE_SIZE,
+} from "@/lib/storefront";
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
-import { CartToggleButton } from "./cart-buttons";
-import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
-import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
 import { StorefrontProductCard } from "./storefront-product-card";
-import { StorefrontSearch } from "./storefront-search";
-import { StorefrontViewportMode } from "./storefront-viewport-mode";
+import { StorefrontPagination } from "./storefront-pagination";
 
 type HomeSearchParams = {
   categoria?: string | string[];
   buscar?: string | string[];
   ordenar?: string | string[];
+  pagina?: string | string[];
 };
 
 type HomeProps = {
@@ -23,6 +23,7 @@ type NormalizedHomeSearchParams = {
   categoria?: string;
   buscar?: string;
   ordenar?: string;
+  pagina?: string;
 };
 
 const SORT_VALUES = ["relevance", "newest", "price-asc", "price-desc"];
@@ -57,6 +58,7 @@ function normalizeSearchParams(
     buscar: getSingleParam(params.buscar),
     categoria: getSingleParam(params.categoria),
     ordenar: ordenar && SORT_VALUES.includes(ordenar) ? ordenar : undefined,
+    pagina: getSingleParam(params.pagina),
   };
 }
 
@@ -107,47 +109,18 @@ function SortSidebar({
 
 export default async function Home({ searchParams }: HomeProps) {
   const params = normalizeSearchParams(await searchParams);
-  const { activeCategory, audienceCategories, products, store } =
+  const { activeCategory, audienceCategories, products, store, totalProducts } =
     await getStorefrontHome({
       categorySlug: params.categoria,
       query: params.buscar,
       sort: params.ordenar,
+      page: Math.max(1, Number(params.pagina) || 1),
     });
   const storeName = store?.name ?? "Thoemia Intimo";
   const title = activeCategory?.name ?? "Todos los productos";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <StorefrontViewportMode />
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
-        <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
-          <StorefrontMobileFilterDrawer
-            activeCategory={params.categoria}
-            categoryGroups={audienceCategories}
-            searchParams={params}
-          />
-
-          <Link
-            aria-label="Ir al inicio"
-            className="cursor-pointer justify-self-center md:justify-self-auto"
-            href="/"
-          >
-            <span className="block font-serif text-3xl leading-none text-foreground">
-              Thoemia
-            </span>
-            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
-              Intimo
-            </span>
-          </Link>
-
-          <StorefrontSearch
-            initialValue={params.buscar}
-            key={params.buscar ?? "empty-search"}
-          />
-
-          <CartToggleButton className="ml-0 justify-self-end" />
-        </div>
-      </header>
 
       <div className="storefront-shell grid gap-8 px-5 py-10 sm:px-8 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
         <StorefrontAudienceSidebar
@@ -158,18 +131,6 @@ export default async function Home({ searchParams }: HomeProps) {
 
         <section className="min-w-0 space-y-8">
           <div className="space-y-4">
-            <StorefrontSearch
-              className="flex w-full md:hidden"
-              initialValue={params.buscar}
-              key={`mobile-${params.buscar ?? "empty-search"}`}
-            />
-            <StorefrontMobileSortForm
-              action="/"
-              category={params.categoria}
-              query={params.buscar}
-              sort={params.ordenar}
-              sortOptions={SORT_OPTIONS}
-            />
             <div>
               <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {title}
@@ -185,12 +146,17 @@ export default async function Home({ searchParams }: HomeProps) {
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <StorefrontProductCard key={product.id} product={product} />
+            <div className="grid gap-3 min-[360px]:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+                {products.map((product, index) => (
+                <StorefrontProductCard
+                  key={product.id}
+                  priority={index === 0}
+                  product={product}
+                />
               ))}
-            </div>
+              </div>
           )}
+          <StorefrontPagination basePath="/" currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
         </section>
 
         <SortSidebar searchParams={params} />

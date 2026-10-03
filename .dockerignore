@@ -1,0 +1,13 @@
+# Environment files and secrets
+.env
+.env.*
+
+# Local/generated files not needed in the build context
+.git
+.next
+node_modules
+.pnpm-store
+.vercel
+coverage
+*.tsbuildinfo
+/generated/prisma

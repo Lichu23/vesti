@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AdminShell, SettingsIcon } from "@/app/admin/admin-ui";
+import { ConfirmActionForm } from "@/app/admin/confirm-action-form";
 import {
   createStoreInvite,
   removeStoreAdmin,
@@ -15,7 +16,6 @@ import { prisma } from "@/lib/prisma";
 export default async function AdminSettingsPage() {
   const session = await requireAdminSession();
   const storeId = session.user.storeId;
-  const isOwner = session.user.role === "OWNER";
 
   if (!storeId) {
     return null;
@@ -66,8 +66,15 @@ export default async function AdminSettingsPage() {
     notFound();
   }
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin settings]", {
+      loadedInvites: invites.length,
+      loadedUsers: users.length,
+    });
+  }
+
   return (
-    <AdminShell activeSection="settings">
+    <AdminShell>
       <header className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Configuracion
@@ -88,20 +95,7 @@ export default async function AdminSettingsPage() {
               Datos principales
             </h2>
           </div>
-          {isOwner ? (
-            <StoreSettingsForm action={updateStoreSettings} store={store} />
-          ) : (
-            <div className="grid gap-3 text-sm text-muted-foreground">
-              <p>
-                Solo el owner puede editar la configuracion principal de la
-                tienda.
-              </p>
-              <p>Nombre: {store.name}</p>
-              <p>Slug: {store.slug}</p>
-              <p>WhatsApp: {store.whatsapp ?? "Sin configurar"}</p>
-              <p>Estado: {store.isActive ? "Activa" : "Inactiva"}</p>
-            </div>
-          )}
+          <StoreSettingsForm action={updateStoreSettings} store={store} />
         </div>
 
       </section>
@@ -131,18 +125,15 @@ export default async function AdminSettingsPage() {
                     {user.email} - {user.role === "OWNER" ? "Owner" : "Admin"}
                   </p>
                 </div>
-                {isOwner &&
-                user.role === "ADMIN" &&
+                {user.role === "ADMIN" &&
                 user.id !== session.user.id ? (
-                  <form action={removeStoreAdmin}>
-                    <input name="userId" type="hidden" value={user.id} />
-                    <button
-                      className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
-                      type="submit"
-                    >
-                      Quitar acceso
-                    </button>
-                  </form>
+                  <ConfirmActionForm
+                    action={removeStoreAdmin}
+                    buttonClassName="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
+                    buttonContent="Quitar acceso"
+                    confirmMessage={`¿Quitar el acceso de ${user.name || user.email || "este usuario"}? Debera recibir una nueva invitacion para volver a entrar.`}
+                    fields={{ userId: user.id }}
+                  />
                 ) : null}
               </div>
             ))}
@@ -150,7 +141,7 @@ export default async function AdminSettingsPage() {
         </div>
 
         <div className="grid h-fit gap-5">
-          {isOwner ? <StoreInviteForm action={createStoreInvite} /> : null}
+          <StoreInviteForm action={createStoreInvite} />
 
           <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
             <div className="mb-5 space-y-1">
@@ -178,17 +169,15 @@ export default async function AdminSettingsPage() {
                         {invite.createdAt.toLocaleDateString("es-AR")}
                       </p>
                     </div>
-                    {isOwner ? (
-                      <form action={removeStoreInvite}>
-                        <input name="inviteId" type="hidden" value={invite.id} />
-                        <button
-                          className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
-                          type="submit"
-                        >
-                          Cancelar invitacion
-                        </button>
-                      </form>
-                    ) : null}
+                    <form action={removeStoreInvite}>
+                      <input name="inviteId" type="hidden" value={invite.id} />
+                      <button
+                        className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:border-destructive hover:text-destructive"
+                        type="submit"
+                      >
+                        Cancelar invitacion
+                      </button>
+                    </form>
                   </div>
                 ))}
               </div>

@@ -7,6 +7,7 @@ import {
   createProductImage,
   type ProductImageFormState,
 } from "@/app/admin/products/actions";
+import { compressProductImage } from "@/app/admin/products/compress-product-image";
 
 const initialProductImageFormState: ProductImageFormState = {
   message: "",
@@ -27,6 +28,7 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
     initialProductImageFormState,
   );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState("");
 
   useEffect(() => {
     return () => {
@@ -36,14 +38,33 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
     };
   }, [previewUrl]);
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+    setImageError("");
+
+    if (!file) {
+      setPreviewUrl(null);
+      return;
     }
 
-    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+    try {
+      const compressedFile = await compressProductImage(file);
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(compressedFile);
+      event.target.files = dataTransfer.files;
+
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+    } catch {
+      event.target.value = "";
+      setPreviewUrl(null);
+      setImageError("No se pudo procesar la imagen seleccionada.");
+    }
   }
 
   return (
@@ -75,15 +96,6 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
         ) : null}
 
         <label className="grid gap-1 text-sm font-medium">
-          URL de imagen alternativa
-          <input
-            className={fieldClassName()}
-            name="url"
-            placeholder="https://example.com/product.jpg"
-          />
-        </label>
-
-        <label className="grid gap-1 text-sm font-medium">
           Texto alternativo
           <input
             className={fieldClassName()}
@@ -104,6 +116,10 @@ export function ProductImageForm({ productId }: ProductImageFormProps) {
           />
         </label>
       </div>
+
+      {imageError ? (
+        <p className="text-xs text-red-600">{imageError}</p>
+      ) : null}
 
       {state.message ? (
         <p

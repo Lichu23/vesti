@@ -11,16 +11,22 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:status:dev": "prisma migrate status --config prisma.dev.config.ts",
+    "db:deploy:dev": "prisma migrate deploy --config prisma.dev.config.ts",
     "db:studio": "prisma studio",
+    "db:studio:dev": "prisma studio --config prisma.dev.config.ts",
+    "db:seed:dev": "node scripts/seed-dev.mjs",
     "storage:setup": "node scripts/setup-product-images-bucket.mjs",
     "db:validate": "prisma validate",
-    "validate": "pnpm lint && pnpm db:validate && pnpm build"
+    "test:analytics": "node --experimental-strip-types --test scripts/admin-analytics.test.mjs",
+    "validate": "pnpm lint && pnpm test:analytics && pnpm db:validate && pnpm build"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@supabase/supabase-js": "^2.112.2",
+    "@vercel/analytics": "^2.0.1",
     "next": "16.3.0",
     "next-auth": "5.0.0-beta.32",
     "pg": "^8.22.0",

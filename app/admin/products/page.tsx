@@ -3,26 +3,19 @@ import {
   AdminPagination,
   AdminShell,
   formatAdminPrice,
-  TrashIcon,
 } from "@/app/admin/admin-ui";
 import { AdminProductsFilterForm } from "@/app/admin/products/admin-products-filter-form";
 import { ProductModal } from "@/app/admin/products/product-modal";
 import {
-  createProduct,
-  createProductVariant,
-  deleteProduct,
-  deleteProductImage,
-  deleteProductVariant,
-  updateProduct,
-  updateProductVariant,
-  adjustInventory,
-} from "@/app/admin/products/actions";
-import { InventoryAdjustmentForm } from "@/app/admin/products/inventory-adjustment-form";
-import { ProductImageForm } from "@/app/admin/products/product-image-form";
+  ProductDeleteForm,
+  ProductDeleteProvider,
+} from "@/app/admin/products/product-delete-form";
 import {
-  ProductVariantDeleteForm,
-  ProductVariantForm,
-} from "@/app/admin/products/product-variant-form";
+  createProduct,
+  deleteProduct,
+  updateProduct,
+} from "@/app/admin/products/actions";
+import Image from "next/image";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -140,17 +133,6 @@ export default async function AdminProductsPage({
         select: {
           id: true,
           color: true,
-          inventoryMovements: {
-            orderBy: [{ createdAt: "desc" }],
-            select: {
-              id: true,
-              createdAt: true,
-              quantity: true,
-              reason: true,
-              type: true,
-            },
-            take: 5,
-          },
           isActive: true,
           price: true,
           size: true,
@@ -165,6 +147,15 @@ export default async function AdminProductsPage({
     where: productWhere,
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin products]", {
+      page: safeCurrentPage,
+      pageSize: productsPerPage,
+      returnedProducts: products.length,
+      totalProducts: productCount,
+    });
+  }
+
   return (
     <AdminShell activeSection="products">
       <h1 className="font-serif text-3xl leading-tight text-foreground max-sm:mb-6 sm:text-5xl">
@@ -176,7 +167,8 @@ export default async function AdminProductsPage({
         </p>
       ) : null}
 
-      <section className="space-y-6">
+      <ProductDeleteProvider action={deleteProduct}>
+        <section className="space-y-6">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
           <AdminProductsFilterForm
             categories={categories}
@@ -236,17 +228,17 @@ export default async function AdminProductsPage({
 
                 return (
                   <article
-                    className="grid gap-4 border-b border-border p-4 last:border-b-0 md:grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] md:items-center md:px-5 md:py-4"
+                    className="grid min-w-0 gap-4 border-b border-border p-4 last:border-b-0 md:grid-cols-[minmax(320px,1.7fr)_180px_140px_140px_110px] md:items-center md:px-5 md:py-4"
                     key={product.id}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
                       {image ? (
                         <div
                           aria-label={image.alt ?? product.name}
-                          className="size-16 rounded-[4px] bg-muted bg-cover bg-center"
-                          role="img"
-                          style={{ backgroundImage: `url(${image.url})` }}
-                        />
+                            className="relative size-16 overflow-hidden rounded-[4px] bg-muted"
+                          >
+                            <Image alt={image.alt ?? product.name} className="object-cover" fill sizes="64px" src={image.url} />
+                          </div>
                       ) : (
                         <div className="flex size-16 items-center justify-center rounded-[4px] bg-muted text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                           Sin imagen
@@ -256,13 +248,18 @@ export default async function AdminProductsPage({
                         <h2 className="truncate text-base font-semibold text-foreground">
                           {product.name}
                         </h2>
+                        {!product.isActive ? (
+                          <span className="mt-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                            Oculto
+                          </span>
+                        ) : null}
                         <p className="text-sm text-muted-foreground">
                           Talle: {product.sizeDisplayText ?? "Unico"}
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid gap-3 text-sm md:contents">
+                    <div className="grid min-w-0 gap-3 text-sm md:contents">
                       <p className="flex items-center justify-between gap-3 text-muted-foreground md:block">
                         <span className="font-medium text-foreground md:hidden">
                           Categoria
@@ -298,7 +295,7 @@ export default async function AdminProductsPage({
                         action={updateProduct}
                         buttonLabel="Actualizar producto"
                         categories={categories}
-                        description="Edita la informacion base del producto."
+                        description="Edita el producto, sus variantes y el stock."
                         product={{
                           id: product.id,
                           name: product.name,
@@ -312,222 +309,32 @@ export default async function AdminProductsPage({
                           sizeDisplayText: product.sizeDisplayText,
                           isFeatured: product.isFeatured,
                           isActive: product.isActive,
+                          variants: product.variants.map((variant) => ({
+                            id: variant.id,
+                            color: variant.color,
+                            isActive: variant.isActive,
+                            price: variant.price?.toString() ?? null,
+                            size: variant.size,
+                            sku: variant.sku,
+                            stock: variant.stock,
+                          })),
+                          image: product.images[0]
+                            ? {
+                                alt: product.images[0].alt,
+                                url: product.images[0].url,
+                              }
+                            : null,
                         }}
                         title="Editar producto"
                         trigger={{
                           label: `Editar ${product.name}`,
                           type: "icon",
                         }}
-                      >
-                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
-                          <div className="space-y-1">
-                            <h4 className="font-semibold">Variantes</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Carga talles, colores, precios y stock por
-                              variante.
-                            </p>
-                          </div>
-
-                          {product.variants.length === 0 ? (
-                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
-                              Todavia no hay variantes.
-                            </p>
-                          ) : (
-                            <div className="grid gap-3">
-                              {product.variants.map((variant) => (
-                                <article
-                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
-                                  key={variant.id}
-                                >
-                                  <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div className="space-y-1 text-sm">
-                                      <p className="font-medium">
-                                        {variant.size}
-                                        {variant.color
-                                          ? ` - ${variant.color}`
-                                          : ""}
-                                      </p>
-                                      <p className="text-muted-foreground">
-                                        Stock: {variant.stock}
-                                        {variant.price
-                                          ? ` - ${formatAdminPrice(Number(variant.price))}`
-                                          : " - Usa precio base"}
-                                      </p>
-                                      {variant.sku ? (
-                                        <p className="text-muted-foreground">
-                                          SKU: {variant.sku}
-                                        </p>
-                                      ) : null}
-                                    </div>
-                                    <span className="rounded-full bg-secondary px-3 py-1 text-xs">
-                                      {variant.isActive ? "Activo" : "Oculto"}
-                                    </span>
-                                  </div>
-
-                                  <ProductVariantForm
-                                    action={updateProductVariant}
-                                    buttonLabel="Actualizar variante"
-                                    colorMode={product.colorMode}
-                                    productId={product.id}
-                                    stockLocked
-                                    variant={{
-                                      id: variant.id,
-                                      size: variant.size,
-                                      color: variant.color,
-                                      stock: variant.stock,
-                                      isActive: variant.isActive,
-                                      sku: variant.sku,
-                                      price: variant.price?.toString() ?? null,
-                                    }}
-                                  />
-
-                                  <ProductVariantDeleteForm
-                                    action={deleteProductVariant}
-                                    productId={product.id}
-                                    variantId={variant.id}
-                                  />
-
-                                  <section className="grid gap-3 rounded-[4px] bg-background p-3">
-                                    <div className="space-y-1">
-                                      <h5 className="text-sm font-semibold">
-                                        Inventario
-                                      </h5>
-                                      <p className="text-xs text-muted-foreground">
-                                        Agrega ajustes manuales positivos o
-                                        negativos.
-                                      </p>
-                                    </div>
-
-                                    <InventoryAdjustmentForm
-                                      action={adjustInventory}
-                                      productId={product.id}
-                                      variantId={variant.id}
-                                    />
-
-                                    {variant.inventoryMovements.length ===
-                                    0 ? (
-                                      <p className="text-sm text-muted-foreground">
-                                        Sin movimientos recientes.
-                                      </p>
-                                    ) : (
-                                      <div className="grid gap-2">
-                                        {variant.inventoryMovements.map(
-                                          (movement) => (
-                                            <div
-                                              className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border bg-card p-2 text-sm"
-                                              key={movement.id}
-                                            >
-                                              <div>
-                                                <p className="font-medium">
-                                                  {movement.quantity > 0
-                                                    ? "+"
-                                                    : ""}
-                                                  {movement.quantity}{" "}
-                                                  <span className="text-muted-foreground">
-                                                    Ajuste manual
-                                                  </span>
-                                                </p>
-                                                {movement.reason ? (
-                                                  <p className="text-muted-foreground">
-                                                    {movement.reason}
-                                                  </p>
-                                                ) : null}
-                                              </div>
-                                              <time className="text-xs text-muted-foreground">
-                                                {movement.createdAt.toLocaleString(
-                                                  "en-US",
-                                                )}
-                                              </time>
-                                            </div>
-                                          ),
-                                        )}
-                                      </div>
-                                    )}
-                                  </section>
-                                </article>
-                              ))}
-                            </div>
-                          )}
-
-                          <ProductVariantForm
-                            action={createProductVariant}
-                            buttonLabel="Crear variante"
-                            colorMode={product.colorMode}
-                            productId={product.id}
-                          />
-                        </section>
-
-                        <section className="grid gap-3 rounded-[4px] bg-muted p-4">
-                          <div className="space-y-1">
-                            <h4 className="font-semibold">Imagenes</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Carga imagenes del producto.
-                            </p>
-                          </div>
-
-                          {product.images.length === 0 ? (
-                            <p className="rounded-[4px] border bg-card p-3 text-sm text-muted-foreground">
-                              Todavia no hay imagenes.
-                            </p>
-                          ) : (
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {product.images.map((image) => (
-                                <article
-                                  className="grid gap-3 rounded-[4px] border bg-card p-3"
-                                  key={image.id}
-                                >
-                                  <div
-                                    aria-label={image.alt ?? product.name}
-                                    className="aspect-square w-full rounded-[4px] bg-muted bg-cover bg-center"
-                                    role="img"
-                                    style={{
-                                      backgroundImage: `url(${image.url})`,
-                                    }}
-                                  />
-                                  <div className="space-y-1 text-sm">
-                                    <p className="break-all text-muted-foreground">
-                                      {image.url}
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                      Orden: {image.sortOrder}
-                                    </p>
-                                    {image.alt ? (
-                                      <p className="text-muted-foreground">
-                                        Alt: {image.alt}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                  <form action={deleteProductImage}>
-                                    <input
-                                      name="id"
-                                      type="hidden"
-                                      value={image.id}
-                                    />
-                                    <button
-                                      className="cursor-pointer text-sm font-medium text-destructive"
-                                      type="submit"
-                                    >
-                                      Eliminar imagen
-                                    </button>
-                                  </form>
-                                </article>
-                              ))}
-                            </div>
-                          )}
-
-                          <ProductImageForm productId={product.id} />
-                        </section>
-                      </ProductModal>
-                      <form action={deleteProduct}>
-                        <input name="id" type="hidden" value={product.id} />
-                        <button
-                          aria-label={`Eliminar ${product.name}`}
-                          className="cursor-pointer transition hover:text-destructive"
-                          type="submit"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </form>
+                      />
+                      <ProductDeleteForm
+                        productId={product.id}
+                        productName={product.name}
+                      />
                     </div>
                   </article>
                 );
@@ -545,7 +352,8 @@ export default async function AdminProductsPage({
           }}
           totalPages={totalPages}
         />
-      </section>
+        </section>
+      </ProductDeleteProvider>
     </AdminShell>
   );
 }

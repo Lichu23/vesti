@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { getStorefrontHome } from "@/lib/storefront";
@@ -17,8 +18,10 @@ function getSizeLabel(product: StorefrontProduct) {
 }
 
 export function StorefrontProductCard({
+  priority = false,
   product,
 }: {
+  priority?: boolean;
   product: StorefrontProduct;
 }) {
   const image = product.images[0];
@@ -33,11 +36,14 @@ export function StorefrontProductCard({
         href={`/products/${product.slug}`}
       >
         {image ? (
-          <div
-            aria-label={image.alt ?? product.name}
-            className="h-full w-full bg-cover bg-center transition duration-500 group-hover:scale-105"
-            role="img"
-            style={{ backgroundImage: `url(${image.url})` }}
+          <Image
+            alt={image.alt ?? product.name}
+            className="object-cover transition duration-500 group-hover:scale-105"
+            fill
+            loading={priority ? "eager" : "lazy"}
+            preload={priority}
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            src={image.url}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-sm uppercase tracking-[0.24em] text-muted-foreground">
@@ -54,10 +60,10 @@ export function StorefrontProductCard({
         ) : null}
       </Link>
 
-      <div className="flex min-h-56 flex-col gap-4 p-5">
+      <div className="flex min-h-56 flex-col gap-3 p-3 sm:gap-4 sm:p-5">
         <div className="space-y-2">
           <Link className="cursor-pointer" href={`/products/${product.slug}`}>
-            <h3 className="font-serif text-xl font-semibold leading-tight text-foreground transition hover:text-primary">
+            <h3 className="font-serif text-lg font-semibold leading-tight text-foreground transition hover:text-primary sm:text-xl">
               {product.name}
             </h3>
           </Link>
@@ -73,6 +79,7 @@ export function StorefrontProductCard({
 
         <StorefrontVariantSelector
           basePrice={Number(product.basePrice)}
+          display="card"
           imageAlt={image?.alt}
           imageUrl={image?.url}
           productId={product.id}

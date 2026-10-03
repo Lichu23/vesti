@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type CategoryFormState = {
   message: string;
@@ -103,6 +104,7 @@ export async function createCategory(
     return categoryError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 
   return { message: "Categoria creada.", status: "success" };
@@ -141,6 +143,7 @@ export async function updateCategory(
     return categoryError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 
   return { message: "Categoria actualizada.", status: "success" };
@@ -155,12 +158,43 @@ export async function deleteCategory(formData: FormData) {
     return;
   }
 
-  await prisma.category.delete({
+  const category = await prisma.category.findUnique({
+    select: {
+      _count: {
+        select: {
+          products: true,
+        },
+      },
+    },
     where: {
       id,
       storeId,
     },
   });
 
+  if (!category) {
+    return;
+  }
+
+  if (category._count.products > 0) {
+    await prisma.category.update({
+      data: {
+        isActive: false,
+      },
+      where: {
+        id,
+        storeId,
+      },
+    });
+  } else {
+    await prisma.category.delete({
+      where: {
+        id,
+        storeId,
+      },
+    });
+  }
+
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/categories");
 }

@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { UserRole } from "@/generated/prisma/enums";
-import { requireOwnerSession } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { STOREFRONT_CACHE_TAG } from "@/lib/storefront";
 
 export type StoreSettingsFormState = {
   message: string;
@@ -97,7 +98,7 @@ export async function updateStoreSettings(
   _previousState: StoreSettingsFormState,
   formData: FormData,
 ): Promise<StoreSettingsFormState> {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const parsed = readStoreSettingsForm(formData);
 
@@ -120,8 +121,11 @@ export async function updateStoreSettings(
     return storeSettingsError(error);
   }
 
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/");
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/admin");
+  revalidateTag(STOREFRONT_CACHE_TAG, "max");
   revalidatePath("/admin/settings");
 
   return { message: "Configuracion actualizada.", status: "success" };
@@ -131,11 +135,12 @@ export async function createStoreInvite(
   _previousState: StoreInviteFormState,
   formData: FormData,
 ): Promise<StoreInviteFormState> {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const email = normalizeEmail(formData.get("email"));
-  const roleInput = String(formData.get("role") ?? UserRole.ADMIN);
-  const role = roleInput === UserRole.OWNER ? UserRole.OWNER : UserRole.ADMIN;
+  // Invitations are intentionally limited to operational admins. OWNER is an
+  // internal control role and must never be assignable through this form.
+  const role = UserRole.ADMIN;
 
   if (!storeId) {
     return { message: "Se requiere acceso a la tienda.", status: "error" };
@@ -183,13 +188,14 @@ export async function createStoreInvite(
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 
   return { message: "Invitacion guardada.", status: "success" };
 }
 
 export async function removeStoreInvite(formData: FormData) {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const inviteId = String(formData.get("inviteId") ?? "");
 
@@ -205,11 +211,12 @@ export async function removeStoreInvite(formData: FormData) {
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 }
 
 export async function removeStoreAdmin(formData: FormData) {
-  const session = await requireOwnerSession();
+  const session = await requireAdminSession();
   const storeId = session.user.storeId;
   const userId = String(formData.get("userId") ?? "");
 
@@ -233,5 +240,6 @@ export async function removeStoreAdmin(formData: FormData) {
     },
   });
 
+  revalidateTag(STOREFRONT_CACHE_TAG, 'max');
   revalidatePath("/admin/settings");
 }

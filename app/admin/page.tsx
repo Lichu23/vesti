@@ -5,54 +5,13 @@ import type { ReactNode } from "react";
 import {
   AdminShell,
   BoxIcon,
-  CategoryIcon,
-  formatAdminOrderStatus,
-  formatAdminPrice,
   InventoryStats,
-  OrdersIcon,
   SettingsIcon,
-  WarningIcon,
 } from "@/app/admin/admin-ui";
-import { OrderStatus } from "@/generated/prisma/client";
+import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-
-function getStockValue(
-  products: {
-    basePrice: { toString(): string };
-    variants: {
-      price: { toString(): string } | null;
-      stock: number;
-    }[];
-  }[],
-) {
-  return products.reduce(
-    (productTotal, product) =>
-      productTotal +
-      product.variants.reduce(
-        (variantTotal, variant) =>
-          variantTotal +
-          variant.stock *
-            Number(variant.price?.toString() ?? product.basePrice.toString()),
-        0,
-      ),
-    0,
-  );
-}
-
-function getOutOfStockCount(
-  products: {
-    variants: {
-      stock: number;
-    }[];
-  }[],
-) {
-  return products.filter(
-    (product) =>
-      product.variants.length === 0 ||
-      product.variants.every((variant) => variant.stock <= 0),
-  ).length;
-}
+import { TrafficPanel } from "@/app/admin/traffic-panel";
 
 function DashboardAction({
   description,
@@ -97,10 +56,10 @@ export default async function AdminDashboardPage() {
   const [
     store,
     categoryCount,
-    products,
+    stockValueRows,
+    productCount,
+    outOfStockCount,
     reviewingOrdersCount,
-    confirmedOrdersCount,
-    recentOrders,
   ] = await Promise.all([
     prisma.store.findUnique({
       select: {
@@ -116,21 +75,34 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
-    prisma.product.findMany({
-      select: {
-        basePrice: true,
+    prisma.$queryRaw<{ stockValue: Prisma.Decimal | number | string | null }[]>(
+      Prisma.sql`
+        SELECT COALESCE(
+          SUM(
+            pv."stock" * COALESCE(pv."price", p."basePrice")
+          ),
+          0
+        ) AS "stockValue"
+        FROM "ProductVariant" pv
+        INNER JOIN "Product" p ON p."id" = pv."productId"
+        WHERE pv."storeId" = ${storeId}
+          AND pv."isActive" = true
+          AND p."isActive" = true
+      `,
+    ),
+    prisma.product.count({
+      where: { storeId, isActive: true },
+    }),
+    prisma.product.count({
+      where: {
+        isActive: true,
+        storeId,
         variants: {
-          select: {
-            price: true,
-            stock: true,
-          },
-          where: {
+          none: {
             isActive: true,
+            stock: { gt: 0 },
           },
         },
-      },
-      where: {
-        storeId,
       },
     }),
     prisma.order.count({
@@ -139,36 +111,22 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
-    prisma.order.count({
-      where: {
-        status: OrderStatus.CONFIRMED,
-        storeId,
-      },
-    }),
-    prisma.order.findMany({
-      orderBy: [{ createdAt: "desc" }],
-      select: {
-        createdAt: true,
-        customerName: true,
-        id: true,
-        status: true,
-        total: true,
-      },
-      take: 5,
-      where: {
-        storeId,
-      },
-    }),
   ]);
-  const outOfStockCount = getOutOfStockCount(products);
-  const stockValue = getStockValue(products);
+  const stockValue = Number(stockValueRows[0]?.stockValue ?? 0);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[admin dashboard]", {
+      loadedActiveVariants: 0,
+      stockValue,
+    });
+  }
 
   if (!store) {
     notFound();
   }
 
   return (
-    <AdminShell activeSection="dashboard">
+    <AdminShell>
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Dashboard
@@ -181,12 +139,24 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
+      <Link
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+        href="/admin/orders"
+      >
+        Gestionar pedidos
+        <span className="rounded-full bg-background/20 px-2 py-0.5 text-xs">
+          {reviewingOrdersCount} pendientes
+        </span>
+      </Link>
+
       <InventoryStats
         categoryCount={categoryCount}
         outOfStockCount={outOfStockCount}
-        productCount={products.length}
+        productCount={productCount}
         stockValue={stockValue}
       />
+
+      <TrafficPanel />
 
       <section className="grid gap-5 xl:grid-cols-3">
         <DashboardAction
@@ -195,13 +165,6 @@ export default async function AdminDashboardPage() {
           icon={<BoxIcon />}
           label="Gestionar productos"
           title="Inventario"
-        />
-        <DashboardAction
-          description={`${reviewingOrdersCount} pedidos pendientes y ${confirmedOrdersCount} confirmados.`}
-          href="/admin/orders"
-          icon={<OrdersIcon />}
-          label="Gestionar pedidos"
-          title="Pedidos"
         />
         <DashboardAction
           description={
@@ -216,71 +179,6 @@ export default async function AdminDashboardPage() {
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <OrdersIcon />
-            <h2 className="font-serif text-3xl text-foreground">
-              Pedidos recientes
-            </h2>
-          </div>
-          {recentOrders.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Todavia no hay pedidos.
-            </p>
-          ) : (
-            <div className="grid gap-3">
-              {recentOrders.map((order) => (
-                <Link
-                  className="grid gap-2 rounded-[4px] border border-border bg-background p-4 transition hover:border-primary sm:grid-cols-[minmax(0,1fr)_auto]"
-                  href="/admin/orders"
-                  key={order.id}
-                >
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {order.customerName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.createdAt.toLocaleString("es-AR")} -{" "}
-                      {formatAdminOrderStatus(order.status)}
-                    </p>
-                  </div>
-                  <p className="font-serif text-2xl text-foreground">
-                    {formatAdminPrice(Number(order.total))}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <WarningIcon />
-            <h2 className="font-serif text-3xl text-foreground">
-              Checklist MVP
-            </h2>
-          </div>
-          <ul className="grid gap-3 text-sm text-muted-foreground">
-            <li className="flex gap-3">
-              <CategoryIcon />
-              Crear categorias principales.
-            </li>
-            <li className="flex gap-3">
-              <BoxIcon />
-              Cargar productos con imagenes y variantes.
-            </li>
-            <li className="flex gap-3">
-              <OrdersIcon />
-              Probar pedido manual y confirmacion de stock.
-            </li>
-            <li className="flex gap-3">
-              <SettingsIcon />
-              Verificar WhatsApp y datos de tienda.
-            </li>
-          </ul>
-        </div>
-      </section>
     </AdminShell>
   );
 }

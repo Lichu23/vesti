@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 type StorefrontSidebarCategory = {
@@ -23,16 +25,21 @@ const AUDIENCE_SECTIONS = [
   { href: "/ninos", key: "KIDS" as const, label: "Ninos" },
 ];
 
-function buildCategoryHref(slug: string, params: StorefrontSidebarParams) {
+function buildCategoryHref(
+  audiencePath: string,
+  slug: string,
+  params: StorefrontSidebarParams,
+) {
   const searchParams = new URLSearchParams();
 
+  searchParams.set("categoria", slug);
   if (params.buscar) searchParams.set("buscar", params.buscar);
   if (params.ordenar && params.ordenar !== "relevance") {
     searchParams.set("ordenar", params.ordenar);
   }
 
   const query = searchParams.toString();
-  return query ? `/categories/${slug}?${query}` : `/categories/${slug}`;
+  return `${audiencePath}?${query}`;
 }
 
 export function StorefrontAudienceSidebar({
@@ -40,12 +47,16 @@ export function StorefrontAudienceSidebar({
   activeCategory,
   categoryGroups,
   className = "storefront-desktop-only hidden xl:block",
+  isDisabled = false,
+  onNavigate,
   searchParams,
 }: {
   activeAudiencePath?: string;
   activeCategory?: string;
   className?: string;
   categoryGroups: StorefrontSidebarCategoryGroups;
+  isDisabled?: boolean;
+  onNavigate?: () => void;
   searchParams: StorefrontSidebarParams;
 }) {
   return (
@@ -97,6 +108,15 @@ export function StorefrontAudienceSidebar({
                     <Link
                       className="cursor-pointer transition hover:text-foreground"
                       href={section.href}
+                      aria-disabled={isDisabled}
+                      onClick={(event) => {
+                        if (isDisabled) {
+                          event.preventDefault();
+                          return;
+                        }
+                        onNavigate?.();
+                      }}
+                      tabIndex={isDisabled ? -1 : undefined}
                     >
                       Ver todo
                     </Link>
@@ -110,7 +130,20 @@ export function StorefrontAudienceSidebar({
                           ? "font-semibold text-foreground"
                           : ""
                       }`}
-                      href={buildCategoryHref(category.slug, searchParams)}
+                      href={buildCategoryHref(
+                        section.href,
+                        category.slug,
+                        searchParams,
+                      )}
+                      aria-disabled={isDisabled}
+                      onClick={(event) => {
+                        if (isDisabled) {
+                          event.preventDefault();
+                          return;
+                        }
+                        onNavigate?.();
+                      }}
+                      tabIndex={isDisabled ? -1 : undefined}
                     >
                       {category.name}
                     </Link>

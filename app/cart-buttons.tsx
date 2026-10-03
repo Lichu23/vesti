@@ -1,5 +1,7 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+
 import { useCart } from "./cart-context";
 
 type AddToCartButtonProps = {
@@ -21,6 +23,11 @@ type AddToCartButtonProps = {
 
 export function CartToggleButton({ className = "" }: { className?: string }) {
   const { itemCount, openCart } = useCart();
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   return (
     <button
@@ -42,7 +49,7 @@ export function CartToggleButton({ className = "" }: { className?: string }) {
         <path d="M7 8h10l-1 11H8L7 8Z" />
         <path d="M9 8a3 3 0 0 1 6 0" />
       </svg>
-      {itemCount > 0 ? (
+      {isHydrated && itemCount > 0 ? (
         <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {itemCount}
         </span>
