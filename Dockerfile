@@ -13,6 +13,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/generated ./generated
 COPY . .
+ENV NEXT_OUTPUT=standalone
 RUN pnpm build
 
 FROM node:22-bookworm-slim AS runner
