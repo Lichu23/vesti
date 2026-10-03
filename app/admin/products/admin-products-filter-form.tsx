@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { SearchIcon } from "@/app/admin/admin-ui";
@@ -20,6 +20,23 @@ function normalizeValue(value?: string) {
   return value?.trim() ?? "";
 }
 
+function buildFilterUrl(pathname: string, query: string, categoryId: string) {
+  const nextParams = new URLSearchParams();
+  const trimmedQuery = normalizeValue(query);
+
+  if (trimmedQuery) {
+    nextParams.set("buscar", trimmedQuery);
+  }
+
+  if (categoryId) {
+    nextParams.set("categoria", categoryId);
+  }
+
+  const queryString = nextParams.toString();
+
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
 export function AdminProductsFilterForm({
   categories,
   categoryId,
@@ -29,7 +46,8 @@ export function AdminProductsFilterForm({
   const router = useRouter();
   const initialQuery = normalizeValue(query);
   const initialCategoryId = categoryId ?? "";
-  const [isPending, startTransition] = useTransition();
+  const [isAutoPending, startAutoTransition] = useTransition();
+  const [isFiltering, startFilterTransition] = useTransition();
   const [currentQuery, setCurrentQuery] = useState(initialQuery);
   const [currentCategoryId, setCurrentCategoryId] = useState(initialCategoryId);
   const hasChanges = useMemo(
@@ -38,6 +56,21 @@ export function AdminProductsFilterForm({
       currentCategoryId !== initialCategoryId,
     [currentCategoryId, currentQuery, initialCategoryId, initialQuery],
   );
+
+  // Manual filtering (mobile): lock the fields until the filtered list renders.
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!hasChanges || isFiltering) {
+      return;
+    }
+
+    const nextUrl = buildFilterUrl(pathname, currentQuery, currentCategoryId);
+
+    startFilterTransition(() => {
+      router.replace(nextUrl, { scroll: false });
+    });
+  }
 
   useEffect(() => {
     if (!hasChanges) {
@@ -51,21 +84,9 @@ export function AdminProductsFilterForm({
     }
 
     const timeout = window.setTimeout(() => {
-      const nextParams = new URLSearchParams();
-      const trimmedQuery = normalizeValue(currentQuery);
+      const nextUrl = buildFilterUrl(pathname, currentQuery, currentCategoryId);
 
-      if (trimmedQuery) {
-        nextParams.set("buscar", trimmedQuery);
-      }
-
-      if (currentCategoryId) {
-        nextParams.set("categoria", currentCategoryId);
-      }
-
-      const queryString = nextParams.toString();
-      const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
-
-      startTransition(() => {
+      startAutoTransition(() => {
         router.replace(nextUrl, { scroll: false });
       });
     }, 350);
@@ -76,12 +97,15 @@ export function AdminProductsFilterForm({
   return (
     <form
       action="/admin/products"
-      className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto]"
+      aria-busy={isFiltering || isAutoPending}
+      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 xl:grid-cols-[minmax(0,1fr)_220px_auto] xl:gap-4"
+      onSubmit={handleSubmit}
     >
-      <label className="flex min-h-14 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground">
+      <label className="col-span-2 flex min-h-12 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground xl:col-span-1 xl:min-h-14">
         <SearchIcon />
         <input
           className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 placeholder:text-muted-foreground"
+          disabled={isFiltering}
           name="buscar"
           onChange={(event) => setCurrentQuery(event.target.value)}
           placeholder="Buscar por nombre o categoria..."
@@ -91,7 +115,8 @@ export function AdminProductsFilterForm({
       </label>
 
       <select
-        className="min-h-14 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+        className="min-h-12 min-w-0 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 xl:min-h-14"
+        disabled={isFiltering}
         name="categoria"
         onChange={(event) => setCurrentCategoryId(event.target.value)}
         value={currentCategoryId}
@@ -105,11 +130,21 @@ export function AdminProductsFilterForm({
       </select>
 
       <button
-        className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:border-primary disabled:cursor-not-allowed disabled:opacity-45 xl:hidden"
-        disabled={!hasChanges || isPending}
+        className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary gap-2 disabled:cursor-not-allowed disabled:opacity-45 xl:hidden"
+        disabled={!hasChanges || isFiltering}
         type="submit"
       >
-        {isPending ? "Filtrando..." : "Filtrar"}
+        {isFiltering ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+            />
+            Filtrando...
+          </>
+        ) : (
+          "Filtrar"
+        )}
       </button>
     </form>
   );

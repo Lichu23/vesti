@@ -89,16 +89,8 @@ export default async function AdminProductsPage({
     storeId,
   };
 
-  const [store, categories, productCount, totalProductCount] =
+  const [categories, productCount, totalProductCount] =
     await Promise.all([
-      prisma.store.findUnique({
-        select: {
-          name: true,
-        },
-        where: {
-          id: storeId,
-        },
-      }),
       prisma.category.findMany({
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         select: {
@@ -166,16 +158,9 @@ export default async function AdminProductsPage({
 
   return (
     <AdminShell>
-      <div className="space-y-2">
-        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
-          Panel de inventario
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Administra los productos y colecciones de{" "}
-          {store?.name ?? "Thoemia Intimo"}.
-        </p>
-      </div>
-
+      <h1 className="font-serif text-3xl leading-tight text-foreground max-sm:mb-6 sm:text-5xl">
+        Panel de inventario
+      </h1>
       {categories.length === 0 ? (
         <p className="rounded-[4px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Crea al menos una categoria antes de crear productos.
