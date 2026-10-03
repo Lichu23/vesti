@@ -65,7 +65,7 @@ export function AdminNavigation({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-h-screen min-w-0 overflow-x-hidden bg-background text-foreground">
+      <main className="min-h-[calc(100dvh-6rem)] min-w-0 overflow-x-hidden bg-background text-foreground lg:min-h-screen">
         <div className="mx-auto grid max-w-[1720px] gap-6 px-4 py-6 sm:px-10 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
           <aside className="hidden lg:block">
             <Link aria-label="Ir al admin" className="block" href="/admin">

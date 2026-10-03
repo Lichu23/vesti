@@ -3,7 +3,7 @@ export default function Loading() {
     <div
       aria-live="polite"
       aria-busy="true"
-      className="min-h-screen min-w-0 overflow-x-hidden bg-background text-foreground"
+      className="min-h-[calc(100dvh-6rem)] min-w-0 overflow-x-hidden bg-background text-foreground lg:min-h-screen"
     >
       <div className="mx-auto max-w-[1720px] px-4 py-6 sm:px-10 sm:py-10">
         <section className="relative min-w-0 space-y-10 overflow-x-hidden">
