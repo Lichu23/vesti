@@ -116,23 +116,23 @@ export function OrderForm({
   }
 
   return (
-    <form action={formAction} className="grid min-w-0 gap-4">
+    <form action={formAction} className="grid min-w-0 grid-cols-1 gap-4">
       {order ? <input name="orderId" type="hidden" value={order.id} /> : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="grid gap-1 text-sm">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label className="grid min-w-0 gap-1 text-sm">
           Nombre del cliente
           <input
-            className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            className="w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             defaultValue={order?.customerName}
             name="customerName"
             placeholder="Nombre"
             required
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           Telefono
           <input
-            className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            className="w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             defaultValue={order?.customerPhone}
             name="customerPhone"
             placeholder="5491123456789"
@@ -161,17 +161,17 @@ export function OrderForm({
         </span>
       </div>
 
-      <label className="grid gap-1 text-sm">
+      <label className="grid min-w-0 gap-1 text-sm">
         Notas
         <textarea
-          className="min-h-24 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+          className="min-h-24 w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           defaultValue={order?.notes ?? ""}
           name="notes"
           placeholder="Datos del chat, envio o comentarios"
         />
       </label>
 
-      <section className="grid gap-3">
+      <section className="grid min-w-0 grid-cols-1 gap-3">
         <div className="space-y-1">
           <h3 className="font-semibold">Items</h3>
           <p className="text-sm text-zinc-600">
@@ -187,13 +187,13 @@ export function OrderForm({
 
           return (
             <div
-              className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]"
+              className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]"
               key={row.id}
             >
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Producto y variante
                 <select
-                  className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                   name="variantId"
                   onChange={(event) =>
                     updateItemRowVariant(row.id, event.target.value)
@@ -217,10 +217,10 @@ export function OrderForm({
                   ))}
                 </select>
               </label>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Cantidad
                 <input
-                  className="rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                   defaultValue={row.item?.quantity ?? 1}
                   max={selectedVariant?.stock}
                   min="1"
@@ -270,7 +270,7 @@ export function OrderForm({
         </p>
       ) : null}
 
-      <div className="sticky bottom-0 -mx-4 -mb-4 border-t bg-white p-4 sm:-mx-5 sm:-mb-5 sm:p-5">
+      <div className="sticky -bottom-4 -mx-4 -mb-4 mt-2 border-t bg-white p-4 shadow-[0_-8px_12px_-8px_rgb(0_0_0/0.12)] sm:-bottom-5 sm:-mx-5 sm:-mb-5 sm:p-5">
         <button
           className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
           disabled={disabled}

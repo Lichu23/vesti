@@ -120,7 +120,7 @@ export default async function AdminOrdersPage() {
         <OrderModal
           action={createManualOrder}
           buttonLabel="Crear pedido"
-          description="Carga un pedido de WhatsApp. El stock se descuenta al confirmarlo."
+          description="Carga un pedido. El stock se descuenta al confirmarlo."
           title="Nuevo pedido"
           trigger="create"
           triggerLabel="Nuevo pedido"
