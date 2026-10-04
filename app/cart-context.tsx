@@ -385,6 +385,9 @@ function CartDrawer() {
         ? document.activeElement
         : null;
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -421,6 +424,7 @@ function CartDrawer() {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocusedElement?.focus();
     };
@@ -467,7 +471,7 @@ function CartDrawer() {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           {items.length === 0 ? (
             <div className="flex min-h-80 items-center justify-center text-center text-muted-foreground">
               Tu carrito esta vacio.
