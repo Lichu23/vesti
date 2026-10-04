@@ -13,6 +13,7 @@ import {
   StoreIcon,
 } from "@/app/admin/admin-ui";
 import { AdminMobileMenu } from "@/app/admin/admin-mobile-menu";
+import { BrandLogo } from "@/app/brand-logo";
 import type { AdminSection } from "@/app/admin/admin-ui";
 
 const adminNavItems: {
@@ -43,20 +44,17 @@ export function AdminNavigation({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm lg:hidden">
-        <div className="mx-auto flex min-h-24 max-w-[1720px] items-center gap-4 px-4 sm:px-10">
-          <AdminMobileMenu activeSection={activeSection} />
+        <div className="mx-auto grid min-h-24 max-w-[1720px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-10">
+          <div className="justify-self-start">
+            <AdminMobileMenu activeSection={activeSection} />
+          </div>
 
-          <Link aria-label="Ir al admin" className="shrink-0" href="/admin">
-            <span className="block font-serif text-2xl leading-none text-foreground sm:text-3xl">
-              Thoemia
-            </span>
-            <span className="mt-2 block text-[10px] uppercase tracking-[0.45em] text-foreground sm:text-xs">
-              Intimo
-            </span>
+          <Link aria-label="Ir al admin" className="justify-self-center" href="/admin">
+            <BrandLogo />
           </Link>
 
           <Link
-            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary sm:px-5"
+            className="inline-flex shrink-0 items-center gap-2 justify-self-end rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary sm:px-5"
             href="/"
           >
             <StoreIcon />
@@ -69,12 +67,7 @@ export function AdminNavigation({ children }: { children: ReactNode }) {
         <div className="mx-auto grid max-w-[1720px] gap-6 px-4 py-6 sm:px-10 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
           <aside className="hidden lg:block">
             <Link aria-label="Ir al admin" className="block" href="/admin">
-              <span className="block font-serif text-3xl leading-none text-foreground">
-                Thoemia
-              </span>
-              <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
-                Intimo
-              </span>
+              <BrandLogo className="w-36" variant="full" />
               <span className="mt-3 inline-flex rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                 Admin
               </span>

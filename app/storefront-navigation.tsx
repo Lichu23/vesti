@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 
+import { BrandLogo } from "./brand-logo";
 import { CartToggleButton } from "./cart-buttons";
 import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
 import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
@@ -89,12 +90,7 @@ export function StorefrontNavigation({
             className="cursor-pointer justify-self-center md:justify-self-auto"
             href="/"
           >
-            <span className="block font-serif text-3xl leading-none text-foreground">
-              Thoemia
-            </span>
-            <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
-              Intimo
-            </span>
+            <BrandLogo priority />
           </Link>
 
           {!isProductPage ? (
