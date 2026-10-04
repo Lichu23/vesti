@@ -36,19 +36,33 @@ export function StorefrontMobileSortForm({
     >
       {query ? <input name="buscar" type="hidden" value={query} /> : null}
       {category ? <input name="categoria" type="hidden" value={category} /> : null}
-      <select
-        aria-label="Ordenar productos"
-        className="min-w-0 cursor-pointer rounded-full border border-input bg-card px-4 py-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-        name="ordenar"
-        onChange={(event) => setSelectedSort(event.target.value)}
-        value={selectedSort}
-      >
-        {sortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          aria-label="Ordenar productos"
+          className="w-full min-w-0 cursor-pointer appearance-none rounded-full border border-input bg-card py-3 pl-4 pr-11 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+          name="ordenar"
+          onChange={(event) => setSelectedSort(event.target.value)}
+          value={selectedSort}
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+          viewBox="0 0 24 24"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </div>
       <button
         className="w-full cursor-pointer rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
         disabled={!hasChanges}

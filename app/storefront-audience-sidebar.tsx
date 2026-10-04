@@ -50,6 +50,7 @@ export function StorefrontAudienceSidebar({
   isDisabled = false,
   onNavigate,
   searchParams,
+  showHeading = true,
 }: {
   activeAudiencePath?: string;
   activeCategory?: string;
@@ -58,12 +59,15 @@ export function StorefrontAudienceSidebar({
   isDisabled?: boolean;
   onNavigate?: () => void;
   searchParams: StorefrontSidebarParams;
+  showHeading?: boolean;
 }) {
   return (
     <nav aria-label="Audiencias" className={className}>
-      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-        Comprar por
-      </p>
+      {showHeading ? (
+        <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+          Comprar por
+        </p>
+      ) : null}
       <div className="space-y-4 text-base text-muted-foreground">
         {AUDIENCE_SECTIONS.map((section) => {
           const categories = categoryGroups[section.key];
@@ -88,12 +92,18 @@ export function StorefrontAudienceSidebar({
                 }`}
               >
                 <span>{section.label}</span>
-                <span
+                <svg
                   aria-hidden="true"
-                  className="text-sm transition group-open:rotate-180"
+                  className="size-4 shrink-0 transition group-open:rotate-180"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                  viewBox="0 0 24 24"
                 >
-                  v
-                </span>
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
               </summary>
               <ul className="mt-3 space-y-3 pl-3 text-sm">
                 <li>
