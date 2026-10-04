@@ -130,14 +130,9 @@ export function StorefrontMobileFilterDrawer({
             role="dialog"
           >
             <div className="mb-8 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-                  Filtros
-                </p>
-                <h2 className="mt-2 font-serif text-3xl text-foreground">
-                  Comprar por
-                </h2>
-              </div>
+              <h2 className="font-serif text-3xl text-foreground">
+                Comprar por
+              </h2>
               <button
                 aria-label="Cerrar filtros"
                 className="flex size-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground"
@@ -157,6 +152,7 @@ export function StorefrontMobileFilterDrawer({
               isDisabled={isDisabled}
               onNavigate={handleNavigate}
               searchParams={searchParams}
+              showHeading={false}
             />
           </aside>
         </div>

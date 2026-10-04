@@ -114,20 +114,35 @@ export function AdminProductsFilterForm({
         />
       </label>
 
-      <select
-        className="min-h-12 min-w-0 cursor-pointer rounded-full border border-border bg-card px-5 text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 xl:min-h-14"
-        disabled={isFiltering}
-        name="categoria"
-        onChange={(event) => setCurrentCategoryId(event.target.value)}
-        value={currentCategoryId}
-      >
-        <option value="">Todas las categorias</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </select>
+      <div className="relative min-w-0">
+        <select
+          aria-label="Filtrar por categoria"
+          className="h-full min-h-12 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-border bg-card py-0 pl-5 pr-12 text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed xl:min-h-14"
+          disabled={isFiltering}
+          name="categoria"
+          onChange={(event) => setCurrentCategoryId(event.target.value)}
+          value={currentCategoryId}
+        >
+          <option value="">Todas las categorias</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute right-5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+          viewBox="0 0 24 24"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </div>
 
       <button
         className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary gap-2 disabled:cursor-not-allowed disabled:opacity-45 xl:hidden"
