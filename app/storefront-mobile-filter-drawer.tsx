@@ -1,7 +1,8 @@
 ﻿"use client";
 
+import { Dialog } from "@base-ui/react/dialog";
 import { Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 
@@ -39,113 +40,50 @@ export function StorefrontMobileFilterDrawer({
   searchParams: StorefrontSidebarParams;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const drawerRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-        return;
-      }
-
-      if (event.key !== "Tab" || !drawerRef.current) return;
-      const focusable = Array.from(
-        drawerRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), summary, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-      triggerRef.current?.focus();
-    };
-  }, [isOpen]);
-
   function handleNavigate() {
     setIsOpen(false);
     onNavigate?.();
   }
 
   return (
-    <>
-      <button
-        aria-expanded={isOpen}
+    <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
+      <Dialog.Trigger
         aria-disabled={isDisabled}
         aria-label="Abrir filtros"
         className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:hidden"
         disabled={isDisabled}
-        ref={triggerRef}
-        onClick={() => setIsOpen(true)}
-        type="button"
       >
         <Menu aria-hidden="true" className="size-6" strokeWidth={1.8} />
-      </button>
+      </Dialog.Trigger>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-[1000] xl:hidden">
-          <button
-            aria-label="Cerrar filtros"
-            className="absolute inset-0 cursor-pointer bg-foreground/35"
-            onClick={() => setIsOpen(false)}
-            type="button"
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-[1000] bg-foreground/35 transition-opacity duration-300 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-reduce:transition-none xl:hidden" />
+
+        <Dialog.Popup className="fixed left-0 top-0 z-[1000] flex h-dvh w-[86vw] max-w-sm flex-col bg-background p-6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full motion-reduce:transition-none xl:hidden">
+          <div className="mb-8 flex items-center justify-between gap-4">
+            <Dialog.Title className="font-serif text-3xl text-foreground">
+              Comprar por
+            </Dialog.Title>
+            <Dialog.Close
+              aria-label="Cerrar filtros"
+              className="flex size-11 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <X aria-hidden="true" className="size-5" strokeWidth={1.8} />
+            </Dialog.Close>
+          </div>
+
+          <StorefrontAudienceSidebar
+            activeAudiencePath={activeAudiencePath}
+            activeCategory={activeCategory}
+            categoryGroups={categoryGroups}
+            className="min-h-0 overflow-y-auto"
+            isDisabled={isDisabled}
+            onNavigate={handleNavigate}
+            searchParams={searchParams}
+            showHeading={false}
           />
-          <aside
-            aria-label="Filtros de productos"
-            aria-modal="true"
-            className="absolute left-0 top-0 flex h-dvh w-[86vw] max-w-sm flex-col bg-background p-6 shadow-2xl"
-            ref={drawerRef}
-            role="dialog"
-          >
-            <div className="mb-8 flex items-center justify-between gap-4">
-              <h2 className="font-serif text-3xl text-foreground">
-                Comprar por
-              </h2>
-              <button
-                aria-label="Cerrar filtros"
-                className="flex size-11 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                onClick={() => setIsOpen(false)}
-                ref={closeRef}
-                type="button"
-              >
-                <X aria-hidden="true" className="size-5" strokeWidth={1.8} />
-              </button>
-            </div>
-
-            <StorefrontAudienceSidebar
-              activeAudiencePath={activeAudiencePath}
-              activeCategory={activeCategory}
-              categoryGroups={categoryGroups}
-              className="min-h-0 overflow-y-auto"
-              isDisabled={isDisabled}
-              onNavigate={handleNavigate}
-              searchParams={searchParams}
-              showHeading={false}
-            />
-          </aside>
-        </div>
-      ) : null}
-    </>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
