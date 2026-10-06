@@ -3,7 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { type AdminSection } from "@/app/admin/admin-ui";
 
@@ -45,10 +45,29 @@ export function AdminMobileMenu({
   activeSection: AdminSection;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const scrollToTopOnCloseRef = useRef(false);
+
+  function handleLinkClick() {
+    scrollToTopOnCloseRef.current = true;
+    setIsOpen(false);
+  }
+
+  // Base UI restores the old scroll position when it unlocks the page, which
+  // would undo the scroll-to-top of the navigation.
+  function handleOpenChangeComplete(open: boolean) {
+    if (open || !scrollToTopOnCloseRef.current) return;
+
+    scrollToTopOnCloseRef.current = false;
+    window.scrollTo({ top: 0 });
+  }
 
   return (
     <div className="order-first lg:hidden">
-      <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
+      <Dialog.Root
+        onOpenChange={setIsOpen}
+        onOpenChangeComplete={handleOpenChangeComplete}
+        open={isOpen}
+      >
         <Dialog.Trigger
           aria-label="Abrir menu admin"
           className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -90,7 +109,7 @@ export function AdminMobileMenu({
                   }`}
                   href={item.href}
                   key={item.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleLinkClick}
                 >
                   {item.label}
                 </Link>
@@ -100,7 +119,7 @@ export function AdminMobileMenu({
             <Link
               className="mt-8 inline-flex items-center justify-center rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition hover:border-primary"
               href="/"
-              onClick={() => setIsOpen(false)}
+              onClick={handleLinkClick}
             >
               Ver tienda
             </Link>

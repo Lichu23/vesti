@@ -3,7 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Check, SlidersHorizontal, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type SortOption = {
   label: string;
@@ -24,6 +24,7 @@ export function StorefrontMobileFilterSheet({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const scrollToTopOnCloseRef = useRef(false);
 
   const currentSort = searchParams.get("ordenar") ?? "relevance";
 
@@ -42,12 +43,26 @@ export function StorefrontMobileFilterSheet({
 
     const query = nextParams.toString();
 
+    scrollToTopOnCloseRef.current = true;
     onNavigate?.();
     router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
+  // Base UI restores the old scroll position when it unlocks the page, so the
+  // jump to the top has to happen once the sheet has finished closing.
+  function handleOpenChangeComplete(open: boolean) {
+    if (open || !scrollToTopOnCloseRef.current) return;
+
+    scrollToTopOnCloseRef.current = false;
+    window.scrollTo({ top: 0 });
+  }
+
   return (
-    <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
+    <Dialog.Root
+      onOpenChange={setIsOpen}
+      onOpenChangeComplete={handleOpenChangeComplete}
+      open={isOpen}
+    >
       <Dialog.Trigger
         aria-disabled={isDisabled}
         aria-label="Ordenar productos"
