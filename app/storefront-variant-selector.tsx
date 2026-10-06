@@ -85,40 +85,34 @@ export function StorefrontVariantSelector({
     ? `Agregar ${productName} ${getVariantLabel(selectedVariant)} al carrito`
     : `Elegir talle para ${productName}`;
 
-  function addVariant(variant: StorefrontVariant) {
-    addItem({
-      imageAlt,
-      imageUrl,
-      maxQuantity: variant.stock,
-      productId,
-      productName,
-      unitPrice: variant.price,
-      variantColor: variant.color,
-      variantId: variant.id,
-      variantSize: variant.size,
-    });
+  function addVariant(variant: StorefrontVariant, flyFrom?: DOMRect) {
+    addItem(
+      {
+        imageAlt,
+        imageUrl,
+        maxQuantity: variant.stock,
+        productId,
+        productName,
+        unitPrice: variant.price,
+        variantColor: variant.color,
+        variantId: variant.id,
+        variantSize: variant.size,
+      },
+      { flyFrom },
+    );
   }
 
-  function addSelectedVariant() {
+  function addSelectedVariant(flyFrom?: DOMRect) {
     if (!selectedVariant) return;
 
-    addVariant(selectedVariant);
+    addVariant(selectedVariant, flyFrom);
   }
 
-  function handleCardAdd() {
-    if (needsVariantSelection) {
-      setIsPickerOpen(true);
-      return;
-    }
-
-    addSelectedVariant();
-  }
-
-  function handlePickerSelect(variantId: string) {
+  function handlePickerSelect(variantId: string, origin?: DOMRect) {
     const variant = inStockVariants.find((item) => item.id === variantId);
 
     setIsPickerOpen(false);
-    if (variant) addVariant(variant);
+    if (variant) addVariant(variant, origin);
   }
 
   return (
@@ -168,21 +162,16 @@ export function StorefrontVariantSelector({
             </span>
           </p>
           <button
-            aria-haspopup={needsVariantSelection ? "dialog" : undefined}
-            aria-label={
-              needsVariantSelection
-                ? `Elegir talle de ${productName}`
-                : addButtonLabel
-            }
+            aria-haspopup="dialog"
+            aria-label={`Elegir talle de ${productName}`}
             className="flex size-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-full text-3xl font-light leading-none text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-35"
             disabled={!hasStock || !selectedVariant}
-            onClick={handleCardAdd}
+            onClick={() => setIsPickerOpen(true)}
             type="button"
           >
             <Plus aria-hidden="true" className="size-7" strokeWidth={1.5} />
           </button>
-          {needsVariantSelection ? (
-            <StorefrontSizePicker
+          <StorefrontSizePicker
               formatPrice={formatPrice}
               imageAlt={imageAlt}
               imageUrl={imageUrl}
@@ -193,7 +182,6 @@ export function StorefrontVariantSelector({
               unitLabel={unitLabel}
               variants={variants}
             />
-          ) : null}
         </div>
       ) : (
         <div className="flex items-center justify-between gap-4">
@@ -207,7 +195,9 @@ export function StorefrontVariantSelector({
             aria-label={addButtonLabel}
             className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-primary text-2xl leading-none text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
             disabled={!hasStock || !selectedVariant}
-            onClick={addSelectedVariant}
+            onClick={(event) =>
+              addSelectedVariant(event.currentTarget.getBoundingClientRect())
+            }
             title={selectedVariant ? undefined : `Elegir talle para ${productName}`}
             type="button"
           >

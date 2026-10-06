@@ -7,12 +7,14 @@ import {
   LazyMotion,
   MotionConfig,
   domAnimation,
+  useReducedMotion,
 } from "motion/react";
 import * as m from "motion/react-m";
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -34,8 +36,18 @@ type CartItem = CartItemInput & {
   quantity: number;
 };
 
+type CartFlight = {
+  dx: number;
+  dy: number;
+  id: number;
+  imageUrl?: string | null;
+  left: number;
+  top: number;
+};
+
 type CartContextValue = {
-  addItem: (item: CartItemInput) => void;
+  /** `flyFrom` is the element rect the item visually flies out of. */
+  addItem: (item: CartItemInput, options?: { flyFrom?: DOMRect }) => void;
   clearCart: () => void;
   closeCart: () => void;
   decreaseItem: (variantId: string) => void;
@@ -48,6 +60,8 @@ type CartContextValue = {
   storeName: string;
   storeWhatsapp?: string | null;
   total: number;
+  /** Item count minus items still flying to the cart icon. */
+  visibleItemCount: number;
 };
 
 type CartToast = {
@@ -57,6 +71,9 @@ type CartToast = {
 
 const CART_STORAGE_KEY = "thoemia-cart";
 const EASE_OUT_DRAWER = [0.32, 0.72, 0, 1] as const;
+const FLIGHT_SIZE = 56;
+const FLIGHT_DURATION = 0.7;
+let nextFlightId = 1;
 const CartContext = createContext<CartContextValue | null>(null);
 const cartListeners = new Set<() => void>();
 const EMPTY_CART: CartItem[] = [];
@@ -227,56 +244,91 @@ export function CartProvider({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<CartToast | null>(null);
+  const [flights, setFlights] = useState<CartFlight[]>([]);
+  const shouldReduceMotion = useReducedMotion();
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  const addItem = useCallback((item: CartItemInput) => {
-    if (item.maxQuantity <= 0) return;
+  const completeFlight = useCallback((id: number) => {
+    setFlights((current) => current.filter((flight) => flight.id !== id));
+  }, []);
 
-    const currentItems = readCartSnapshot();
-    const nextItems = (() => {
-      const existing = currentItems.find(
-        (cartItem) => cartItem.variantId === item.variantId,
-      );
+  const addItem = useCallback(
+    (item: CartItemInput, options?: { flyFrom?: DOMRect }) => {
+      if (item.maxQuantity <= 0) return;
 
-      if (!existing) {
-        return [
-          ...currentItems,
-          {
-            ...item,
-            quantity: 1,
-          },
-        ];
+      const target = document.querySelector<HTMLElement>("[data-cart-target]");
+      const from = options?.flyFrom;
+
+      // Register the flight before the cart changes so the badge count stays
+      // behind until the item lands on the cart icon.
+      if (from && target && !shouldReduceMotion) {
+        const to = target.getBoundingClientRect();
+
+        if (from.width > 0 && to.width > 0) {
+          const fromX = from.left + from.width / 2;
+          const fromY = from.top + from.height / 2;
+
+          setFlights((current) => [
+            ...current,
+            {
+              dx: to.left + to.width / 2 - fromX,
+              dy: to.top + to.height / 2 - fromY,
+              id: nextFlightId++,
+              imageUrl: item.imageUrl,
+              left: fromX - FLIGHT_SIZE / 2,
+              top: fromY - FLIGHT_SIZE / 2,
+            },
+          ]);
+        }
       }
 
-      return currentItems.map((cartItem) =>
-        cartItem.variantId === item.variantId
-          ? {
-              ...cartItem,
+      const currentItems = readCartSnapshot();
+      const nextItems = (() => {
+        const existing = currentItems.find(
+          (cartItem) => cartItem.variantId === item.variantId,
+        );
+
+        if (!existing) {
+          return [
+            ...currentItems,
+            {
               ...item,
-              quantity: clampQuantity(
-                cartItem.quantity + 1,
-                item.maxQuantity,
-              ),
-            }
-          : cartItem,
-      );
-    })();
+              quantity: 1,
+            },
+          ];
+        }
 
-    writeCartSnapshot(nextItems);
-    const toastId = Date.now();
+        return currentItems.map((cartItem) =>
+          cartItem.variantId === item.variantId
+            ? {
+                ...cartItem,
+                ...item,
+                quantity: clampQuantity(
+                  cartItem.quantity + 1,
+                  item.maxQuantity,
+                ),
+              }
+            : cartItem,
+        );
+      })();
 
-    setToast({
-      id: toastId,
-      message: `${item.productName} agregado al carrito.`,
-    });
-    window.setTimeout(() => {
-      setToast((currentToast) =>
-        currentToast?.id === toastId ? null : currentToast,
-      );
-    }, 2400);
-  }, []);
+      writeCartSnapshot(nextItems);
+      const toastId = Date.now();
+
+      setToast({
+        id: toastId,
+        message: `${item.productName} agregado al carrito.`,
+      });
+      window.setTimeout(() => {
+        setToast((currentToast) =>
+          currentToast?.id === toastId ? null : currentToast,
+        );
+      }, 2400);
+    },
+    [shouldReduceMotion],
+  );
 
   const increaseItem = useCallback((variantId: string) => {
     writeCartSnapshot(
@@ -320,6 +372,7 @@ export function CartProvider({
       0,
     );
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const visibleItemCount = Math.max(0, itemCount - flights.length);
 
     return {
       addItem,
@@ -335,12 +388,14 @@ export function CartProvider({
       storeName: storeName ?? "Thoemia Intimo",
       storeWhatsapp,
       total,
+      visibleItemCount,
     };
   }, [
     addItem,
     clearCart,
     closeCart,
     decreaseItem,
+    flights.length,
     increaseItem,
     isOpen,
     items,
@@ -357,6 +412,7 @@ export function CartProvider({
           {children}
           <CartToast toast={toast} />
           <CartDrawer />
+          <CartFlightLayer flights={flights} onComplete={completeFlight} />
         </CartContext.Provider>
       </LazyMotion>
     </MotionConfig>
@@ -454,7 +510,7 @@ function CartDrawer() {
                         <div className="min-w-0 space-y-3">
                           <div>
                             <p className="font-semibold text-foreground">
-                              {item.productName} x{item.quantity}
+                              {item.productName}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {getVariantLabel(item)}
@@ -559,6 +615,74 @@ function CartDrawer() {
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function CartFlight({
+  flight,
+  onComplete,
+}: {
+  flight: CartFlight;
+  onComplete: (id: number) => void;
+}) {
+  // Safety net in case the animation is interrupted before it completes.
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => onComplete(flight.id),
+      (FLIGHT_DURATION + 0.8) * 1000,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [flight.id, onComplete]);
+
+  return (
+    <m.div
+      animate={{
+        borderRadius: 999,
+        opacity: 0.35,
+        scale: 0.3,
+        x: flight.dx,
+        y: flight.dy,
+      }}
+      className="absolute bg-muted bg-cover bg-center shadow-lg"
+      initial={{ borderRadius: 8, opacity: 1, scale: 1, x: 0, y: 0 }}
+      onAnimationComplete={() => onComplete(flight.id)}
+      style={{
+        backgroundImage: flight.imageUrl
+          ? `url(${flight.imageUrl})`
+          : undefined,
+        height: FLIGHT_SIZE,
+        left: flight.left,
+        top: flight.top,
+        width: FLIGHT_SIZE,
+      }}
+      transition={{
+        borderRadius: { duration: 0.4 },
+        opacity: { delay: 0.35, duration: FLIGHT_DURATION - 0.35 },
+        scale: { duration: FLIGHT_DURATION, ease: [0.4, 0, 0.2, 1] },
+        x: { duration: FLIGHT_DURATION, ease: [0.55, 0, 1, 0.45] },
+        y: { duration: FLIGHT_DURATION, ease: [0, 0.55, 0.45, 1] },
+      }}
+    />
+  );
+}
+
+function CartFlightLayer({
+  flights,
+  onComplete,
+}: {
+  flights: CartFlight[];
+  onComplete: (id: number) => void;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-[1100]"
+    >
+      {flights.map((flight) => (
+        <CartFlight flight={flight} key={flight.id} onComplete={onComplete} />
+      ))}
+    </div>
   );
 }
 

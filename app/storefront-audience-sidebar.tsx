@@ -1,7 +1,6 @@
-"use client";
-
-import { ChevronDown } from "lucide-react";
 import Link from "next/link";
+
+import { buildAudienceHref } from "./storefront-routes";
 
 type StorefrontSidebarCategory = {
   id: string;
@@ -26,135 +25,73 @@ const AUDIENCE_SECTIONS = [
   { href: "/ninos", key: "KIDS" as const, label: "Ninos" },
 ];
 
-function buildCategoryHref(
-  audiencePath: string,
-  slug: string,
-  params: StorefrontSidebarParams,
-) {
-  const searchParams = new URLSearchParams();
-
-  searchParams.set("categoria", slug);
-  if (params.buscar) searchParams.set("buscar", params.buscar);
-  if (params.ordenar && params.ordenar !== "relevance") {
-    searchParams.set("ordenar", params.ordenar);
-  }
-
-  const query = searchParams.toString();
-  return `${audiencePath}?${query}`;
-}
-
 export function StorefrontAudienceSidebar({
   activeAudiencePath,
   activeCategory,
   categoryGroups,
-  className = "storefront-desktop-only hidden xl:block",
-  isDisabled = false,
-  onNavigate,
   searchParams,
-  showHeading = true,
 }: {
   activeAudiencePath?: string;
   activeCategory?: string;
-  className?: string;
   categoryGroups: StorefrontSidebarCategoryGroups;
-  isDisabled?: boolean;
-  onNavigate?: () => void;
   searchParams: StorefrontSidebarParams;
-  showHeading?: boolean;
 }) {
+  // Only search and sort carry over; page numbers must not.
+  const linkParams = {
+    buscar: searchParams.buscar,
+    ordenar: searchParams.ordenar,
+  };
+
   return (
-    <nav aria-label="Audiencias" className={className}>
-      {showHeading ? (
-        <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
-          Comprar por
-        </p>
-      ) : null}
-      <div className="space-y-4 text-base text-muted-foreground">
+    <nav
+      aria-label="Audiencias"
+      className="storefront-desktop-only hidden xl:block"
+    >
+      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+        Comprar por
+      </p>
+      <div className="space-y-6 text-base text-muted-foreground">
         {AUDIENCE_SECTIONS.map((section) => {
           const categories = categoryGroups[section.key];
-          const hasActiveCategory = categories.some(
-            (category) => category.slug === activeCategory,
-          );
           const isActiveAudience = activeAudiencePath === section.href;
-          const isCurrentAllProducts = isActiveAudience && !activeCategory;
-          const isOpen = isActiveAudience || hasActiveCategory;
+          const isAudienceRoot = isActiveAudience && !activeCategory;
 
           return (
-            <details
-              className="group border-b border-border pb-4"
-              key={section.href}
-              open={isOpen}
-            >
-              <summary
-                className={`flex cursor-pointer list-none items-center justify-between gap-3 ${
-                  isActiveAudience || hasActiveCategory
-                    ? "font-semibold text-foreground"
-                    : ""
+            <div className="border-b border-border pb-6" key={section.href}>
+              <Link
+                aria-current={isAudienceRoot ? "page" : undefined}
+                className={`transition hover:text-foreground ${
+                  isActiveAudience ? "font-semibold text-foreground" : ""
                 }`}
+                href={buildAudienceHref(section.href, undefined, linkParams)}
               >
-                <span>{section.label}</span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="size-5 shrink-0 transition group-open:rotate-180"
-                  strokeWidth={1.8}
-                />
-              </summary>
+                {section.label}
+              </Link>
               <ul className="mt-3 space-y-3 pl-3 text-sm">
-                <li>
-                  {isCurrentAllProducts ? (
-                    <span
-                      aria-current="page"
-                      className="font-semibold text-foreground"
-                    >
-                      Ver todo
-                    </span>
-                  ) : (
-                    <Link
-                      className="cursor-pointer transition hover:text-foreground"
-                      href={section.href}
-                      aria-disabled={isDisabled}
-                      onClick={(event) => {
-                        if (isDisabled) {
-                          event.preventDefault();
-                          return;
-                        }
-                        onNavigate?.();
-                      }}
-                      tabIndex={isDisabled ? -1 : undefined}
-                    >
-                      Ver todo
-                    </Link>
-                  )}
-                </li>
-                {categories.map((category) => (
-                  <li key={`${section.href}-${category.id}`}>
-                    <Link
-                      className={`cursor-pointer transition hover:text-foreground ${
-                        activeCategory === category.slug
-                          ? "font-semibold text-foreground"
-                          : ""
-                      }`}
-                      href={buildCategoryHref(
-                        section.href,
-                        category.slug,
-                        searchParams,
-                      )}
-                      aria-disabled={isDisabled}
-                      onClick={(event) => {
-                        if (isDisabled) {
-                          event.preventDefault();
-                          return;
-                        }
-                        onNavigate?.();
-                      }}
-                      tabIndex={isDisabled ? -1 : undefined}
-                    >
-                      {category.name}
-                    </Link>
-                  </li>
-                ))}
+                {categories.map((category) => {
+                  const isActive =
+                    isActiveAudience && activeCategory === category.slug;
+
+                  return (
+                    <li key={`${section.href}-${category.id}`}>
+                      <Link
+                        aria-current={isActive ? "page" : undefined}
+                        className={`transition hover:text-foreground ${
+                          isActive ? "font-semibold text-foreground" : ""
+                        }`}
+                        href={buildAudienceHref(
+                          section.href,
+                          category.slug,
+                          linkParams,
+                        )}
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
-            </details>
+            </div>
           );
         })}
       </div>

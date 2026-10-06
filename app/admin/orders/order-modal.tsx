@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { AdminModal } from "@/app/admin/admin-modal";
+import { AdminToast } from "@/app/admin/admin-toast";
 import type { OrderFormState } from "@/app/admin/orders/actions";
 import { OrderForm } from "@/app/admin/orders/order-form";
 
@@ -50,7 +52,6 @@ export function OrderModal({
   const [isOpen, setIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastDelayRef = useRef<number | null>(null);
-  const titleId = useId();
 
   useEffect(() => {
     if (!toastMessage) {
@@ -69,28 +70,6 @@ export function OrderModal({
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    const previousOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
 
   const handleSuccess = useCallback((message: string) => {
     setIsOpen(false);
@@ -129,57 +108,22 @@ export function OrderModal({
         </button>
       )}
 
-      {toastMessage ? (
-        <div
-          aria-live="polite"
-          className="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-full border border-border bg-card px-5 py-3 text-center text-sm font-medium text-foreground shadow-lg sm:left-auto sm:right-5 sm:translate-x-0"
-        >
-          {toastMessage}
-        </div>
-      ) : null}
+      <AdminToast message={toastMessage} />
 
-      {isOpen ? (
-        <div
-          aria-labelledby={titleId}
-          aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-0 text-left sm:p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setIsOpen(false);
-            }
-          }}
-          role="dialog"
-        >
-          <div className="h-full max-h-dvh w-full min-w-0 max-w-3xl overflow-y-auto overscroll-contain rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:p-5">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <h3
-                  className="font-serif text-2xl text-foreground sm:text-3xl"
-                  id={titleId}
-                >
-                  {title}
-                </h3>
-                <p className="text-sm text-muted-foreground">{description}</p>
-              </div>
-              <button
-                className="cursor-pointer rounded-md border px-3 py-2 text-sm"
-                onClick={() => setIsOpen(false)}
-                type="button"
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <OrderForm
-              action={action}
-              buttonLabel={buttonLabel}
-              onSuccess={handleSuccess}
-              order={order}
-              variants={variants}
-            />
-          </div>
-        </div>
-      ) : null}
+      <AdminModal
+        description={description}
+        onOpenChange={setIsOpen}
+        open={isOpen}
+        title={title}
+      >
+        <OrderForm
+          action={action}
+          buttonLabel={buttonLabel}
+          onSuccess={handleSuccess}
+          order={order}
+          variants={variants}
+        />
+      </AdminModal>
     </>
   );
 }

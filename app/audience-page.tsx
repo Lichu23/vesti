@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { Audience } from "@/generated/prisma/client";
 import {
@@ -10,6 +10,7 @@ import {
 import { StorefrontAudienceSidebar } from "./storefront-audience-sidebar";
 import { StorefrontProductCard } from "./storefront-product-card";
 import { StorefrontPagination } from "./storefront-pagination";
+import { buildAudienceHref } from "./storefront-routes";
 
 type AudienceSearchParams = {
   buscar?: string | string[];
@@ -52,47 +53,46 @@ function normalizeSearchParams(params: AudienceSearchParams) {
   };
 }
 
-function buildAudienceHref(
-  basePath: string,
-  params: ReturnType<typeof normalizeSearchParams>,
-) {
-  const searchParams = new URLSearchParams();
-
-  if (params.categoria) searchParams.set("categoria", params.categoria);
-  if (params.buscar) searchParams.set("buscar", params.buscar);
-  if (params.ordenar && params.ordenar !== "relevance") {
-    searchParams.set("ordenar", params.ordenar);
-  }
-
-  const query = searchParams.toString();
-  return query ? `${basePath}?${query}` : basePath;
-}
-
 export async function AudiencePage({
   basePath,
+  categoria,
   config,
   searchParams,
 }: {
   basePath: string;
+  categoria?: string;
   config: AudienceConfig;
   searchParams: Promise<AudienceSearchParams>;
 }) {
   const params = normalizeSearchParams(await searchParams);
+
+  // Old links used /mujer?categoria=slug; categories now live at /mujer/slug.
+  if (!categoria && params.categoria) {
+    permanentRedirect(
+      buildAudienceHref(basePath, params.categoria, {
+        buscar: params.buscar,
+        ordenar: params.ordenar,
+        pagina: params.pagina,
+      }),
+    );
+  }
+
+  const currentPath = categoria ? `${basePath}/${categoria}` : basePath;
   const { activeCategory, audienceCategories, products, store, totalProducts } =
     await getStorefrontHome({
       audience: config.audience,
-      categorySlug: params.categoria,
+      categorySlug: categoria,
       query: params.buscar,
       sort: params.ordenar,
       page: Math.max(1, Number(params.pagina) || 1),
     });
 
-  if (!store) {
+  if (!store || (categoria && !activeCategory)) {
     notFound();
   }
 
   // New key per query so the grid remounts and replays its entrance.
-  const gridKey = [params.categoria, params.buscar, params.ordenar, params.pagina].join("|");
+  const gridKey = [categoria, params.buscar, params.ordenar, params.pagina].join("|");
   const title = activeCategory
     ? `${config.title}: ${activeCategory.name}`
     : config.title;
@@ -103,7 +103,7 @@ export async function AudiencePage({
       <div className="storefront-shell grid gap-5 px-4 py-5 sm:gap-8 sm:px-8 sm:py-10 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
         <StorefrontAudienceSidebar
           activeAudiencePath={basePath}
-          activeCategory={params.categoria}
+          activeCategory={categoria}
           categoryGroups={audienceCategories}
           searchParams={params}
         />
@@ -139,7 +139,7 @@ export async function AudiencePage({
               ))}
             </div>
           )}
-          <StorefrontPagination basePath={basePath} currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, categoria: params.categoria, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
+          <StorefrontPagination basePath={currentPath} currentPage={Math.max(1, Number(params.pagina) || 1)} params={{ buscar: params.buscar, ordenar: params.ordenar }} totalPages={Math.ceil(totalProducts / STOREFRONT_PAGE_SIZE)} />
         </section>
 
         <aside className="storefront-desktop-only hidden xl:block">
@@ -155,8 +155,8 @@ export async function AudiencePage({
                       ? "border-b-2 border-primary font-semibold text-foreground"
                       : ""
                   }`}
-                  href={buildAudienceHref(basePath, {
-                    ...params,
+                  href={buildAudienceHref(basePath, categoria, {
+                    buscar: params.buscar,
                     ordenar: option.value,
                   })}
                 >

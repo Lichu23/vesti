@@ -7,10 +7,11 @@ import { useCallback, useState } from "react";
 
 import { BrandLogo } from "./brand-logo";
 import { CartToggleButton } from "./cart-buttons";
-import { StorefrontMobileFilterDrawer } from "./storefront-mobile-filter-drawer";
-import { StorefrontMobileSortForm } from "./storefront-mobile-sort-form";
+import { StorefrontMobileFilterSheet } from "./storefront-mobile-filter-sheet";
+import { StorefrontMobileMenu } from "./storefront-mobile-menu";
 import { StorefrontProductLoading } from "./storefront-product-loading";
 import { StorefrontSearch } from "./storefront-search";
+import { parseStorefrontPath } from "./storefront-routes";
 
 type Category = {
   id: string;
@@ -54,13 +55,11 @@ export function StorefrontNavigation({
   }
 
   const isProductPage = pathname.startsWith("/products/");
-  const activeAudiencePath = ["/mujer", "/hombre", "/ninos", "/unisex"].find(
-    (path) => pathname === path,
-  );
+  const { audiencePath: activeAudiencePath, categorySlug } =
+    parseStorefrontPath(pathname);
   const currentSearchParams = {
     buscar: searchParams.get("buscar") ?? undefined,
-    categoria: searchParams.get("categoria") ?? undefined,
-    ordenar: searchParams.get("ordenar") ?? undefined,
+    categoria: categorySlug ?? searchParams.get("categoria") ?? undefined,
   };
 
   return (
@@ -76,13 +75,12 @@ export function StorefrontNavigation({
               <ArrowLeft aria-hidden="true" className="size-6" strokeWidth={1.8} />
             </Link>
           ) : (
-            <StorefrontMobileFilterDrawer
+            <StorefrontMobileMenu
               activeAudiencePath={activeAudiencePath}
               activeCategory={currentSearchParams.categoria}
               categoryGroups={categoryGroups}
               isDisabled={isNavigating}
               onNavigate={handleNavigate}
-              searchParams={currentSearchParams}
             />
           )}
 
@@ -107,21 +105,20 @@ export function StorefrontNavigation({
       </header>
 
       {!isProductPage ? (
-        <div className="storefront-shell storefront-mobile-only grid gap-3 px-4 pt-3 xl:hidden sm:gap-4 sm:px-8 sm:pt-5">
+        <div className="storefront-shell storefront-mobile-only flex items-center gap-2 px-4 pt-3 xl:hidden sm:px-8 sm:pt-5">
           <StorefrontSearch
-            className="flex w-full md:hidden"
+            className="flex min-w-0 flex-1 md:hidden"
             initialValue={currentSearchParams.buscar}
             key={`mobile-${currentSearchParams.buscar ?? "empty-search"}`}
             onNavigate={handleNavigate}
           />
-          <StorefrontMobileSortForm
-            action={pathname}
-            category={currentSearchParams.categoria}
-            query={currentSearchParams.buscar}
-            sort={currentSearchParams.ordenar}
-            sortOptions={SORT_OPTIONS}
-            onNavigate={handleNavigate}
-          />
+          <div className="ml-auto">
+            <StorefrontMobileFilterSheet
+              isDisabled={isNavigating}
+              onNavigate={handleNavigate}
+              sortOptions={SORT_OPTIONS}
+            />
+          </div>
         </div>
       ) : null}
 

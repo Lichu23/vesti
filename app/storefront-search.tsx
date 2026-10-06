@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -51,14 +52,12 @@ export function StorefrontSearch({
 
   return (
     <div
-      className={`${className} items-center gap-3 rounded-full border border-input bg-card px-5 py-3 text-muted-foreground`}
+      className={`${className} h-11 items-center gap-2 rounded-full border border-input bg-card px-4 text-muted-foreground md:h-12 md:gap-3 md:px-5`}
     >
-      <span aria-hidden="true" className="text-2xl leading-none">
-        &#8981;
-      </span>
+      <Search aria-hidden="true" className="size-5 shrink-0" strokeWidth={1.8} />
       <input
         aria-label="Buscar productos"
-        className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
+        className="w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground"
         name="buscar"
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Buscar productos..."

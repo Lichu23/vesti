@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
+import { AdminModal } from "@/app/admin/admin-modal";
 import { EditIcon } from "@/app/admin/admin-ui";
 import { type CategoryFormState } from "@/app/admin/categories/actions";
 import { CategoryForm } from "@/app/admin/categories/category-form";
@@ -66,38 +67,19 @@ export function CategoryModal({
         </button>
       )}
 
-      {isOpen ? (
-        <div
-          aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-0 text-left sm:p-4"
-          role="dialog"
-        >
-          <div className="h-full max-h-screen w-full max-w-3xl overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:p-5">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h3 className="font-serif text-2xl text-foreground sm:text-3xl">
-                  {title}
-                </h3>
-                <p className="text-sm text-muted-foreground">{description}</p>
-              </div>
-              <button
-                className="cursor-pointer rounded-md border px-3 py-2 text-sm"
-                onClick={() => setIsOpen(false)}
-                type="button"
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <CategoryForm
-              action={action}
-              buttonLabel={buttonLabel}
-              category={category}
-              onSuccess={handleSuccess}
-            />
-          </div>
-        </div>
-      ) : null}
+      <AdminModal
+        description={description}
+        onOpenChange={setIsOpen}
+        open={isOpen}
+        title={title}
+      >
+        <CategoryForm
+          action={action}
+          buttonLabel={buttonLabel}
+          category={category}
+          onSuccess={handleSuccess}
+        />
+      </AdminModal>
     </>
   );
 }
