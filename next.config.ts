@@ -5,13 +5,22 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 const isProduction = process.env.NODE_ENV === "production";
 
+// React and Turbopack use eval() in development only (callstack reconstruction,
+// source maps); production keeps the strict policy without 'unsafe-eval'.
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(isProduction ? [] : ["'unsafe-eval'"]),
+  "https://va.vercel-scripts.com",
+].join(" ");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self' https://accounts.google.com",
-  "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+  `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
