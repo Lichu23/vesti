@@ -1,9 +1,12 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import {
+  AdminSelect,
+  adminSelectPillClassName,
+} from "@/app/admin/admin-select";
 import { SearchIcon } from "@/app/admin/admin-ui";
 
 type ProductCategoryOption = {
@@ -115,26 +118,21 @@ export function AdminProductsFilterForm({
         />
       </label>
 
-      <div className="relative min-w-0">
-        <select
+      <div className="min-w-0">
+        <AdminSelect
           aria-label="Filtrar por categoria"
-          className="h-full min-h-12 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-border bg-card py-0 pl-5 pr-12 text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed xl:min-h-14"
+          className={adminSelectPillClassName}
           disabled={isFiltering}
           name="categoria"
-          onChange={(event) => setCurrentCategoryId(event.target.value)}
+          onValueChange={setCurrentCategoryId}
+          options={[
+            { label: "Todas las categorias", value: "" },
+            ...categories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            })),
+          ]}
           value={currentCategoryId}
-        >
-          <option value="">Todas las categorias</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          aria-hidden="true"
-          className="pointer-events-none absolute right-5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-          strokeWidth={1.8}
         />
       </div>
 

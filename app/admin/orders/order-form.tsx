@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 
+import { AdminSelect } from "@/app/admin/admin-select";
 import type { OrderFormState } from "@/app/admin/orders/actions";
 
 type OrderVariantOption = {
@@ -192,30 +193,25 @@ export function OrderForm({
             >
               <label className="grid min-w-0 gap-1 text-sm">
                 Producto y variante
-                <select
-                  className="w-full min-w-0 rounded-md border px-3 py-2 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                <AdminSelect
                   name="variantId"
-                  onChange={(event) =>
-                    updateItemRowVariant(row.id, event.target.value)
+                  onValueChange={(variantId) =>
+                    updateItemRowVariant(row.id, variantId)
                   }
-                  required
-                  value={selectedVariantIdsByRow[row.id] ?? ""}
-                >
-                  <option value="">Seleccionar</option>
-                  {variants.map((variant) => (
-                    <option
-                      disabled={
+                  options={[
+                    { label: "Seleccionar", value: "" },
+                    ...variants.map((variant) => ({
+                      disabled:
                         variant.stock <= 0 ||
                         (selectedVariantIds.has(variant.id) &&
-                          selectedVariantIdsByRow[row.id] !== variant.id)
-                      }
-                      key={variant.id}
-                      value={variant.id}
-                    >
-                      {variant.label} - Stock {variant.stock}
-                    </option>
-                  ))}
-                </select>
+                          selectedVariantIdsByRow[row.id] !== variant.id),
+                      label: `${variant.label} - Stock ${variant.stock}`,
+                      value: variant.id,
+                    })),
+                  ]}
+                  required
+                  value={selectedVariantIdsByRow[row.id] ?? ""}
+                />
               </label>
               <label className="grid min-w-0 gap-1 text-sm">
                 Cantidad

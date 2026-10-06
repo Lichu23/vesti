@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 
 import { type ProductFormState } from "@/app/admin/products/actions";
+import { AdminSelect } from "@/app/admin/admin-select";
 import { compressProductImage } from "@/app/admin/products/compress-product-image";
 
 const initialProductFormState: ProductFormState = {
@@ -292,35 +293,28 @@ export function ProductForm({
         <div className="grid grid-cols-2 gap-3">
           <label className="grid min-w-0 gap-1 text-sm font-medium">
             Categoria
-            <select
-              className={fieldClassName()}
+            <AdminSelect
               defaultValue={product?.categoryId ?? ""}
               name="categoryId"
+              options={[
+                { label: "Seleccionar categoria", value: "" },
+                ...categories.map((category) => ({
+                  label: category.name,
+                  value: category.id,
+                })),
+              ]}
               required
-            >
-              <option value="">Seleccionar categoria</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="grid min-w-0 gap-1 text-sm font-medium">
             Audiencia
-            <select
-              className={fieldClassName()}
+            <AdminSelect
               defaultValue={product?.audience ?? "WOMEN"}
               name="audience"
+              options={audiences}
               required
-            >
-              {audiences.map((audience) => (
-                <option key={audience.value} value={audience.value}>
-                  {audience.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
 
@@ -395,18 +389,12 @@ export function ProductForm({
 
           <label className="grid min-w-0 gap-1 text-sm font-medium">
             Unidad de venta
-            <select
-              className={fieldClassName()}
+            <AdminSelect
               defaultValue={product?.saleUnit ?? "UNIT"}
               name="saleUnit"
+              options={saleUnits}
               required
-            >
-              {saleUnits.map((saleUnit) => (
-                <option key={saleUnit.value} value={saleUnit.value}>
-                  {saleUnit.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           {!isVariantsMode ? (
@@ -428,13 +416,10 @@ export function ProductForm({
 
           <label className="grid min-w-0 gap-1 text-sm font-medium">
             Modo de color
-            <select
-              className={fieldClassName()}
+            <AdminSelect
               aria-describedby="color-mode-description"
               name="colorMode"
-              onChange={(event) => {
-                const nextColorMode = event.target.value;
-
+              onValueChange={(nextColorMode) => {
                 setSelectedColorMode(nextColorMode);
 
                 if (nextColorMode !== "VARIANTS") {
@@ -443,15 +428,10 @@ export function ProductForm({
                   );
                 }
               }}
+              options={availableColorModes}
               required
               value={selectedColorMode}
-            >
-              {availableColorModes.map((colorMode) => (
-                <option key={colorMode.value} value={colorMode.value}>
-                  {colorMode.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           {selectedColorModeDescription ? (
