@@ -40,6 +40,7 @@
 @theme {
   --animate-card-in: card-in 400ms cubic-bezier(0.32, 0.72, 0, 1) both;
   --animate-fade-in: fade-in 150ms ease-out both;
+  --animate-slide-in: slide-in 250ms cubic-bezier(0.32, 0.72, 0, 1) both;
 
   @keyframes card-in {
     from {
@@ -51,6 +52,13 @@
   @keyframes fade-in {
     from {
       opacity: 0;
+    }
+  }
+
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
     }
   }
 }

@@ -129,7 +129,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="space-y-4">
             <Link
               className="inline-flex cursor-pointer text-sm text-muted-foreground transition hover:text-foreground"
-              href={`${getAudiencePath(product.audience)}?categoria=${product.category.slug}`}
+              href={`${getAudiencePath(product.audience)}/${product.category.slug}`}
             >
               {product.category.name}
             </Link>
