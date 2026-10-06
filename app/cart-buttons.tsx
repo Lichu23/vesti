@@ -33,7 +33,7 @@ export function CartToggleButton({ className = "" }: { className?: string }) {
   return (
     <button
       aria-label="Abrir carrito"
-      className={`relative ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:ml-0 ${className}`}
+      className={`relative ml-auto flex size-11 cursor-pointer md:size-12 items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:ml-0 ${className}`}
       onClick={openCart}
       type="button"
     >

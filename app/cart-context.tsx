@@ -406,8 +406,8 @@ function CartDrawer() {
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-foreground/45 transition-opacity duration-300 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-reduce:transition-none" />
 
         <Dialog.Popup className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[560px] flex-col border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full motion-reduce:transition-none">
-          <header className="flex min-h-20 items-center justify-between border-b border-border px-6">
-            <Dialog.Title className="font-serif text-3xl text-foreground">
+          <header className="flex min-h-14 items-center justify-between border-b border-border px-4 sm:min-h-20 sm:px-6">
+            <Dialog.Title className="font-serif text-2xl text-foreground sm:text-3xl">
               Mi carrito
             </Dialog.Title>
             <Dialog.Close
@@ -418,7 +418,7 @@ function CartDrawer() {
             </Dialog.Close>
           </header>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
             {items.length === 0 ? (
               <div className="flex min-h-80 items-center justify-center text-center text-muted-foreground">
                 Tu carrito esta vacio.
@@ -435,8 +435,8 @@ function CartDrawer() {
                       key={item.variantId}
                       transition={{ duration: 0.25, ease: EASE_OUT_DRAWER }}
                     >
-                      <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] gap-5 pb-6">
-                        <div className="size-[100px] overflow-hidden rounded-[4px] bg-muted">
+                      <div className="grid grid-cols-[80px_minmax(0,1fr)_auto] gap-3 pb-4 sm:grid-cols-[100px_minmax(0,1fr)_auto] sm:gap-5 sm:pb-6">
+                        <div className="size-[80px] overflow-hidden sm:size-[100px] rounded-[4px] bg-muted">
                           {item.imageUrl ? (
                             <div
                               aria-label={item.imageAlt ?? item.productName}
@@ -519,8 +519,8 @@ function CartDrawer() {
             )}
           </div>
 
-          <footer className="border-t border-border px-6 py-6">
-            <div className="mb-6 flex items-center justify-between text-base text-muted-foreground">
+          <footer className="border-t border-border px-4 py-4 sm:px-6 sm:py-6">
+            <div className="mb-4 flex items-center justify-between text-base text-muted-foreground sm:mb-6">
               <span>Total</span>
               <span className="font-serif text-2xl text-foreground">
                 {formatPrice(total)}

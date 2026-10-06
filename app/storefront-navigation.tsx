@@ -66,11 +66,11 @@ export function StorefrontNavigation({
   return (
     <>
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-sm">
-        <div className="grid min-h-24 grid-cols-[48px_1fr_48px] items-center gap-4 px-5 sm:px-8 md:flex md:gap-6">
+        <div className="grid min-h-14 grid-cols-[44px_1fr_44px] items-center gap-2 px-4 sm:px-8 md:flex md:min-h-24 md:gap-6">
           {isProductPage ? (
             <Link
               aria-label="Volver a productos"
-              className="flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex size-11 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 md:size-12 focus-visible:outline-offset-2 focus-visible:outline-primary"
               href="/"
             >
               <ArrowLeft aria-hidden="true" className="size-6" strokeWidth={1.8} />
@@ -107,7 +107,7 @@ export function StorefrontNavigation({
       </header>
 
       {!isProductPage ? (
-        <div className="storefront-shell storefront-mobile-only grid gap-4 px-5 pt-5 xl:hidden sm:px-8">
+        <div className="storefront-shell storefront-mobile-only grid gap-3 px-4 pt-3 xl:hidden sm:gap-4 sm:px-8 sm:pt-5">
           <StorefrontSearch
             className="flex w-full md:hidden"
             initialValue={currentSearchParams.buscar}
