@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import { getPrimaryStore, getStorefrontNavigation } from "@/lib/storefront";
 import { CartProvider } from "./cart-context";
+import { ScrollToTopOnNavigation } from "./scroll-to-top";
 import { StorefrontNavigation } from "./storefront-navigation";
 import "./globals.css";
 
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </StorefrontNavigation>
           </Suspense>
         </CartProvider>
+        <ScrollToTopOnNavigation />
         <Analytics />
       </body>
     </html>

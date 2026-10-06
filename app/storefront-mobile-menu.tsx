@@ -4,7 +4,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { ArrowLeft, Check, ChevronRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { buildAudienceHref } from "./storefront-routes";
 
@@ -47,6 +47,7 @@ export function StorefrontMobileMenu({
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<MenuView>("root");
+  const scrollToTopOnCloseRef = useRef(false);
 
   const search = searchParams.get("buscar") ?? undefined;
   const sort = searchParams.get("ordenar") ?? undefined;
@@ -61,12 +62,26 @@ export function StorefrontMobileMenu({
   }
 
   function handleLinkClick() {
+    scrollToTopOnCloseRef.current = true;
     setIsOpen(false);
     onNavigate?.();
   }
 
+  // Base UI locks page scroll while open and restores the old position when it
+  // unlocks, which would undo the scroll-to-top of the navigation.
+  function handleOpenChangeComplete(open: boolean) {
+    if (open || !scrollToTopOnCloseRef.current) return;
+
+    scrollToTopOnCloseRef.current = false;
+    window.scrollTo({ top: 0 });
+  }
+
   return (
-    <Dialog.Root onOpenChange={handleOpenChange} open={isOpen}>
+    <Dialog.Root
+      onOpenChange={handleOpenChange}
+      onOpenChangeComplete={handleOpenChangeComplete}
+      open={isOpen}
+    >
       <Dialog.Trigger
         aria-disabled={isDisabled}
         aria-label="Abrir menu"
