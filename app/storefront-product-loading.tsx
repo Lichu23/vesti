@@ -18,11 +18,11 @@ export function StorefrontProductLoading() {
 
       <div
         aria-hidden="true"
-        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4"
+        className="-mx-5 grid grid-cols-2 gap-x-2 gap-y-6 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
       >
         {Array.from({ length: 8 }).map((_, index) => (
           <div className="space-y-3" key={index}>
-            <div className="aspect-square animate-pulse rounded bg-secondary" />
+            <div className="aspect-[4/5] animate-pulse bg-secondary sm:aspect-square" />
             <div className="h-4 w-3/4 animate-pulse rounded bg-secondary" />
             <div className="h-4 w-1/3 animate-pulse rounded bg-secondary" />
           </div>
