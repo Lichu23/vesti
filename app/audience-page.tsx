@@ -91,6 +91,8 @@ export async function AudiencePage({
     notFound();
   }
 
+  // New key per query so the grid remounts and replays its entrance.
+  const gridKey = [params.categoria, params.buscar, params.ordenar, params.pagina].join("|");
   const title = activeCategory
     ? `${config.title}: ${activeCategory.name}`
     : config.title;
@@ -123,9 +125,13 @@ export async function AudiencePage({
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4">
+            <div
+              className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
+              key={gridKey}
+            >
               {products.map((product, index) => (
                 <StorefrontProductCard
+                  index={index}
                   key={product.id}
                   priority={index === 0}
                   product={product}

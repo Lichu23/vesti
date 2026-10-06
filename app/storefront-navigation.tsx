@@ -128,7 +128,7 @@ export function StorefrontNavigation({
       <div className="relative min-h-0">
         {children}
         {isNavigating ? (
-          <div className="absolute inset-0 z-20 bg-background">
+          <div className="absolute inset-0 z-20 animate-fade-in bg-background motion-reduce:animate-none">
             <StorefrontProductLoading />
           </div>
         ) : null}

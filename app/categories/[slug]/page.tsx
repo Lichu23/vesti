@@ -89,6 +89,9 @@ export default async function CategoryPage({
     notFound();
   }
 
+  // New key per query so the grid remounts and replays its entrance.
+  const gridKey = [slug, currentParams.buscar, currentParams.ordenar, currentParams.pagina].join("|");
+
   return (
     <main className="min-h-screen bg-background text-foreground">
 
@@ -116,9 +119,13 @@ export default async function CategoryPage({
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4">
+            <div
+              className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
+              key={gridKey}
+            >
               {products.map((product, index) => (
                 <StorefrontProductCard
+                  index={index}
                   key={product.id}
                   priority={index === 0}
                   product={product}
