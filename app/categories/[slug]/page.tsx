@@ -119,7 +119,7 @@ export default async function CategoryPage({
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="grid gap-3 min-[360px]:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+            <div className="grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4">
               {products.map((product, index) => (
                 <StorefrontProductCard
                   key={product.id}
