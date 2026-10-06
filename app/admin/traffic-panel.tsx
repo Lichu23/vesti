@@ -3,6 +3,7 @@
 import { LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { AdminSelect } from "@/app/admin/admin-select";
 import type { TrafficReport } from "@/lib/analytics-query";
 
 type Status = "unconfigured" | "unavailable" | "forbidden" | "unauthorized";
@@ -127,7 +128,7 @@ export function TrafficPanel() {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div><h2 id="traffic-title" className="font-serif text-3xl">Tráfico web</h2><p className="text-sm text-muted-foreground">Días completos hasta ayer (UTC).</p></div>
       <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
-        <label className="text-sm">Período <select className="ml-2 rounded border border-border bg-background p-2" disabled={isRefreshing} value={days} onChange={(event) => setDays(event.target.value)}><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option></select></label>
+        <label className="flex items-center gap-2 text-sm">Período <AdminSelect className="min-w-44 rounded-md border border-border bg-background p-2 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20" disabled={isRefreshing} name="period" onValueChange={setDays} options={[{ label: "Últimos 7 días", value: "7" }, { label: "Últimos 30 días", value: "30" }]} value={days} /></label>
         <button type="button" className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60" disabled={isRefreshing} aria-describedby={isRefreshing ? "traffic-refresh-status" : undefined} onClick={() => void refresh(days)}>Actualizar</button>
       </div>
     </div>
