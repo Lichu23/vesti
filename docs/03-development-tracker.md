@@ -49,10 +49,11 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 -   [x] Staggered product grid entrance and fade on page and sort changes
 -   [x] Compact mobile layout: thinner header, icon-only logo, 16px margins
 -   [x] Category sub-routes (/mujer/[categoria]), drill-in mobile menu and sort bottom sheet
+-   [x] Add-to-cart flow: "+" always opens the size sheet, fly-to-cart animation and rolling cart count
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
-Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker feat/minimal-product-card feat/lucide-icons feat/mobile-portrait-cards feat/motion-base-ui feat/mobile-filter-drawer-animation feat/storefront-grid-motion feat/mobile-layout feat/mobile-filter-sheet
+Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker feat/minimal-product-card feat/lucide-icons feat/mobile-portrait-cards feat/motion-base-ui feat/mobile-filter-drawer-animation feat/storefront-grid-motion feat/mobile-layout feat/mobile-filter-sheet feat/cart-motion
 
 ## Phase 5 Orders
 

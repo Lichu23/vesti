@@ -3,6 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import Image from "next/image";
+import { useRef } from "react";
 
 export type SizePickerVariant = {
   id: string;
@@ -26,12 +27,13 @@ export function StorefrontSizePicker({
   imageAlt?: string | null;
   imageUrl?: string | null;
   onOpenChange: (open: boolean) => void;
-  onSelect: (variantId: string) => void;
+  onSelect: (variantId: string, origin?: DOMRect) => void;
   open: boolean;
   productName: string;
   unitLabel: string;
   variants: SizePickerVariant[];
 }) {
+  const thumbnailRef = useRef<HTMLDivElement>(null);
   const firstInStock = variants.find((variant) => variant.stock > 0);
   const headerPrice = firstInStock?.price ?? variants[0]?.price ?? 0;
   const hasDifferentPrices = new Set(variants.map((v) => v.price)).size > 1;
@@ -43,7 +45,10 @@ export function StorefrontSizePicker({
 
         <Dialog.Popup className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-[16px] border border-border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl transition-[translate,scale,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-[ending-style]:translate-y-full data-[starting-style]:translate-y-full motion-reduce:transition-none sm:inset-0 sm:m-auto sm:h-fit sm:max-w-sm sm:rounded-[8px] sm:p-5 sm:duration-200 sm:data-[ending-style]:translate-y-0 sm:data-[starting-style]:translate-y-0 sm:data-[ending-style]:scale-95 sm:data-[starting-style]:scale-95 sm:data-[ending-style]:opacity-0 sm:data-[starting-style]:opacity-0">
           <div className="flex items-start gap-4">
-            <div className="relative size-[72px] shrink-0 overflow-hidden rounded-[4px] bg-muted">
+            <div
+                className="relative size-[72px] shrink-0 overflow-hidden rounded-[4px] bg-muted"
+                ref={thumbnailRef}
+              >
               {imageUrl ? (
                 <Image
                   alt={imageAlt ?? productName}
@@ -97,7 +102,12 @@ export function StorefrontSizePicker({
                   }`}
                   disabled={isOutOfStock}
                   key={variant.id}
-                  onClick={() => onSelect(variant.id)}
+                  onClick={() =>
+                        onSelect(
+                          variant.id,
+                          thumbnailRef.current?.getBoundingClientRect(),
+                        )
+                      }
                   type="button"
                 >
                   <span>{variant.size || "Unico"}</span>
