@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { AdminToast } from "@/app/admin/admin-toast";
 import type { ProductDeleteState } from "@/app/admin/products/actions";
 import { TrashIcon } from "@/app/admin/admin-ui";
 
@@ -57,19 +58,10 @@ export function ProductDeleteProvider({
       <form action={formAction} className="hidden" id={productDeleteFormId} />
       {children}
 
-      {showToast ? (
-        <div
-          aria-live={state.status === "error" ? "assertive" : "polite"}
-          className={`fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-full border bg-card px-5 py-3 text-center text-sm font-medium shadow-lg sm:left-auto sm:right-5 sm:translate-x-0 ${
-            state.status === "error"
-              ? "border-destructive text-destructive"
-              : "border-border text-foreground"
-          }`}
-          role={state.status === "error" ? "alert" : "status"}
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <AdminToast
+        message={showToast ? state.message : null}
+        tone={state.status === "error" ? "error" : "default"}
+      />
     </ProductDeletePendingContext>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
+import { Dialog } from "@base-ui/react/dialog";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 
 import { type AdminSection } from "@/app/admin/admin-ui";
 
@@ -46,69 +46,35 @@ export function AdminMobileMenu({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
-
   return (
     <div className="order-first lg:hidden">
-      <button
-        aria-expanded={isOpen}
-        aria-label="Abrir menu admin"
-        className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        onClick={() => setIsOpen((current) => !current)}
-        type="button"
-      >
-        <Menu aria-hidden="true" className="size-6" strokeWidth={1.8} />
-      </button>
+      <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
+        <Dialog.Trigger
+          aria-label="Abrir menu admin"
+          className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <Menu aria-hidden="true" className="size-6" strokeWidth={1.8} />
+        </Dialog.Trigger>
 
-      {isOpen
-        ? createPortal(
-        <div className="fixed inset-0 z-[1000] lg:hidden">
-          <button
-            aria-label="Cerrar menu admin"
-            className="absolute inset-0 cursor-pointer bg-foreground/35"
-            onClick={() => setIsOpen(false)}
-            type="button"
-          />
-          <aside
-            aria-modal="true"
-            className="absolute left-0 top-0 flex h-dvh w-[86vw] max-w-sm flex-col bg-background p-6 shadow-2xl"
-            role="dialog"
-          >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-[1000] bg-foreground/35 transition-opacity duration-300 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-reduce:transition-none lg:hidden" />
+
+          <Dialog.Popup className="fixed left-0 top-0 z-[1000] flex h-dvh w-[86vw] max-w-sm flex-col bg-background p-6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full motion-reduce:transition-none lg:hidden">
             <div className="mb-8 flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
                   Gestion
                 </p>
-                <h2 className="mt-2 font-serif text-3xl text-foreground">
+                <Dialog.Title className="mt-2 font-serif text-3xl text-foreground">
                   Admin
-                </h2>
+                </Dialog.Title>
               </div>
-              <button
+              <Dialog.Close
                 aria-label="Cerrar menu admin"
                 className="flex size-11 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                onClick={() => setIsOpen(false)}
-                type="button"
               >
                 <X aria-hidden="true" className="size-5" strokeWidth={1.8} />
-              </button>
+              </Dialog.Close>
             </div>
 
             <nav
@@ -138,11 +104,9 @@ export function AdminMobileMenu({
             >
               Ver tienda
             </Link>
-          </aside>
-        </div>,
-        document.body,
-      )
-        : null}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }
