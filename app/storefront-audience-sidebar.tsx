@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 
 type StorefrontSidebarCategory = {
@@ -92,18 +93,11 @@ export function StorefrontAudienceSidebar({
                 }`}
               >
                 <span>{section.label}</span>
-                <svg
+                <ChevronDown
                   aria-hidden="true"
-                  className="size-4 shrink-0 transition group-open:rotate-180"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.8"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
+                  className="size-5 shrink-0 transition group-open:rotate-180"
+                  strokeWidth={1.8}
+                />
               </summary>
               <ul className="mt-3 space-y-3 pl-3 text-sm">
                 <li>

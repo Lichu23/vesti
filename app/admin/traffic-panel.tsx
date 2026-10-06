@@ -1,5 +1,6 @@
 "use client";
 
+import { LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TrafficReport } from "@/lib/analytics-query";
@@ -131,10 +132,7 @@ export function TrafficPanel() {
       </div>
     </div>
     {isRefreshing ? <div id="traffic-refresh-status" className="mt-5 flex items-start gap-3" role="status" aria-live="polite">
-      <svg className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
-      </svg>
+      <LoaderCircle className="mt-0.5 size-5 shrink-0 animate-spin text-primary" aria-hidden="true" />
       <div>
         <p className="text-sm text-muted-foreground">Cargando estadísticas…</p>
         <p className="mt-1 text-xs text-muted-foreground">Consultando visitas y páginas vistas de Vercel Analytics.</p>

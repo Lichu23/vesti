@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { EditIcon } from "@/app/admin/admin-ui";
@@ -51,7 +52,7 @@ export function CategoryModal({
           onClick={() => setIsOpen(true)}
           type="button"
         >
-          <span className="text-xl leading-none">+</span>
+          <Plus aria-hidden="true" className="size-5" strokeWidth={1.8} />
           {trigger.label}
         </button>
       ) : (

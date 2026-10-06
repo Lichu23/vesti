@@ -1,5 +1,6 @@
 "use client";
 
+import { Minus, Plus, Trash2, X } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -467,7 +468,7 @@ function CartDrawer() {
             ref={closeButtonRef}
             type="button"
           >
-            &times;
+            <X aria-hidden="true" className="size-6" strokeWidth={1.8} />
           </button>
         </header>
 
@@ -516,7 +517,11 @@ function CartDrawer() {
                         onClick={() => decreaseItem(item.variantId)}
                         type="button"
                       >
-                        -
+                        <Minus
+                          aria-hidden="true"
+                          className="mx-auto size-4"
+                          strokeWidth={1.8}
+                        />
                       </button>
                       <span className="w-10 text-center text-base text-foreground">
                         {item.quantity}
@@ -528,7 +533,11 @@ function CartDrawer() {
                         onClick={() => increaseItem(item.variantId)}
                         type="button"
                       >
-                        +
+                        <Plus
+                          aria-hidden="true"
+                          className="mx-auto size-4"
+                          strokeWidth={1.8}
+                        />
                       </button>
                     </div>
                   </div>
@@ -540,22 +549,11 @@ function CartDrawer() {
                       onClick={() => removeItem(item.variantId)}
                       type="button"
                     >
-                      <svg
+                      <Trash2
                         aria-hidden="true"
                         className="size-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.8"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M4 7h16" />
-                        <path d="M10 11v6" />
-                        <path d="M14 11v6" />
-                        <path d="M6 7l1 13h10l1-13" />
-                        <path d="M9 7V4h6v3" />
-                      </svg>
+                        strokeWidth={1.8}
+                      />
                     </button>
                     <p className="font-serif text-xl font-semibold text-foreground">
                       {formatPrice(item.unitPrice * item.quantity)}

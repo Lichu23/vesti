@@ -1,5 +1,6 @@
 "use client";
 
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -70,23 +71,11 @@ export function AdminMobileMenu({
       <button
         aria-expanded={isOpen}
         aria-label="Abrir menu admin"
-        className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary"
+        className="relative z-20 flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <svg
-          aria-hidden="true"
-          className="size-6"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="1.8"
-          viewBox="0 0 24 24"
-        >
-          <path d="M4 7h16" />
-          <path d="M4 12h16" />
-          <path d="M4 17h16" />
-        </svg>
+        <Menu aria-hidden="true" className="size-6" strokeWidth={1.8} />
       </button>
 
       {isOpen
@@ -114,11 +103,11 @@ export function AdminMobileMenu({
               </div>
               <button
                 aria-label="Cerrar menu admin"
-                className="flex size-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground"
+                className="flex size-11 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 onClick={() => setIsOpen(false)}
                 type="button"
               >
-                <span aria-hidden="true">x</span>
+                <X aria-hidden="true" className="size-5" strokeWidth={1.8} />
               </button>
             </div>
 

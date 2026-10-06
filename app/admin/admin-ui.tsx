@@ -1,4 +1,16 @@
 import type { ReactNode } from "react";
+import {
+  LayoutDashboard,
+  LayoutGrid,
+  Package,
+  Pencil,
+  ReceiptText,
+  Search,
+  Settings,
+  Store,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import Link from "next/link";
 
 
@@ -49,196 +61,43 @@ export function formatAdminOrderStatus(status: string) {
 }
 
 export function BoxIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-      <path d="M12 12 4.4 7.7" />
-      <path d="M12 12v8.5" />
-      <path d="m12 12 7.6-4.3" />
-    </svg>
-  );
+  return <Package aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function CategoryIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 4h7v7H4z" />
-      <path d="M13 4h7v7h-7z" />
-      <path d="M4 13h7v7H4z" />
-      <path d="M13 13h7v7h-7z" />
-    </svg>
-  );
+  return <LayoutGrid aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function WarningIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="m12 3 9 16H3L12 3Z" />
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
+  return <TriangleAlert aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
-export function StoreIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 10h16" />
-      <path d="m5 10 1-6h12l1 6" />
-      <path d="M6 10v10h12V10" />
-      <path d="M9 20v-6h6v6" />
-    </svg>
-  );
+export function StoreIcon({ className = "size-5" }: { className?: string }) {
+  return <Store aria-hidden="true" className={className} strokeWidth={1.8} />;
 }
 
 export function DashboardIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 13h7V4H4z" />
-      <path d="M13 20h7V4h-7z" />
-      <path d="M4 20h7v-5H4z" />
-    </svg>
-  );
+  return <LayoutDashboard aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function OrdersIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M7 3h10l2 4v14H5V7z" />
-      <path d="M7 7h10" />
-      <path d="M9 12h6" />
-      <path d="M9 16h4" />
-    </svg>
-  );
+  return <ReceiptText aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function SettingsIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.36a1.7 1.7 0 0 0-1 .58V20a2 2 0 1 1-4 0v-.06a1.7 1.7 0 0 0-1-.58 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-.58-1H4a2 2 0 1 1 0-4h.06a1.7 1.7 0 0 0 .58-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-.58V4a2 2 0 1 1 4 0v.06a1.7 1.7 0 0 0 1 .58 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.2.37.4.7.58 1H20a2 2 0 1 1 0 4h-.06c-.18.3-.38.63-.54 1Z" />
-    </svg>
-  );
+  return <Settings aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="m21 21-4.3-4.3" />
-      <circle cx="11" cy="11" r="7" />
-    </svg>
-  );
+  return <Search aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function EditIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  );
+  return <Pencil aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function TrashIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="M3 6h18" />
-      <path d="M8 6V4h8v2" />
-      <path d="M6 6l1 15h10l1-15" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-    </svg>
-  );
+  return <Trash2 aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
 export function StatCard({ icon, label, value }: StatCardProps) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -130,18 +131,11 @@ export function AdminProductsFilterForm({
             </option>
           ))}
         </select>
-        <svg
+        <ChevronDown
           aria-hidden="true"
-          className="pointer-events-none absolute right-5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-          viewBox="0 0 24 24"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+          className="pointer-events-none absolute right-5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+          strokeWidth={1.8}
+        />
       </div>
 
       <button

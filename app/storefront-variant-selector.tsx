@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useCart } from "./cart-context";
@@ -178,7 +179,7 @@ export function StorefrontVariantSelector({
             onClick={handleCardAdd}
             type="button"
           >
-            <span aria-hidden="true">+</span>
+            <Plus aria-hidden="true" className="size-7" strokeWidth={1.5} />
           </button>
           {isPickerOpen ? (
             <StorefrontSizePicker
