@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { useCart } from "./cart-context";
+import { StorefrontSizePicker } from "./storefront-size-picker";
 
 type StorefrontVariant = {
   color: string | null;
@@ -65,6 +66,7 @@ export function StorefrontVariantSelector({
   );
   const defaultVariantId = inStockVariants[0]?.id ?? "";
   const [selectedVariantId, setSelectedVariantId] = useState(defaultVariantId);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const storedSelectedVariant = inStockVariants.find(
     (variant) => variant.id === selectedVariantId,
   );
@@ -82,25 +84,45 @@ export function StorefrontVariantSelector({
     ? `Agregar ${productName} ${getVariantLabel(selectedVariant)} al carrito`
     : `Elegir talle para ${productName}`;
 
-  function addSelectedVariant() {
-    if (!selectedVariant) return;
-
+  function addVariant(variant: StorefrontVariant) {
     addItem({
       imageAlt,
       imageUrl,
-      maxQuantity: selectedVariant.stock,
+      maxQuantity: variant.stock,
       productId,
       productName,
-      unitPrice: selectedVariant.price,
-      variantColor: selectedVariant.color,
-      variantId: selectedVariant.id,
-      variantSize: selectedVariant.size,
+      unitPrice: variant.price,
+      variantColor: variant.color,
+      variantId: variant.id,
+      variantSize: variant.size,
     });
+  }
+
+  function addSelectedVariant() {
+    if (!selectedVariant) return;
+
+    addVariant(selectedVariant);
+  }
+
+  function handleCardAdd() {
+    if (needsVariantSelection) {
+      setIsPickerOpen(true);
+      return;
+    }
+
+    addSelectedVariant();
+  }
+
+  function handlePickerSelect(variantId: string) {
+    const variant = inStockVariants.find((item) => item.id === variantId);
+
+    setIsPickerOpen(false);
+    if (variant) addVariant(variant);
   }
 
   return (
     <div className="mt-auto grid gap-3">
-      {needsVariantSelection ? (
+      {needsVariantSelection && display === "detail" ? (
         <fieldset className="grid gap-2">
           <legend className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
             Talle
@@ -137,23 +159,42 @@ export function StorefrontVariantSelector({
       ) : null}
 
       {display === "card" ? (
-        <div className="grid gap-3">
-          <div>
-            <p className="whitespace-nowrap font-serif text-xl text-foreground">
-              {formatPrice(displayedPrice)}
-            </p>
-            <p className="text-xs text-muted-foreground">{unitLabel}</p>
-          </div>
+        <div className="flex items-end justify-between gap-2 sm:grid sm:gap-3">
+          <p className="whitespace-nowrap font-serif text-lg text-foreground sm:text-xl">
+            {formatPrice(displayedPrice)}
+            <span className="ml-1 font-sans text-xs text-muted-foreground">
+              {unitLabel}
+            </span>
+          </p>
           <button
-            aria-label={addButtonLabel}
-            className="min-h-11 w-full cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            aria-haspopup={needsVariantSelection ? "dialog" : undefined}
+            aria-label={
+              needsVariantSelection
+                ? `Elegir talle de ${productName}`
+                : addButtonLabel
+            }
+            className="flex size-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45 sm:size-auto sm:min-h-11 sm:w-full sm:px-4 sm:py-2"
             disabled={!hasStock || !selectedVariant}
-            onClick={addSelectedVariant}
-            title={selectedVariant ? undefined : `Elegir talle para ${productName}`}
+            onClick={handleCardAdd}
             type="button"
           >
-            Agregar
+            <span aria-hidden="true" className="text-2xl leading-none sm:hidden">
+              +
+            </span>
+            <span className="hidden sm:inline">Agregar</span>
           </button>
+          {isPickerOpen ? (
+            <StorefrontSizePicker
+              formatPrice={formatPrice}
+              imageAlt={imageAlt}
+              imageUrl={imageUrl}
+              onClose={() => setIsPickerOpen(false)}
+              onSelect={handlePickerSelect}
+              productName={productName}
+              unitLabel={unitLabel}
+              variants={variants}
+            />
+          ) : null}
         </div>
       ) : (
         <div className="flex items-center justify-between gap-4">
