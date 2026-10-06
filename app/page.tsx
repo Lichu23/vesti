@@ -135,9 +135,6 @@ export default async function Home({ searchParams }: HomeProps) {
               <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
                 {title}
               </h1>
-              <p className="mt-3 text-lg text-muted-foreground">
-                {products.length} productos
-              </p>
             </div>
           </div>
 
@@ -146,7 +143,7 @@ export default async function Home({ searchParams }: HomeProps) {
               Todavia no hay productos activos para mostrar.
             </div>
           ) : (
-            <div className="grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4">
+            <div className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4">
                 {products.map((product, index) => (
                 <StorefrontProductCard
                   key={product.id}

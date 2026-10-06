@@ -28,7 +28,7 @@ export function StorefrontProductCard({
     <article className="flex flex-col">
       <Link
         aria-label={`Ver ${product.name}`}
-        className="relative block aspect-square cursor-pointer overflow-hidden bg-muted"
+        className="relative block aspect-[4/5] cursor-pointer sm:aspect-square overflow-hidden bg-muted"
         href={`/products/${product.slug}`}
       >
         {image ? (
@@ -56,7 +56,7 @@ export function StorefrontProductCard({
         ) : null}
       </Link>
 
-      <div className="flex flex-col items-center gap-1 pt-3 text-center">
+      <div className="flex flex-col items-center gap-1 px-1 pt-3 text-center">
         <Link
           className="block w-full cursor-pointer"
           href={`/products/${product.slug}`}
