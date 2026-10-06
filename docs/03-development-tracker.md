@@ -44,10 +44,11 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 -   [x] Compact mobile product card with size picker sheet
 -   [x] Minimal product card (no border, centered name, price and + button)
 -   [x] Full-width portrait product cards on mobile
+-   [x] Animated cart drawer, cart items, toast and size picker (Base UI Dialog + Motion)
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
-Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker feat/minimal-product-card feat/lucide-icons feat/mobile-portrait-cards
+Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker feat/minimal-product-card feat/lucide-icons feat/mobile-portrait-cards feat/motion-base-ui
 
 ## Phase 5 Orders
 

@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="es-AR"
       className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="isolate flex min-h-full flex-col">
         <CartProvider storeName={store?.name} storeWhatsapp={store?.whatsapp}>
           <Suspense fallback={children}>
             <StorefrontNavigation

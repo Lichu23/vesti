@@ -181,13 +181,14 @@ export function StorefrontVariantSelector({
           >
             <Plus aria-hidden="true" className="size-7" strokeWidth={1.5} />
           </button>
-          {isPickerOpen ? (
+          {needsVariantSelection ? (
             <StorefrontSizePicker
               formatPrice={formatPrice}
               imageAlt={imageAlt}
               imageUrl={imageUrl}
-              onClose={() => setIsPickerOpen(false)}
+              onOpenChange={setIsPickerOpen}
               onSelect={handlePickerSelect}
+              open={isPickerOpen}
               productName={productName}
               unitLabel={unitLabel}
               variants={variants}
