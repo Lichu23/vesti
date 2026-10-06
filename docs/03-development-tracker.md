@@ -42,10 +42,11 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 -   [x] Product page
 -   [x] Size/variant selector on product cards
 -   [x] Compact mobile product card with size picker sheet
+-   [x] Minimal product card (no border, centered name, price and + button)
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
-Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker
+Branches: feat/storefront feat/cart feat/storefront-variant-selector feat/storefront-audience-pages feat/storefront-category-pages feat/storefront-product-page feat/product-card-size-picker feat/minimal-product-card
 
 ## Phase 5 Orders
 
