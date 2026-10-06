@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { Select } from "@base-ui/react/select";
+import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 type SortOption = {
@@ -37,26 +38,47 @@ export function StorefrontMobileSortForm({
     >
       {query ? <input name="buscar" type="hidden" value={query} /> : null}
       {category ? <input name="categoria" type="hidden" value={category} /> : null}
-      <div className="relative">
-        <select
+      <Select.Root
+        items={sortOptions}
+        name="ordenar"
+        onValueChange={(value) => {
+          if (value) setSelectedSort(value);
+        }}
+        value={selectedSort}
+      >
+        <Select.Trigger
           aria-label="Ordenar productos"
-          className="w-full min-w-0 cursor-pointer appearance-none rounded-full border border-input bg-card py-3 pl-4 pr-11 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-          name="ordenar"
-          onChange={(event) => setSelectedSort(event.target.value)}
-          value={selectedSort}
+          className="flex w-full min-w-0 cursor-pointer items-center justify-between rounded-full border border-input bg-card py-3 pl-4 pr-4 text-left text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
         >
-          {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          aria-hidden="true"
-          className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-          strokeWidth={1.8}
-        />
-      </div>
+          <Select.Value />
+          <Select.Icon className="text-muted-foreground transition-transform data-[popup-open]:rotate-180 motion-reduce:transition-none">
+            <ChevronDown aria-hidden="true" className="size-5" strokeWidth={1.8} />
+          </Select.Icon>
+        </Select.Trigger>
+
+        <Select.Portal>
+          <Select.Positioner
+            alignItemWithTrigger={false}
+            className="z-[1001]"
+            sideOffset={6}
+          >
+            <Select.Popup className="w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-[16px] border border-border bg-card py-1 shadow-lg outline-none transition duration-150 data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-reduce:transition-none">
+              {sortOptions.map((option) => (
+                <Select.Item
+                  className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 text-sm text-foreground outline-none data-[highlighted]:bg-secondary"
+                  key={option.value}
+                  value={option.value}
+                >
+                  <Select.ItemText>{option.label}</Select.ItemText>
+                  <Select.ItemIndicator>
+                    <Check aria-hidden="true" className="size-4" strokeWidth={1.8} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>
       <button
         className="w-full cursor-pointer rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
         disabled={!hasChanges}
