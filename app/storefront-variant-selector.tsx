@@ -159,8 +159,8 @@ export function StorefrontVariantSelector({
       ) : null}
 
       {display === "card" ? (
-        <div className="flex items-end justify-between gap-2 sm:grid sm:gap-3">
-          <p className="whitespace-nowrap font-serif text-lg text-foreground sm:text-xl">
+        <div className="flex flex-col items-center">
+          <p className="whitespace-nowrap font-serif text-base text-foreground sm:text-lg">
             {formatPrice(displayedPrice)}
             <span className="ml-1 font-sans text-xs text-muted-foreground">
               {unitLabel}
@@ -173,15 +173,12 @@ export function StorefrontVariantSelector({
                 ? `Elegir talle de ${productName}`
                 : addButtonLabel
             }
-            className="flex size-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45 sm:size-auto sm:min-h-11 sm:w-full sm:px-4 sm:py-2"
+            className="flex size-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-full text-3xl font-light leading-none text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-35"
             disabled={!hasStock || !selectedVariant}
             onClick={handleCardAdd}
             type="button"
           >
-            <span aria-hidden="true" className="text-2xl leading-none sm:hidden">
-              +
-            </span>
-            <span className="hidden sm:inline">Agregar</span>
+            <span aria-hidden="true">+</span>
           </button>
           {isPickerOpen ? (
             <StorefrontSizePicker

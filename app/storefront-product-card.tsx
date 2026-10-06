@@ -13,10 +13,6 @@ function getProductStock(product: StorefrontProduct) {
   return product.variants.reduce((total, variant) => total + variant.stock, 0);
 }
 
-function getSizeLabel(product: StorefrontProduct) {
-  return product.sizeDisplayText ?? "Unico";
-}
-
 export function StorefrontProductCard({
   priority = false,
   product,
@@ -29,7 +25,7 @@ export function StorefrontProductCard({
   const hasStock = stock > 0;
 
   return (
-    <article className="group overflow-hidden rounded-[4px] border border-border bg-card transition hover:border-primary">
+    <article className="flex flex-col">
       <Link
         aria-label={`Ver ${product.name}`}
         className="relative block aspect-square cursor-pointer overflow-hidden bg-muted"
@@ -38,7 +34,7 @@ export function StorefrontProductCard({
         {image ? (
           <Image
             alt={image.alt ?? product.name}
-            className="object-cover transition duration-500 group-hover:scale-105"
+            className="object-cover"
             fill
             loading={priority ? "eager" : "lazy"}
             preload={priority}
@@ -60,22 +56,15 @@ export function StorefrontProductCard({
         ) : null}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-3 p-3 sm:min-h-56 sm:gap-4 sm:p-5">
-        <div className="space-y-2">
-          <Link className="cursor-pointer" href={`/products/${product.slug}`}>
-            <h3 className="line-clamp-2 font-serif text-lg font-semibold leading-tight text-foreground transition hover:text-primary sm:text-xl">
-              {product.name}
-            </h3>
-          </Link>
-          <div className="hidden space-y-1 text-sm text-muted-foreground sm:block">
-            <p>Talle: {getSizeLabel(product)}</p>
-          </div>
-          {product.description ? (
-            <p className="hidden line-clamp-2 text-sm leading-6 text-muted-foreground sm:block">
-              {product.description}
-            </p>
-          ) : null}
-        </div>
+      <div className="flex flex-col items-center gap-1 pt-3 text-center">
+        <Link
+          className="block w-full cursor-pointer"
+          href={`/products/${product.slug}`}
+        >
+          <h3 className="truncate font-serif text-base font-semibold leading-tight text-foreground transition hover:text-primary sm:text-lg">
+            {product.name}
+          </h3>
+        </Link>
 
         <StorefrontVariantSelector
           basePrice={Number(product.basePrice)}
