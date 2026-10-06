@@ -3,8 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 
 const bucketName = "product-images";
 
-function loadEnvFile(path) {
+function loadEnvFile(path, { required = false } = {}) {
   if (!existsSync(path)) {
+    if (required) {
+      console.error(`Missing ${path}.`);
+      process.exit(1);
+    }
+
     return;
   }
 
@@ -35,8 +40,17 @@ function loadEnvFile(path) {
   }
 }
 
-loadEnvFile(".env.local");
-loadEnvFile(".env");
+// Usage: node scripts/setup-product-images-bucket.mjs [env-file]
+// With an explicit env file (e.g. .env.development.local) only that file is
+// used, so the bucket is created in the project that file points to.
+const explicitEnvFile = process.argv[2];
+
+if (explicitEnvFile) {
+  loadEnvFile(explicitEnvFile, { required: true });
+} else {
+  loadEnvFile(".env.local");
+  loadEnvFile(".env");
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -47,6 +61,8 @@ if (!supabaseUrl || !serviceRoleKey) {
   );
   process.exit(1);
 }
+
+console.log(`Target Supabase project: ${new URL(supabaseUrl).host}`);
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
