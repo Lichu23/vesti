@@ -13,10 +13,15 @@ function getProductStock(product: StorefrontProduct) {
   return product.variants.reduce((total, variant) => total + variant.stock, 0);
 }
 
+const MAX_STAGGER_STEPS = 8;
+const STAGGER_STEP_MS = 45;
+
 export function StorefrontProductCard({
+  index = 0,
   priority = false,
   product,
 }: {
+  index?: number;
   priority?: boolean;
   product: StorefrontProduct;
 }) {
@@ -25,7 +30,12 @@ export function StorefrontProductCard({
   const hasStock = stock > 0;
 
   return (
-    <article className="flex flex-col">
+    <article
+      className="flex animate-card-in flex-col motion-reduce:animate-none"
+      style={{
+        animationDelay: `${Math.min(index, MAX_STAGGER_STEPS) * STAGGER_STEP_MS}ms`,
+      }}
+    >
       <Link
         aria-label={`Ver ${product.name}`}
         className="relative block aspect-[4/5] cursor-pointer sm:aspect-square overflow-hidden bg-muted"
