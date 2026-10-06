@@ -50,7 +50,6 @@ Branches: feature/product-variants feature/size-guides feature/inventory
 -   [x] Compact mobile layout: thinner header, icon-only logo, 16px margins
 -   [x] Category sub-routes (/mujer/[categoria]), drill-in mobile menu and sort bottom sheet
 -   [x] Add-to-cart flow: "+" always opens the size sheet, fly-to-cart animation and rolling cart count
--   [x] Add-to-cart flow: "+" always opens the size sheet, fly-to-cart animation and rolling cart count
 -   [x] Cart
 -   [x] WhatsApp cart handoff
 
