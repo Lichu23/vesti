@@ -77,7 +77,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main className="min-h-screen bg-background text-foreground">
 
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-5 sm:gap-10 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14">
         <section className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-[4px] border border-border bg-muted">
             {mainImage ? (
@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </Link>
 
             <div>
-              <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+              <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
                 {product.name}
               </h1>
             </div>

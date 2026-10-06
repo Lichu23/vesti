@@ -95,20 +95,20 @@ export default async function CategoryPage({
   return (
     <main className="min-h-screen bg-background text-foreground">
 
-      <div className="storefront-shell grid gap-8 px-5 py-10 sm:px-8 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
+      <div className="storefront-shell grid gap-5 px-4 py-5 sm:gap-8 sm:px-8 sm:py-10 xl:grid-cols-[220px_minmax(0,1fr)_240px] xl:gap-12">
         <StorefrontAudienceSidebar
           activeCategory={slug}
           categoryGroups={audienceCategories}
           searchParams={currentParams}
         />
 
-        <section className="min-w-0 space-y-8">
+        <section className="min-w-0 space-y-4 sm:space-y-8">
           <div className="space-y-4">
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.36em] text-muted-foreground">
                 Categoria
               </p>
-              <h1 className="font-serif text-4xl leading-tight text-foreground sm:text-5xl">
+              <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
                 {activeCategory.name}
               </h1>
             </div>
@@ -120,7 +120,7 @@ export default async function CategoryPage({
             </div>
           ) : (
             <div
-              className="-mx-5 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
+              className="-mx-4 grid gap-x-2 gap-y-6 min-[360px]:grid-cols-2 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
               key={gridKey}
             >
               {products.map((product, index) => (

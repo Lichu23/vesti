@@ -29,18 +29,18 @@ export function BrandLogo({
     <span className={`flex items-center gap-3 ${className}`}>
       <Image
         alt=""
-        className="h-11 w-auto sm:h-12"
+        className="h-9 w-auto md:h-12"
         height={434}
         priority={priority}
         sizes="64px"
         src="/brand/logo-mark.png"
         width={579}
       />
-      <span>
-        <span className="block font-serif text-2xl leading-none text-foreground sm:text-3xl">
+      <span className="hidden md:block">
+        <span className="block font-serif text-3xl leading-none text-foreground">
           Thoemia
         </span>
-        <span className="mt-2 block text-[10px] uppercase tracking-[0.45em] text-foreground sm:text-xs">
+        <span className="mt-2 block text-xs uppercase tracking-[0.45em] text-foreground">
           Intimo
         </span>
       </span>

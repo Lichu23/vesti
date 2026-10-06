@@ -3,7 +3,7 @@ export function StorefrontProductLoading() {
     <div
       aria-busy="true"
       aria-label="Cargando productos"
-      className="min-w-0 px-5 py-10 sm:px-8"
+      className="min-w-0 px-4 py-5 sm:px-8 sm:py-10"
       role="status"
     >
       <div className="flex min-h-32 flex-col items-center justify-center gap-3">
@@ -18,7 +18,7 @@ export function StorefrontProductLoading() {
 
       <div
         aria-hidden="true"
-        className="-mx-5 grid grid-cols-2 gap-x-2 gap-y-6 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
+        className="-mx-4 grid grid-cols-2 gap-x-2 gap-y-6 sm:mx-0 sm:gap-x-4 sm:gap-y-8 xl:grid-cols-4"
       >
         {Array.from({ length: 8 }).map((_, index) => (
           <div className="space-y-3" key={index}>
