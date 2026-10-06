@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -69,10 +70,10 @@ export function StorefrontNavigation({
           {isProductPage ? (
             <Link
               aria-label="Volver a productos"
-              className="flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary"
+              className="flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               href="/"
             >
-              ←
+              <ArrowLeft aria-hidden="true" className="size-6" strokeWidth={1.8} />
             </Link>
           ) : (
             <StorefrontMobileFilterDrawer

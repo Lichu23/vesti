@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, ShoppingBag } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
 import { useCart } from "./cart-context";
@@ -32,25 +33,13 @@ export function CartToggleButton({ className = "" }: { className?: string }) {
   return (
     <button
       aria-label="Abrir carrito"
-      className={`relative ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-xl text-foreground transition hover:border-primary md:ml-0 ${className}`}
+      className={`relative ml-auto flex size-12 cursor-pointer items-center justify-center rounded-full text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:ml-0 ${className}`}
       onClick={openCart}
       type="button"
     >
-      <svg
-        aria-hidden="true"
-        className="size-6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-        viewBox="0 0 24 24"
-      >
-        <path d="M7 8h10l-1 11H8L7 8Z" />
-        <path d="M9 8a3 3 0 0 1 6 0" />
-      </svg>
+      <ShoppingBag aria-hidden="true" className="size-6" strokeWidth={1.8} />
       {isHydrated && itemCount > 0 ? (
-        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+        <span className="absolute right-0.5 top-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {itemCount}
         </span>
       ) : null}
@@ -79,7 +68,7 @@ export function AddToCartButton({
       title={disabledLabel}
       type="button"
     >
-      +
+      <Plus aria-hidden="true" className="size-5" strokeWidth={1.8} />
     </button>
   );
 }

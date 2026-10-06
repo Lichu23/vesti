@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import Image from "next/image";
 import { useId, useRef } from "react";
 
@@ -91,7 +92,7 @@ export function StorefrontSizePicker({
             ref={closeButtonRef}
             type="button"
           >
-            <span aria-hidden="true">&times;</span>
+            <X aria-hidden="true" className="size-5" strokeWidth={1.8} />
           </button>
         </div>
 

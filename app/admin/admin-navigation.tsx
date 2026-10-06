@@ -54,10 +54,10 @@ export function AdminNavigation({ children }: { children: ReactNode }) {
           </Link>
 
           <Link
-            className="inline-flex shrink-0 items-center gap-2 justify-self-end rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary sm:px-5"
+            className="inline-flex size-12 shrink-0 items-center justify-center gap-2 justify-self-end rounded-full text-sm font-medium text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:size-auto sm:border sm:border-border sm:bg-card sm:px-5 sm:py-3 sm:hover:border-primary sm:hover:opacity-100"
             href="/"
           >
-            <StoreIcon />
+            <StoreIcon className="size-6 sm:size-5" />
             <span className="hidden sm:inline">Ver tienda</span>
           </Link>
         </div>
