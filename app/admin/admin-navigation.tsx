@@ -4,47 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import {
-  BoxIcon,
-  CategoryIcon,
-  DashboardIcon,
-  OrdersIcon,
-  SettingsIcon,
-  StoreIcon,
-} from "@/app/admin/admin-ui";
+import { StoreIcon } from "@/app/admin/admin-ui";
 import { AdminMobileMenu } from "@/app/admin/admin-mobile-menu";
+import {
+  adminNavItems,
+  getActiveAdminSection,
+} from "@/app/admin/admin-nav-items";
 import { BrandLogo } from "@/app/brand-logo";
-import type { AdminSection } from "@/app/admin/admin-ui";
-
-const adminNavItems: {
-  href: string;
-  label: string;
-  section: AdminSection;
-  icon: ReactNode;
-}[] = [
-  { href: "/admin", label: "Dashboard", section: "dashboard", icon: <DashboardIcon /> },
-  { href: "/admin/products", label: "Productos", section: "products", icon: <BoxIcon /> },
-  { href: "/admin/categories", label: "Categorias", section: "categories", icon: <CategoryIcon /> },
-  { href: "/admin/orders", label: "Pedidos", section: "orders", icon: <OrdersIcon /> },
-  { href: "/admin/settings", label: "Configuracion", section: "settings", icon: <SettingsIcon /> },
-];
-
-function getActiveSection(pathname: string): AdminSection {
-  if (pathname.startsWith("/admin/products")) return "products";
-  if (pathname.startsWith("/admin/categories")) return "categories";
-  if (pathname.startsWith("/admin/orders")) return "orders";
-  if (pathname.startsWith("/admin/settings")) return "settings";
-  return "dashboard";
-}
 
 export function AdminNavigation({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const activeSection = getActiveSection(pathname);
+  const activeSection = getActiveAdminSection(pathname);
 
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm lg:hidden">
-        <div className="mx-auto grid min-h-24 max-w-[1720px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-10">
+        <div className="mx-auto grid min-h-14 max-w-[1720px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-8 md:min-h-24 md:gap-6">
+
           <div className="justify-self-start">
             <AdminMobileMenu activeSection={activeSection} />
           </div>
@@ -54,16 +30,16 @@ export function AdminNavigation({ children }: { children: ReactNode }) {
           </Link>
 
           <Link
-            className="inline-flex size-12 shrink-0 items-center justify-center gap-2 justify-self-end rounded-full text-sm font-medium text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:size-auto sm:border sm:border-border sm:bg-card sm:px-5 sm:py-3 sm:hover:border-primary sm:hover:opacity-100"
+            className="inline-flex size-11 shrink-0 items-center justify-center gap-2 justify-self-end rounded-full text-sm font-medium text-foreground transition hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:size-auto md:border md:border-border md:bg-card md:px-5 md:py-3 md:hover:border-primary md:hover:opacity-100"
             href="/"
           >
-            <StoreIcon className="size-6 sm:size-5" />
-            <span className="hidden sm:inline">Ver tienda</span>
+            <StoreIcon className="size-6 md:size-5" />
+            <span className="hidden md:inline">Ver tienda</span>
           </Link>
         </div>
       </header>
 
-      <main className="min-h-[calc(100dvh-6rem)] min-w-0 overflow-x-hidden bg-background text-foreground lg:min-h-screen">
+      <main className="min-h-[calc(100dvh-3.5rem)] min-w-0 overflow-x-hidden bg-background text-foreground md:min-h-[calc(100dvh-6rem)] lg:min-h-screen">
         <div className="mx-auto grid max-w-[1720px] gap-6 px-4 py-6 sm:px-10 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
           <aside className="hidden lg:block">
             <Link aria-label="Ir al admin" className="block" href="/admin">
