@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
+  CircleDollarSign,
   LayoutDashboard,
   LayoutGrid,
   Package,
@@ -29,6 +32,8 @@ type AdminShellProps = {
 };
 
 type StatCardProps = {
+  className?: string;
+  detail?: ReactNode;
   icon: ReactNode;
   isAlert?: boolean;
   label: string;
@@ -76,6 +81,12 @@ export function WarningIcon() {
   return <TriangleAlert aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
+export function SalesIcon() {
+  return (
+    <CircleDollarSign aria-hidden="true" className="size-5" strokeWidth={1.8} />
+  );
+}
+
 export function WalletIcon() {
   return <Wallet aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
@@ -110,13 +121,17 @@ export function TrashIcon() {
 
 // Minimal on mobile (number over label, no box or icon); card from `sm` up.
 export function StatCard({
+  className = "",
+  detail,
   icon,
   isAlert = false,
   label,
   value,
 }: StatCardProps) {
   return (
-    <article className="flex min-w-0 flex-col sm:rounded-[4px] sm:border sm:border-border sm:bg-card sm:p-6">
+    <article
+      className={`flex min-w-0 flex-col sm:rounded-[4px] sm:border sm:border-border sm:bg-card sm:p-6 ${className}`}
+    >
       <div className="mb-4 hidden size-11 items-center justify-center rounded-full bg-secondary text-foreground sm:flex">
         {icon}
       </div>
@@ -130,6 +145,11 @@ export function StatCard({
       <p className="order-2 mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:order-1 sm:mt-0 sm:text-sm">
         {label}
       </p>
+      {detail ? (
+        <p className="order-3 mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          {detail}
+        </p>
+      ) : null}
     </article>
   );
 }
@@ -141,6 +161,68 @@ export function AdminShell({
   return (
     <section className={`relative min-w-0 overflow-x-hidden ${spacing}`}>
       {children}
+    </section>
+  );
+}
+
+function TrendDetail({
+  change,
+  unit = "",
+}: {
+  change: number | null;
+  unit?: string;
+}) {
+  if (change === null) return null;
+
+  if (change === 0) return <>Igual que los 7 dias previos</>;
+
+  const Icon = change > 0 ? ArrowUp : ArrowDown;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 [font-variant-numeric:lining-nums] ${
+        change > 0 ? "text-primary" : "text-muted-foreground"
+      }`}
+    >
+      <Icon aria-hidden="true" className="size-3" strokeWidth={2} />
+      {Math.abs(change)}
+      {unit} vs 7 dias previos
+    </span>
+  );
+}
+
+// Sales are CONFIRMED orders; the trend compares with the 7 days before.
+export function SalesStats({
+  orders,
+  previousOrders,
+  previousRevenue,
+  revenue,
+}: {
+  orders: number;
+  previousOrders: number;
+  previousRevenue: number;
+  revenue: number;
+}) {
+  const revenueChange =
+    previousRevenue > 0
+      ? Math.round(((revenue - previousRevenue) / previousRevenue) * 100)
+      : null;
+  const ordersChange = previousOrders > 0 ? orders - previousOrders : null;
+
+  return (
+    <section className="grid grid-cols-2 gap-x-4 gap-y-5 border-y border-border py-4 sm:gap-5 sm:border-0 sm:py-0">
+      <StatCard
+        detail={<TrendDetail change={revenueChange} unit="%" />}
+        icon={<SalesIcon />}
+        label="Ventas · 7 dias"
+        value={formatAdminPrice(revenue)}
+      />
+      <StatCard
+        detail={<TrendDetail change={ordersChange} />}
+        icon={<OrdersIcon />}
+        label="Pedidos · 7 dias"
+        value={String(orders)}
+      />
     </section>
   );
 }
@@ -160,11 +242,13 @@ export function InventoryStats({
     <section className="grid grid-cols-2 gap-x-4 gap-y-5 border-y border-border py-4 sm:gap-5 sm:border-0 sm:py-0 xl:grid-cols-4">
       <StatCard icon={<BoxIcon />} label="Productos" value={String(productCount)} />
       <StatCard
+        className="max-sm:hidden"
         icon={<CategoryIcon />}
         label="Categorias"
         value={String(categoryCount)}
       />
       <StatCard
+        className="max-sm:hidden"
         icon={<WarningIcon />}
         isAlert={outOfStockCount > 0}
         label="Sin stock"
