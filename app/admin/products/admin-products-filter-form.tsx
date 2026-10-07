@@ -8,6 +8,12 @@ import {
   adminSelectPillClassName,
 } from "@/app/admin/admin-select";
 import { SearchIcon } from "@/app/admin/admin-ui";
+import { AdminProductsFilterSheet } from "@/app/admin/products/admin-products-filter-sheet";
+import {
+  buildProductsUrl,
+  type ProductSort,
+  type ProductStockFilter,
+} from "@/app/admin/products/products-filters";
 
 type ProductCategoryOption = {
   id: string;
@@ -18,33 +24,20 @@ type AdminProductsFilterFormProps = {
   categories: ProductCategoryOption[];
   categoryId?: string;
   query?: string;
+  sort: ProductSort;
+  stock: ProductStockFilter;
 };
 
 function normalizeValue(value?: string) {
   return value?.trim() ?? "";
 }
 
-function buildFilterUrl(pathname: string, query: string, categoryId: string) {
-  const nextParams = new URLSearchParams();
-  const trimmedQuery = normalizeValue(query);
-
-  if (trimmedQuery) {
-    nextParams.set("buscar", trimmedQuery);
-  }
-
-  if (categoryId) {
-    nextParams.set("categoria", categoryId);
-  }
-
-  const queryString = nextParams.toString();
-
-  return queryString ? `${pathname}?${queryString}` : pathname;
-}
-
 export function AdminProductsFilterForm({
   categories,
   categoryId,
   query,
+  sort,
+  stock,
 }: AdminProductsFilterFormProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -69,7 +62,12 @@ export function AdminProductsFilterForm({
       return;
     }
 
-    const nextUrl = buildFilterUrl(pathname, currentQuery, currentCategoryId);
+    const nextUrl = buildProductsUrl(pathname, {
+      categoryId: currentCategoryId,
+      query: currentQuery,
+      sort,
+      stock,
+    });
 
     startFilterTransition(() => {
       router.replace(nextUrl, { scroll: false });
@@ -88,7 +86,12 @@ export function AdminProductsFilterForm({
     }
 
     const timeout = window.setTimeout(() => {
-      const nextUrl = buildFilterUrl(pathname, currentQuery, currentCategoryId);
+      const nextUrl = buildProductsUrl(pathname, {
+        categoryId: currentCategoryId,
+        query: currentQuery,
+        sort,
+        stock,
+      });
 
       startAutoTransition(() => {
         router.replace(nextUrl, { scroll: false });
@@ -96,7 +99,7 @@ export function AdminProductsFilterForm({
     }, 350);
 
     return () => window.clearTimeout(timeout);
-  }, [currentCategoryId, currentQuery, hasChanges, pathname, router]);
+  }, [currentCategoryId, currentQuery, hasChanges, pathname, router, sort, stock]);
 
   return (
     <form
@@ -105,7 +108,7 @@ export function AdminProductsFilterForm({
       className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 xl:grid-cols-[minmax(0,1fr)_220px_auto] xl:gap-4"
       onSubmit={handleSubmit}
     >
-      <label className="col-span-2 flex min-h-12 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground xl:col-span-1 xl:min-h-14">
+      <label className="flex min-h-12 items-center gap-3 rounded-full border border-border bg-card px-5 text-muted-foreground xl:min-h-14">
         <SearchIcon />
         <input
           className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 placeholder:text-muted-foreground"
@@ -117,6 +120,14 @@ export function AdminProductsFilterForm({
           value={currentQuery}
         />
       </label>
+
+      <AdminProductsFilterSheet
+        categoryId={initialCategoryId || undefined}
+        className="xl:order-last"
+        query={initialQuery}
+        sort={sort}
+        stock={stock}
+      />
 
       <div className="min-w-0">
         <AdminSelect
