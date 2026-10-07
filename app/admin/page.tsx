@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -27,21 +28,36 @@ function DashboardAction({
   title: string;
 }) {
   return (
-    <article className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-      <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
-        {icon}
-      </div>
-      <h2 className="font-serif text-3xl leading-tight text-foreground">
-        {title}
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <>
+      {/* Mobile: plain row; the drawer already links to these sections. */}
       <Link
-        className="mt-5 inline-flex cursor-pointer rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:border-primary"
+        className="flex min-h-12 cursor-pointer items-center justify-between gap-3 border-b border-border py-3 text-base text-foreground transition hover:text-primary sm:hidden"
         href={href}
       >
-        {label}
+        {title}
+        <ChevronRight
+          aria-hidden="true"
+          className="size-5 shrink-0 text-muted-foreground"
+          strokeWidth={1.8}
+        />
       </Link>
-    </article>
+
+      <article className="hidden rounded-[4px] border border-border bg-card p-6 sm:block">
+        <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
+          {icon}
+        </div>
+        <h2 className="font-serif text-3xl leading-tight text-foreground">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+        <Link
+          className="mt-5 inline-flex cursor-pointer rounded-full border border-border px-5 py-3 text-sm font-semibold transition hover:border-primary"
+          href={href}
+        >
+          {label}
+        </Link>
+      </article>
+    </>
   );
 }
 
@@ -126,7 +142,7 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <AdminShell>
+    <AdminShell spacing="space-y-5 sm:space-y-10">
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Dashboard
@@ -134,13 +150,38 @@ export default async function AdminDashboardPage() {
         <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
           Resumen de {store.name}
         </h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="hidden text-lg text-muted-foreground sm:block">
           Control rapido del catalogo, stock y pedidos pendientes.
         </p>
       </div>
 
       <Link
-        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+        className="flex min-h-14 items-center gap-3 border-y border-border py-2 text-base text-foreground transition hover:text-primary sm:hidden"
+        href="/admin/orders"
+      >
+        <span
+          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold [font-variant-numeric:lining-nums_tabular-nums] ${
+            reviewingOrdersCount > 0
+              ? "bg-primary text-primary-foreground"
+              : "border border-border text-muted-foreground"
+          }`}
+        >
+          {reviewingOrdersCount}
+        </span>
+        <span className="min-w-0 flex-1">
+          {reviewingOrdersCount === 1
+            ? "Pedido pendiente"
+            : "Pedidos pendientes"}
+        </span>
+        <ChevronRight
+          aria-hidden="true"
+          className="size-5 shrink-0 text-muted-foreground"
+          strokeWidth={1.8}
+        />
+      </Link>
+
+      <Link
+        className="hidden min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 sm:inline-flex"
         href="/admin/orders"
       >
         Gestionar pedidos
@@ -158,7 +199,7 @@ export default async function AdminDashboardPage() {
 
       <TrafficPanel />
 
-      <section className="grid gap-5 xl:grid-cols-3">
+      <section className="grid sm:gap-5 xl:grid-cols-3">
         <DashboardAction
           description="Carga productos, imagenes, talles, colores y ajustes de stock."
           href="/admin/products"
