@@ -16,14 +16,21 @@ import {
   updateProduct,
 } from "@/app/admin/products/actions";
 import Image from "next/image";
+import {
+  parseProductSort,
+  parseProductStockFilter,
+} from "@/app/admin/products/products-filters";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { LOW_STOCK_THRESHOLD } from "@/lib/admin-dashboard";
 import { prisma } from "@/lib/prisma";
 
 type AdminProductsPageProps = {
   searchParams: Promise<{
     buscar?: string | string[];
     categoria?: string | string[];
+    ordenar?: string | string[];
     pagina?: string | string[];
+    stock?: string | string[];
   }>;
 };
 
@@ -45,8 +52,24 @@ function getProductStock(product: {
   return product.variants.reduce((total, variant) => total + variant.stock, 0);
 }
 
-function getStockLabel(stock: number) {
-  return stock > 0 ? "En stock" : "Sin stock";
+// Same rule as the dashboard: an active variant with few units left.
+function getStockStatus(product: {
+  variants: {
+    isActive: boolean;
+    stock: number;
+  }[];
+}) {
+  if (getProductStock(product) === 0) {
+    return { className: "bg-destructive/10 text-destructive", label: "Sin stock" };
+  }
+
+  const isLow = product.variants.some(
+    (variant) => variant.isActive && variant.stock <= LOW_STOCK_THRESHOLD,
+  );
+
+  return isLow
+    ? { className: "bg-amber-50 text-amber-900", label: "Stock bajo" }
+    : { className: "bg-secondary text-foreground", label: "En stock" };
 }
 
 function getPageParam(value?: string | string[]) {
@@ -64,6 +87,8 @@ export default async function AdminProductsPage({
   const query = getSingleParam(params.buscar)?.trim();
   const categoryId = getSingleParam(params.categoria);
   const currentPage = getPageParam(params.pagina);
+  const sort = parseProductSort(getSingleParam(params.ordenar));
+  const stockFilter = parseProductStockFilter(getSingleParam(params.stock));
 
   if (!storeId) {
     return null;
@@ -71,6 +96,17 @@ export default async function AdminProductsPage({
 
   const productWhere = {
     ...(categoryId ? { categoryId } : {}),
+    ...(stockFilter === "bajo"
+      ? {
+          isActive: true,
+          variants: {
+            some: {
+              isActive: true,
+              stock: { lte: LOW_STOCK_THRESHOLD },
+            },
+          },
+        }
+      : {}),
     ...(query
       ? {
           OR: [
@@ -141,7 +177,9 @@ export default async function AdminProductsPage({
         },
       },
     },
-    orderBy: [{ name: "asc" }],
+    orderBy: sort
+      ? [{ basePrice: sort === "price-asc" ? "asc" : "desc" }, { name: "asc" }]
+      : [{ name: "asc" }],
     skip: (safeCurrentPage - 1) * productsPerPage,
     take: productsPerPage,
     where: productWhere,
@@ -174,6 +212,8 @@ export default async function AdminProductsPage({
             categories={categories}
             categoryId={categoryId}
             query={query}
+            sort={sort}
+            stock={stockFilter}
           />
 
           <ProductModal
@@ -215,7 +255,7 @@ export default async function AdminProductsPage({
               ) : (
                 <AdminEmptyState
                   action={null}
-                  description="Proba cambiar la busqueda o elegir otra categoria."
+                  description="Proba cambiar la busqueda, la categoria o los filtros."
                   title="No hay productos para mostrar"
                 />
               )}
@@ -224,7 +264,7 @@ export default async function AdminProductsPage({
             <div>
               {products.map((product) => {
                 const image = product.images[0];
-                const stock = getProductStock(product);
+                const stockStatus = getStockStatus(product);
 
                 return (
                   <article
@@ -279,13 +319,9 @@ export default async function AdminProductsPage({
                           Stock
                         </span>
                         <span
-                          className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                            stock > 0
-                              ? "bg-secondary text-foreground"
-                              : "bg-destructive/10 text-destructive"
-                          }`}
+                          className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${stockStatus.className}`}
                         >
-                          {getStockLabel(stock)}
+                          {stockStatus.label}
                         </span>
                       </p>
                     </div>
@@ -349,6 +385,8 @@ export default async function AdminProductsPage({
           searchParams={{
             buscar: query,
             categoria: categoryId,
+            ordenar: sort,
+            stock: stockFilter,
           }}
           totalPages={totalPages}
         />

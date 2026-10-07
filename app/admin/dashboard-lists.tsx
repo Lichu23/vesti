@@ -53,36 +53,52 @@ function LowStockList({
       />
       <ul>
         {items.map((item) => (
-          <li className={rowClassName} key={item.id}>
-            <span className="min-w-0">
-              <span className="block truncate text-foreground">{item.name}</span>
-              {item.label ? (
-                <span className="block truncate text-xs text-muted-foreground">
-                  {item.label}
-                </span>
-              ) : null}
-            </span>
-            <span
-              className={`${numberClassName} font-semibold ${
-                item.stock === 0 ? "text-destructive" : "text-foreground"
-              }`}
+          <li key={item.id}>
+            <Link
+              className={`${rowClassName} cursor-pointer transition hover:text-primary`}
+              href={`/admin/products?${new URLSearchParams({ buscar: item.name })}`}
             >
-              {item.stock === 0 ? "Agotado" : `${item.stock} u`}
-            </span>
+              <span className="min-w-0">
+                <span className="block truncate text-foreground">
+                  {item.name}
+                </span>
+                {item.label ? (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {item.label}
+                  </span>
+                ) : null}
+              </span>
+              <span className="flex shrink-0 items-center gap-1">
+                <span
+                  className={`${numberClassName} font-semibold ${
+                    item.stock === 0 ? "text-destructive" : "text-foreground"
+                  }`}
+                >
+                  {item.stock === 0 ? "Agotado" : `${item.stock} u`}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.8}
+                />
+              </span>
+            </Link>
           </li>
         ))}
       </ul>
-      <Link
-        className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-sm text-foreground transition hover:text-primary"
-        href="/admin/products"
-      >
-        Ver productos
-        <ChevronRight
-          aria-hidden="true"
-          className="size-5 shrink-0 text-muted-foreground"
-          strokeWidth={1.8}
-        />
-      </Link>
+      {count > items.length ? (
+        <Link
+          className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-sm text-foreground transition hover:text-primary"
+          href="/admin/products?stock=bajo"
+        >
+          Ver todos
+          <ChevronRight
+            aria-hidden="true"
+            className="size-5 shrink-0 text-muted-foreground"
+            strokeWidth={1.8}
+          />
+        </Link>
+      ) : null}
     </section>
   );
 }
