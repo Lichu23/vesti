@@ -7,10 +7,13 @@ import {
   AdminShell,
   BoxIcon,
   InventoryStats,
+  SalesStats,
   SettingsIcon,
 } from "@/app/admin/admin-ui";
+import { DashboardInsights } from "@/app/admin/dashboard-lists";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { getDashboardInsights } from "@/lib/admin-dashboard";
 import { prisma } from "@/lib/prisma";
 import { TrafficPanel } from "@/app/admin/traffic-panel";
 
@@ -76,6 +79,7 @@ export default async function AdminDashboardPage() {
     productCount,
     outOfStockCount,
     reviewingOrdersCount,
+    insights,
   ] = await Promise.all([
     prisma.store.findUnique({
       select: {
@@ -127,6 +131,7 @@ export default async function AdminDashboardPage() {
         storeId,
       },
     }),
+    getDashboardInsights(storeId),
   ]);
   const stockValue = Number(stockValueRows[0]?.stockValue ?? 0);
 
@@ -144,11 +149,8 @@ export default async function AdminDashboardPage() {
   return (
     <AdminShell spacing="space-y-5 sm:space-y-10">
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
+        <h1 className="text-sm font-semibold uppercase tracking-[0.36em] text-muted-foreground">
           Dashboard
-        </p>
-        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">
-          Resumen de {store.name}
         </h1>
         <p className="hidden text-lg text-muted-foreground sm:block">
           Control rapido del catalogo, stock y pedidos pendientes.
@@ -190,14 +192,21 @@ export default async function AdminDashboardPage() {
         </span>
       </Link>
 
+      <SalesStats {...insights.sales} />
+
+      <DashboardInsights
+        bestSellers={insights.bestSellers}
+        lowStock={insights.lowStock}
+      />
+
+      <TrafficPanel />
+
       <InventoryStats
         categoryCount={categoryCount}
         outOfStockCount={outOfStockCount}
         productCount={productCount}
         stockValue={stockValue}
       />
-
-      <TrafficPanel />
 
       <section className="grid sm:gap-5 xl:grid-cols-3">
         <DashboardAction
