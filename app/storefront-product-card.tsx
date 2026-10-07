@@ -48,7 +48,7 @@ export function StorefrontProductCard({
             fill
             loading={priority ? "eager" : "lazy"}
             preload={priority}
-            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            sizes="(max-width: 1279px) 50vw, 25vw"
             src={image.url}
           />
         ) : (
