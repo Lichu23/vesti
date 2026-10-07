@@ -10,6 +10,7 @@ import {
   Store,
   Trash2,
   TriangleAlert,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -23,10 +24,13 @@ export type AdminSection =
 
 type AdminShellProps = {
   children: ReactNode;
+  // Full Tailwind class for the vertical gap between sections.
+  spacing?: string;
 };
 
 type StatCardProps = {
   icon: ReactNode;
+  isAlert?: boolean;
   label: string;
   value: string;
 };
@@ -72,6 +76,10 @@ export function WarningIcon() {
   return <TriangleAlert aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
+export function WalletIcon() {
+  return <Wallet aria-hidden="true" className="size-5" strokeWidth={1.8} />;
+}
+
 export function StoreIcon({ className = "size-5" }: { className?: string }) {
   return <Store aria-hidden="true" className={className} strokeWidth={1.8} />;
 }
@@ -100,25 +108,40 @@ export function TrashIcon() {
   return <Trash2 aria-hidden="true" className="size-5" strokeWidth={1.8} />;
 }
 
-export function StatCard({ icon, label, value }: StatCardProps) {
+// Minimal on mobile (number over label, no box or icon); card from `sm` up.
+export function StatCard({
+  icon,
+  isAlert = false,
+  label,
+  value,
+}: StatCardProps) {
   return (
-    <article className="rounded-[4px] border border-border bg-card p-5 sm:p-6">
-      <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground">
+    <article className="flex min-w-0 flex-col sm:rounded-[4px] sm:border sm:border-border sm:bg-card sm:p-6">
+      <div className="mb-4 hidden size-11 items-center justify-center rounded-full bg-secondary text-foreground sm:flex">
         {icon}
       </div>
-      <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-3 font-serif text-3xl leading-none text-foreground">
+      <p
+        className={`order-1 whitespace-nowrap font-serif text-2xl leading-none [font-variant-numeric:lining-nums_tabular-nums] sm:order-2 sm:mt-3 sm:text-3xl ${
+          isAlert ? "text-destructive" : "text-foreground"
+        }`}
+      >
         {value}
+      </p>
+      <p className="order-2 mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:order-1 sm:mt-0 sm:text-sm">
+        {label}
       </p>
     </article>
   );
 }
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({
+  children,
+  spacing = "space-y-10",
+}: AdminShellProps) {
   return (
-    <section className="relative min-w-0 space-y-10 overflow-x-hidden">{children}</section>
+    <section className={`relative min-w-0 overflow-x-hidden ${spacing}`}>
+      {children}
+    </section>
   );
 }
 
@@ -134,7 +157,7 @@ export function InventoryStats({
   stockValue: number;
 }) {
   return (
-    <section className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-x-4 gap-y-5 border-y border-border py-4 sm:gap-5 sm:border-0 sm:py-0 xl:grid-cols-4">
       <StatCard icon={<BoxIcon />} label="Productos" value={String(productCount)} />
       <StatCard
         icon={<CategoryIcon />}
@@ -143,11 +166,12 @@ export function InventoryStats({
       />
       <StatCard
         icon={<WarningIcon />}
+        isAlert={outOfStockCount > 0}
         label="Sin stock"
         value={String(outOfStockCount)}
       />
       <StatCard
-        icon={<BoxIcon />}
+        icon={<WalletIcon />}
         label="Valor en stock"
         value={formatAdminPrice(stockValue)}
       />
