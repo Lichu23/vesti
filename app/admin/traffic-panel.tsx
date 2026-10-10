@@ -63,7 +63,7 @@ function TrafficResults({ report }: { report: TrafficReport }) {
         </button> : null}
       </div>
     </>}
-    <p className="text-xs text-muted-foreground">Consultado: {new Date(report.updatedAt).toLocaleString("es-AR")} · Caché de aproximadamente 5 minutos. Producción, sin administración.</p>
+    <p className="text-xs text-muted-foreground">Actualizado {new Date(report.updatedAt).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" })}</p>
   </div>;
 }
 
@@ -126,7 +126,7 @@ export function TrafficPanel() {
 
   return <section className="sm:rounded-[4px] sm:border sm:border-border sm:bg-card sm:p-6" aria-busy={isRefreshing} aria-labelledby="traffic-title">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h2 id="traffic-title" className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:font-serif sm:text-3xl sm:font-normal sm:normal-case sm:tracking-normal sm:text-foreground">Tráfico web</h2><p className="mt-1 text-sm text-muted-foreground">Días completos hasta ayer (UTC).</p></div>
+      <div><h2 id="traffic-title" className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:font-serif sm:text-3xl sm:font-normal sm:normal-case sm:tracking-normal sm:text-foreground">Tráfico web</h2><p className="mt-1 text-sm text-muted-foreground">Días completos hasta ayer (UTC), sin visitas de administración.</p></div>
       <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
         <label className="flex items-center gap-2 text-sm">Período <AdminSelect className="min-w-44 rounded-md border border-border bg-background p-2 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20" disabled={isRefreshing} name="period" onValueChange={setDays} options={[{ label: "Últimos 7 días", value: "7" }, { label: "Últimos 30 días", value: "30" }]} value={days} /></label>
         <button type="button" className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60" disabled={isRefreshing} aria-describedby={isRefreshing ? "traffic-refresh-status" : undefined} onClick={() => void refresh(days)}>Actualizar</button>

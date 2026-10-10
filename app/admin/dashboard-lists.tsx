@@ -26,7 +26,7 @@ type BestSeller = {
 function ListHeader({ aside, title }: { aside?: ReactNode; title: string }) {
   return (
     <div className="mb-1 flex items-baseline justify-between gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {title}
       </h2>
       {aside}
